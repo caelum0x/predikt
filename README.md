@@ -4,6 +4,8 @@
 
 Built on the open-source Manifold app, extended with Polymarket's real on-chain stack (used directly, not reimplemented). Off-chain markets use play money and work out of the box. On-chain markets settle in USDC, trade through a hybrid AMM + signed-order CLOB, and resolve trustlessly via UMA's optimistic oracle — no admin can flip the result.
 
+> Part of the workspace of six products. See the master **[../INVENTORY.md](../INVENTORY.md)** (per-app pages/APIs/features + gap analysis) and the **[../README.md](../README.md)** index.
+
 ## The edge (why this beats Polymarket & Kalshi)
 Kalshi is US-only fiat with gatekept markets; Polymarket is crypto-only and US-banned. Neither can become the other. Predikt runs **both money modes, toggled per market** — free play money (global, no-KYC, permissionless creation, viral) as the top of funnel → trustless on-chain USDC for real stakes. See **`ROADMAP.md`**.
 
