@@ -47,7 +47,7 @@ export function Welcome(props: { setFeedKey?: (key: string) => void }) {
 
   const handleSetPage = (page: number) => {
     if (page === 0) {
-      track('welcome screen: what is manifold')
+      track('welcome screen: what is predikt')
     } else if (page === 1) {
       track('welcome screen: name input')
     } else if (page === 2) {
@@ -202,19 +202,6 @@ export function Welcome(props: { setFeedKey?: (key: string) => void }) {
     </Modal>
   )
 }
-
-// const useIsTwitch = (user: User | null | undefined) => {
-//   const router = useRouter()
-//   const isTwitch = router.pathname === '/twitch'
-
-//   useEffect(() => {
-//     if (isTwitch && user?.shouldShowWelcome) {
-//       api('me/update', { shouldShowWelcome: false })
-//     }
-//   }, [isTwitch, user?.id, user?.shouldShowWelcome])
-
-//   return isTwitch
-// }
 
 function WhatIsOraclePage() {
   return (

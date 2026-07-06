@@ -128,10 +128,6 @@ export function searchGiphy(params: { term: string; limit: number }) {
   return call(getApiUrl('searchgiphy'), 'POST', params)
 }
 
-export function tweetFromManaChan(params: { tweet: string }) {
-  return call(getApiUrl('manachantweet'), 'POST', params)
-}
-
 export function leaveReview(params: any) {
   return call(getApiUrl('leave-review'), 'POST', params)
 }

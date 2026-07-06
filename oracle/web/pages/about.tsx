@@ -13,7 +13,7 @@ import { Page } from 'web/components/layout/page'
 import { OracleLogo } from 'web/components/nav/oracle-logo'
 import { SEO } from 'web/components/SEO'
 import { Title } from 'web/components/widgets/title'
-import { LabCard } from './lab'
+import { LabCard } from 'web/components/widgets/lab-card'
 import { Socials } from 'web/components/socials'
 
 export default function AboutPage() {

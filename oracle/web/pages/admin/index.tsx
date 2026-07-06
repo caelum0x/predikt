@@ -11,7 +11,7 @@ import { useRedirectIfSignedOut } from 'web/hooks/use-redirect-if-signed-out'
 import { handleCreateSportsMarkets } from 'web/lib/admin/create-sports-markets'
 import { api } from 'web/lib/api/api'
 import { db } from 'web/lib/supabase/db'
-import { LabCard } from '../lab'
+import { LabCard } from 'web/components/widgets/lab-card'
 
 export default function AdminPage() {
   useRedirectIfSignedOut()

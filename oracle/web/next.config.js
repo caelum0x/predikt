@@ -154,11 +154,6 @@ module.exports = {
         permanent: true,
       },
       {
-        source: '/labs',
-        destination: '/lab',
-        permanent: true,
-      },
-      {
         source: '/store',
         destination: '/shop',
         permanent: true,
