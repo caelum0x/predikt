@@ -1,0 +1,23 @@
+/built
+
+# User trading API keys — NEVER commit (holds per-user Predikt keys, plaintext)
+keys.json
+*.keys.json
+
+node_modules/
+package-lock.json
+
+# env
+.env
+.env.test
+.env.local
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# misc
+*.tsbuildinfo
+.DS_Store

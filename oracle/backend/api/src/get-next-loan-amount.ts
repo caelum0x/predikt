@@ -1,0 +1,162 @@
+import { type APIHandler } from './helpers/endpoint'
+import { createSupabaseDirectClient } from 'shared/supabase/init'
+import { getUser } from 'shared/utils'
+import {
+  calculateMaxGeneralLoanAmount,
+  calculateDailyLoanLimit,
+  canClaimDailyFreeLoan,
+  calculateTotalFreeLoanAvailable,
+  isMarketEligibleForLoan,
+  getMidnightPacific,
+} from 'common/loans'
+import {
+  canAccessMarginLoans,
+  getFreeLoanRate,
+  getMaxLoanNetWorthPercent,
+} from 'common/supporter-config'
+import { getActiveSupporterEntitlements } from 'shared/supabase/entitlements'
+import {
+  getUnresolvedContractMetricsContractsAnswers,
+  getUnresolvedStatsForToken,
+} from 'shared/update-user-portfolio-histories-core'
+import { keyBy, sumBy } from 'lodash'
+import { convertPortfolioHistory } from 'common/supabase/portfolio-metrics'
+import { type Row } from 'common/supabase/utils'
+
+export const getNextLoanAmount: APIHandler<'get-next-loan-amount'> = async ({
+  userId,
+}) => {
+  const pg = createSupabaseDirectClient()
+
+  const portfolioMetricRow = await pg.oneOrNone<Row<'user_portfolio_history_latest'>>(
+    `select *
+     from user_portfolio_history_latest
+     where user_id = $1`,
+    [userId]
+  )
+  const portfolioMetric = portfolioMetricRow
+    ? convertPortfolioHistory(portfolioMetricRow)
+    : null
+  if (!portfolioMetric) {
+    return {
+      maxGeneralLoan: 0,
+      currentLoan: 0,
+      available: 0,
+      dailyLimit: 0,
+      todayLoans: 0,
+      availableToday: 0,
+    }
+  }
+
+  const user = await getUser(userId)
+  if (!user) {
+    return {
+      maxGeneralLoan: 0,
+      currentLoan: 0,
+      available: 0,
+      dailyLimit: 0,
+      todayLoans: 0,
+      availableToday: 0,
+    }
+  }
+
+  // Fetch supporter entitlements for tier-specific benefits
+  const entitlements = await getActiveSupporterEntitlements(pg, userId)
+  const hasMarginLoanAccess = canAccessMarginLoans(entitlements)
+  const maxLoanPercent = getMaxLoanNetWorthPercent(entitlements)
+  const freeLoanRate = getFreeLoanRate(entitlements)
+
+  const { metrics, contracts } =
+    await getUnresolvedContractMetricsContractsAnswers(pg, [userId])
+  const contractsById = keyBy(contracts, 'id')
+  const { value: portfolioValueNet } = getUnresolvedStatsForToken(
+    'MANA',
+    metrics,
+    contractsById
+  )
+
+  // Total loan includes both free loans and margin loans
+  const currentFreeLoan = sumBy(metrics, (m) => m.loan ?? 0)
+  const currentMarginLoan = sumBy(metrics, (m) => m.marginLoan ?? 0)
+  const currentLoan = currentFreeLoan + currentMarginLoan
+  // getUnresolvedStatsForToken returns value net of loans; add them back for gross display.
+  const portfolioValue = portfolioValueNet + currentLoan
+
+  // Calculate equity from net portfolio value (already excludes loans).
+  // Using equity prevents the compounding loop where borrowing increases borrowing capacity.
+  // Note: Balance is not included since loans are taken against positions.
+  const equity = Math.max(0, portfolioValueNet)
+
+  // Calculate limits based on equity
+  const maxGeneralLoan = calculateMaxGeneralLoanAmount(equity, maxLoanPercent)
+  const available = Math.max(0, maxGeneralLoan - currentLoan)
+
+  // Calculate daily limit based on equity (resets at midnight PT)
+  const dailyLimit = calculateDailyLoanLimit(equity)
+  const midnightPT = getMidnightPacific()
+  const todayLoansResult = await pg.oneOrNone<{ total: number }>(
+    `select coalesce(sum(amount), 0) as total
+     from txns
+     where to_id = $1
+     and category IN ('MARGIN_LOAN', 'LOAN')
+     and created_time >= $2`,
+    [userId, midnightPT.toISOString()]
+  )
+  const todayLoans = todayLoansResult?.total ?? 0
+  const availableToday = Math.max(0, dailyLimit - todayLoans)
+
+  // Get last free loan claim time
+  const lastClaimResult = await pg.oneOrNone<{ last_free_loan_claim: Date }>(
+    `SELECT last_free_loan_claim FROM users WHERE id = $1`,
+    [userId]
+  )
+  const lastClaimTime = lastClaimResult?.last_free_loan_claim ?? null
+  const canClaimFreeLoan = canClaimDailyFreeLoan(lastClaimTime)
+
+  // Calculate free loan available
+  const eligibleMetrics = metrics.filter((m) => {
+    const contract = contractsById[m.contractId]
+    if (!contract) return false
+    if (contract.token !== 'MANA') return false
+    if (contract.isResolved) return false
+    if ((m.payout ?? 0) <= 0 && (m.invested ?? 0) <= 0) return false
+    return isMarketEligibleForLoan({
+      visibility: contract.visibility,
+      isRanked: contract.isRanked,
+      uniqueBettorCount: contract.uniqueBettorCount ?? 0,
+      createdTime: contract.createdTime,
+    }).eligible
+  })
+
+  const freeLoanAvailable = canClaimFreeLoan
+    ? Math.min(
+        calculateTotalFreeLoanAvailable(
+          eligibleMetrics.map((m) => ({
+            payout: m.payout ?? 0,
+            invested: m.invested ?? 0,
+          })),
+          freeLoanRate
+        ),
+        available,
+        availableToday
+      )
+    : 0
+
+  return {
+    maxGeneralLoan,
+    currentLoan,
+    available,
+    dailyLimit,
+    todayLoans,
+    availableToday,
+    // New fields for free/margin loan breakdown
+    currentFreeLoan,
+    currentMarginLoan,
+    freeLoanAvailable,
+    canClaimFreeLoan: canClaimFreeLoan && freeLoanAvailable >= 1,
+    hasMarginLoanAccess,
+    // Equity-based calculation fields (equity = portfolioValue - loans)
+    equity,
+    portfolioValue,
+  }
+}

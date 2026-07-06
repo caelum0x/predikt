@@ -1,0 +1,6 @@
+# Ignore Next artifacts
+.next/
+out/
+public/**/*.json
+public/**/*.html
+next-env.d.ts

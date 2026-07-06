@@ -1,0 +1,194 @@
+import { Contract } from 'common/contract'
+import { MINUTES_ALLOWED_TO_REFER, PrivateUser, User } from 'common/user'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import {
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth'
+import { getIsNative } from 'web/lib/native/is-native'
+import { nativeSignOut } from 'web/lib/native/native-messages'
+import { postMessageToNative } from 'web/lib/native/post-message'
+import { getFirebaseAuth } from './auth'
+dayjs.extend(utc)
+import { safeLocalStorage } from '../util/local'
+import { api } from '../api/api'
+import { clearPushToken } from 'web/lib/supabase/notifications'
+import { removeUndefinedProps } from 'common/util/object'
+import { sleep } from 'common/util/time'
+
+export type { User }
+
+export const auth = getFirebaseAuth()
+export const CACHED_REFERRAL_USERNAME_KEY = 'CACHED_REFERRAL_KEY'
+const CACHED_REFERRAL_CONTRACT_ID_KEY = 'CACHED_REFERRAL_CONTRACT_KEY'
+
+// Scenarios:
+// 1. User is referred by another user to homepage, group page, market page etc. explicitly via referrer= query param
+// 2. User lands on a market or group without a referrer, we attribute the market/group creator
+// Explicit referrers take priority over the implicit ones, (e.g. they're overwritten)
+export function writeReferralInfo(
+  defaultReferrerUsername: string,
+  otherOptions?: {
+    contractId?: string
+    explicitReferrer?: string
+  }
+) {
+  const local = safeLocalStorage
+  const cachedReferralUser = local?.getItem(CACHED_REFERRAL_USERNAME_KEY)
+  const { contractId, explicitReferrer } = otherOptions || {}
+
+  // Write the first referral username we see.
+  if (!cachedReferralUser) {
+    local?.setItem(
+      CACHED_REFERRAL_USERNAME_KEY,
+      explicitReferrer || defaultReferrerUsername
+    )
+    if (contractId) local?.setItem(CACHED_REFERRAL_CONTRACT_ID_KEY, contractId)
+  }
+
+  // Overwrite all referral info if we see an explicit referrer.
+  if (explicitReferrer) {
+    local?.setItem(CACHED_REFERRAL_USERNAME_KEY, explicitReferrer)
+    if (!contractId) local?.removeItem(CACHED_REFERRAL_CONTRACT_ID_KEY)
+    else local?.setItem(CACHED_REFERRAL_CONTRACT_ID_KEY, contractId)
+  }
+}
+
+export async function setCachedReferralInfoForUser(user: User) {
+  if (!canSetReferrer(user)) return
+
+  const local = safeLocalStorage
+  const cachedReferralUsername = local?.getItem(CACHED_REFERRAL_USERNAME_KEY)
+  const cachedReferralContractId = local?.getItem(
+    CACHED_REFERRAL_CONTRACT_ID_KEY
+  )
+  const referralComplete = local?.getItem('referral-complete') == 'true'
+  if (!cachedReferralUsername || referralComplete) return
+  console.log(
+    `User created in last ${MINUTES_ALLOWED_TO_REFER} minutes, trying to set referral`
+  )
+  // get user via username
+  api(
+    'refer-user',
+    removeUndefinedProps({
+      referredByUsername: cachedReferralUsername,
+      contractId: cachedReferralContractId ?? undefined,
+    })
+  )
+    .then((resp) => {
+      console.log('referral resp', resp)
+      local?.setItem('referral-complete', 'true')
+    })
+    .catch((err) => {
+      console.log('error setting referral details', err)
+    })
+}
+
+// Best-effort, time-bounded clear of the current account's push token before an
+// auth change (logout or account switch), so the device stops receiving
+// notifications for that account. Only runs on native (push tokens are
+// mobile-only) and only when signed in. Never blocks the auth change for more
+// than a moment on a flaky network — the backend reclaim in set-push-token is
+// the durable backstop if this best-effort call doesn't land.
+async function clearPushTokenBeforeAuthChange() {
+  if (!getIsNative() || !auth.currentUser) return
+  // Handle errors on the call itself so a rejection arriving after the timeout
+  // below doesn't surface as an unhandled rejection.
+  const clear = clearPushToken().catch((e) =>
+    console.error('error clearing push token before auth change', e)
+  )
+  // Best-effort: don't let a slow network block the auth change. The backend
+  // reclaim in set-push-token is the durable backstop.
+  await Promise.race([clear, sleep(2000)])
+}
+
+export async function firebaseLogin() {
+  if (getIsNative()) {
+    // If we're switching accounts, clear the outgoing account's push token.
+    // Fire-and-forget so the login flow isn't delayed; the set-push-token
+    // reclaim when the next account registers is the durable backstop.
+    void clearPushTokenBeforeAuthChange()
+    // Post the message back to expo
+    postMessageToNative('loginClicked', {})
+    return
+  }
+  const provider = new GoogleAuthProvider()
+  return signInWithPopup(auth, provider).then(async (result) => {
+    return result
+  })
+}
+
+/**
+ * Sign in with Apple via Firebase's Apple OAuth provider.
+ *
+ * The CLIENT wiring here is complete. To ACTIVATE it, the Apple provider must be
+ * enabled once in the Firebase console (no code change needed):
+ *   1. Firebase console → Authentication → Sign-in method → add "Apple".
+ *   2. In the Apple Developer portal: create a Services ID, enable "Sign in with
+ *      Apple", add the Firebase auth handler domain + redirect
+ *      (https://<project>.firebaseapp.com/__/auth/handler), create a Sign in
+ *      with Apple key, and paste the Services ID + Team ID + Key ID + private
+ *      key back into the Firebase Apple provider config.
+ *   3. For the iOS app (App Store requirement): add the "Sign in with Apple"
+ *      capability in Xcode and list oracle.markets as an associated domain.
+ * Until step 1–2 are done, this call fails with auth/operation-not-allowed.
+ * See docs/ONBOARDING.md for the full checklist.
+ */
+export async function loginWithApple() {
+  const provider = new OAuthProvider('apple.com')
+  provider.addScope('email')
+  provider.addScope('name')
+
+  return signInWithPopup(auth, provider)
+    .then((result) => {
+      return result
+    })
+    .catch((error) => {
+      console.error(error)
+    })
+}
+
+export async function firebaseLogout() {
+  if (getIsNative()) {
+    // Clear this account's push token while still authenticated, so the device
+    // stops receiving notifications for the account being logged out.
+    await clearPushTokenBeforeAuthChange()
+    nativeSignOut()
+  }
+
+  await auth.signOut()
+}
+
+export const isContractBlocked = (
+  privateUser: PrivateUser | undefined | null,
+  contract: Contract
+) => {
+  if (!privateUser) return false
+
+  const {
+    blockedContractIds,
+    blockedByUserIds,
+    blockedUserIds,
+    blockedGroupSlugs,
+  } = privateUser
+
+  return (
+    blockedContractIds?.includes(contract.id) ||
+    contract.groupSlugs?.some((slug) => blockedGroupSlugs?.includes(slug)) ||
+    blockedByUserIds?.includes(contract.creatorId) ||
+    blockedUserIds?.includes(contract.creatorId)
+  )
+}
+
+export const canSetReferrer = (user: User) => {
+  // Attribution must happen at signup so the referrer can be paid later when
+  // the referred user bets or verifies. Don't gate on bonus eligibility here:
+  // brand-new users haven't completed iDenfy yet, but we still want to record
+  // who referred them. The bonus payout itself is gated separately.
+  if (user.referredByUserId) return false
+  const now = dayjs().utc()
+  const userCreatedTime = dayjs(user.createdTime)
+  return now.diff(userCreatedTime, 'minute') < MINUTES_ALLOWED_TO_REFER
+}

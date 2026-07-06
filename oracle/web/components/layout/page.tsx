@@ -1,0 +1,104 @@
+import clsx from 'clsx'
+import { ReactNode, useEffect, useState } from 'react'
+import { Toaster } from 'react-hot-toast'
+import { useIsMobile } from 'web/hooks/use-is-mobile'
+import { useTracking } from 'web/hooks/use-tracking'
+import { GoogleOneTapLogin } from 'web/lib/firebase/google-onetap-login'
+import { ConfettiOnDemand } from '../confetti-on-demand'
+import { BottomNavBar } from '../nav/bottom-nav-bar'
+import Sidebar from '../nav/sidebar'
+import { Col } from './col'
+import { useUser } from 'web/hooks/use-user'
+import { BanBanner } from '../moderation/ban-banner'
+import { UserBan } from 'common/user'
+import { api } from 'web/lib/api/api'
+
+import { Footer } from '../footer'
+import { FirstStreakModalManager } from '../profile/first-streak-modal'
+export function Page(props: {
+  trackPageView: string | false
+  trackPageProps?: Record<string, any>
+  className?: string
+  children?: ReactNode
+  hideSidebar?: boolean
+  hideBottomBar?: boolean
+  hideFooter?: boolean
+  banner?: ReactNode
+}) {
+  const {
+    trackPageView,
+    trackPageProps,
+    children,
+    className,
+    hideSidebar,
+    hideBottomBar,
+    banner,
+  } = props
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  if (trackPageView) useTracking(`view ${trackPageView}`, trackPageProps)
+  const isMobile = useIsMobile()
+  const user = useUser()
+  const [bans, setBans] = useState<UserBan[]>([])
+
+  useEffect(() => {
+    if (user) {
+      api('get-user-bans', { userId: user.id })
+        .then((res) => {
+          setBans(res.bans as UserBan[])
+        })
+        .catch(() => {
+          // Ignore errors fetching bans
+        })
+    }
+  }, [user?.id])
+
+  const [isIOS, setIsIOS] = useState(false)
+  useEffect(() => {
+    // Only use scroll container on iOS
+    const iosCheck =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    setIsIOS(iosCheck)
+  }, [])
+
+  return (
+    <>
+      <ConfettiOnDemand />
+      <GoogleOneTapLogin className="fixed bottom-12 right-4 z-[1000]" />
+      <FirstStreakModalManager />
+      <Col
+        className={clsx(
+          !hideBottomBar && 'pb-[58px] lg:pb-0', // bottom bar padding
+          'text-ink-1000 mx-auto min-h-screen w-full max-w-[1440px] lg:grid lg:grid-cols-12',
+          isMobile && isIOS && 'page-scroll-container' // Add scrollable container only on iOS
+        )}
+      >
+        <Toaster
+          position={isMobile ? 'bottom-center' : 'top-center'}
+          containerClassName="!bottom-[70px]"
+          toastOptions={{
+            ariaProps: {
+              role: 'status',
+              'aria-live': 'polite',
+            },
+          }}
+        />
+        {hideSidebar ? (
+          <div className="lg:col-span-2 lg:flex" />
+        ) : (
+          <Sidebar className="sticky top-0 hidden self-start px-2 lg:col-span-2 lg:flex" />
+        )}
+        <main
+          id="main-content"
+          className={clsx('l:px-2 col-span-7 flex flex-1 flex-col', className)}
+        >
+          {banner}
+          {user && <BanBanner bans={bans} />}
+          {children}
+          {!props.hideFooter && <Footer />}
+        </main>
+      </Col>
+      {!hideBottomBar && <BottomNavBar />}
+    </>
+  )
+}

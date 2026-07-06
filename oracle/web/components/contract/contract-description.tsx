@@ -1,0 +1,186 @@
+import { PencilIcon, PlusIcon } from '@heroicons/react/solid'
+import { JSONContent } from '@tiptap/core'
+import clsx from 'clsx'
+import { MAX_DESCRIPTION_LENGTH, Contract } from 'common/contract'
+import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
+import { TextEditor, useTextEditor } from 'web/components/widgets/editor'
+import { useAdminOrMod } from 'web/hooks/use-admin'
+import { useUser } from 'web/hooks/use-user'
+import { updateMarket } from 'web/lib/api/api'
+import { Button } from '../buttons/button'
+import { LogoIcon } from '../icons/logo-icon'
+import { Row } from '../layout/row'
+import { CollapsibleContent } from '../widgets/collapsible-content'
+import { PendingClarifications } from './pending-clarifications'
+import { CreatorBannedFromBettingInfo } from './creator-banned-from-betting-info'
+
+export function ContractDescription(props: {
+  contractId: string // the description is stored on this contract
+  creatorId: string
+  isSweeps: boolean
+  description: string | JSONContent
+  creatorBannedFromBetting?: boolean
+  contract: Contract
+}) {
+  const {
+    contractId,
+    creatorId,
+    isSweeps,
+    description,
+    creatorBannedFromBetting,
+    contract,
+  } = props
+
+  const isModOrAdmin = useAdminOrMod()
+  const user = useUser()
+  const isCreator = user?.id === creatorId
+
+  return (
+    <>
+      <div className="mb-2 mt-6">
+        {isCreator || isModOrAdmin ? (
+          <EditableDescription
+            contractId={contractId}
+            description={description}
+          />
+        ) : (
+          <CollapsibleContent
+            mediaSize="md"
+            content={description}
+            stateKey={`isCollapsed-contract-${contractId}`}
+            hideCollapse={!user}
+          />
+        )}
+
+        <PendingClarifications contractId={contractId} isCreator={isCreator} />
+
+        <div
+          className={clsx(
+            !isSweeps && 'hidden',
+            'text-ink-600 bg-canvas-50 flex items-center justify-center space-x-2 rounded-md px-4 py-2 italic'
+          )}
+        >
+          <LogoIcon className="h-5 w-5 text-primary-600" />
+          <span>This question is managed and resolved by Predikt.</span>
+          <LogoIcon className="h-5 w-5 text-primary-600" />
+        </div>
+
+        {creatorBannedFromBetting && (
+          <CreatorBannedFromBettingInfo
+            contract={contract}
+            creatorId={creatorId}
+          />
+        )}
+      </div>
+    </>
+  )
+}
+
+function EditableDescription(props: {
+  contractId: string
+  description: string | JSONContent
+}) {
+  const { contractId, description } = props
+  const [editing, setEditing] = useState(false)
+
+  const editor = useTextEditor({
+    size: 'md',
+    max: MAX_DESCRIPTION_LENGTH,
+    defaultValue: description,
+  })
+
+  useEffect(() => {
+    if (!editor || editing) return
+
+    const currentContent = editor.getJSON()
+    const newContent =
+      typeof description === 'string' ? description : description
+
+    if (JSON.stringify(currentContent) !== JSON.stringify(newContent)) {
+      editor.commands.setContent(newContent)
+    }
+  }, [description, editor, editing])
+
+  const isDescriptionEmpty = JSONEmpty(description)
+  const [saving, setSaving] = useState(false)
+
+  async function saveDescription() {
+    if (!editor) return
+    setSaving(true)
+    await updateMarket({
+      contractId: contractId,
+      descriptionJson: JSON.stringify(editor.getJSON()),
+    })
+      .catch((e) => {
+        console.error(e)
+        toast.error('Failed to save description. Try again?')
+      })
+      .finally(() => setSaving(false))
+  }
+
+  return editing ? (
+    <>
+      <TextEditor editor={editor} />
+      <Row className="my-2 justify-end gap-2">
+        <Button color="gray" onClick={() => setEditing(false)}>
+          Cancel
+        </Button>
+        <Button
+          onClick={async () => {
+            await saveDescription()
+            setEditing(false)
+          }}
+          loading={saving}
+          disabled={saving}
+        >
+          Save
+        </Button>
+      </Row>
+    </>
+  ) : (
+    <>
+      {!isDescriptionEmpty && (
+        <CollapsibleContent
+          content={description}
+          mediaSize="md"
+          stateKey={`isCollapsed-contract-${contractId}`}
+        />
+      )}
+      <Row className="justify-end">
+        <Button
+          color="gray-white"
+          size="2xs"
+          onClick={() => {
+            setEditing(true)
+            editor?.commands.focus('end')
+          }}
+        >
+          {isDescriptionEmpty ? (
+            <>
+              <PlusIcon className="mr-1 inline h-4 w-4" /> Add description
+            </>
+          ) : (
+            <>
+              <PencilIcon className="mr-1 inline h-4 w-4" /> Edit description
+            </>
+          )}
+        </Button>
+      </Row>
+    </>
+  )
+}
+
+export function JSONEmpty(text: string | JSONContent) {
+  if (!text) return true
+  if (typeof text === 'string') {
+    return text.trim() === ''
+  } else if ('content' in text) {
+    return !(
+      text.content &&
+      text.content.length > 0 &&
+      text.content.some((node) => node.content || node.attrs)
+    )
+  }
+  return true
+}

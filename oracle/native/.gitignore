@@ -1,0 +1,39 @@
+node_modules/
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+credentials.json
+credentials/
+*.apk
+*.aab
+*.ipa
+project.pbxproj
+
+# Generated native projects — recreated by `npx expo prebuild --clean` from
+# app.config.js + plugins/. Never commit them; they carry env-specific values
+# (bundle id, EAS update URL) and would drift from config.
+/ios
+/android
+
+# Firebase credential files contain live API keys — never commit them.
+# These are per-Firebase-project and must be supplied at build time.
+# Cover every path variant (root, configs/, generated ios/ & android/).
+google-services.json
+**/google-services.json
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+configs/**
+
+# macOS
+.DS_Store
+# simulator build
+*.tar.gz
+.env.local
+*.app/

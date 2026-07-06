@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "oracle",
+    "prod": "oracle",
+    "dev": "dev-oracle"
+  }
+}

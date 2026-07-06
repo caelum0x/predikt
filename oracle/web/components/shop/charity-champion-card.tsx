@@ -1,0 +1,394 @@
+import clsx from 'clsx'
+import Link from 'next/link'
+import { useState } from 'react'
+import toast from 'react-hot-toast'
+import { FaLock, FaTrophy } from 'react-icons/fa6'
+import { CHARITY_CHAMPION_ENTITLEMENT_ID } from 'common/shop/items'
+import { UserEntitlement } from 'common/shop/types'
+import { User } from 'common/user'
+import { api } from 'web/lib/api/api'
+import { Button } from '../buttons/button'
+import { Card } from '../widgets/card'
+import { Col } from '../layout/col'
+import { Row } from '../layout/row'
+import { Avatar } from '../widgets/avatar'
+import { RelativeTimestamp } from '../relative-timestamp'
+import { TrophySvg } from './trophy-svg'
+import { NewBadge } from './new-badge'
+import { Tooltip } from '../widgets/tooltip'
+import { UserHovercard } from '../user/user-hovercard'
+import { CharityGiveawayData } from './charity-giveaway-card'
+
+export function CharityChampionCard(props: {
+  data?: CharityGiveawayData
+  isLoading?: boolean
+  user?: User | null
+  className?: string
+  entitlements?: UserEntitlement[]
+  isNew?: boolean
+  onEntitlementsChange?: (entitlements: UserEntitlement[]) => void
+  // Renders a "Hidden" pill in the corner so shop owners know the item
+  // is only visible to them. Off by default (e.g. on the charity page).
+  showHiddenBadge?: boolean
+}) {
+  const {
+    data,
+    isLoading = false,
+    user,
+    className,
+    entitlements,
+    isNew,
+    onEntitlementsChange,
+    showHiddenBadge = false,
+  } = props
+  const [claiming, setClaiming] = useState(false)
+  const [toggling, setToggling] = useState(false)
+
+  const giveaway = data?.giveaway
+  const champion = data?.champion
+  const trophyHolder = data?.trophyHolder
+  const previousTrophyHolder = data?.previousTrophyHolder
+  const topUsers = data?.topUsers
+  const yourEntry = data?.yourEntry
+
+  // Show loading skeleton while data is being fetched
+  if (isLoading) {
+    return (
+      <Card
+        className={clsx(
+          'relative flex flex-col gap-3 p-4',
+          'dark:via-ink-900/15 bg-gradient-to-br from-canvas-50/50 via-canvas-50/30 to-canvas-50/50 dark:from-ink-900/20 dark:to-ink-900/20',
+          className
+        )}
+      >
+        <div className="animate-pulse">
+          <Row className="mb-3 items-center gap-2">
+            <div className="h-5 w-5 rounded bg-ink-200" />
+            <div className="h-5 w-40 rounded bg-ink-200" />
+          </Row>
+          <div className="mb-3 h-10 w-full rounded bg-ink-200" />
+          <div className="mb-3 rounded-lg bg-white/60 p-3 dark:bg-ink-800/60">
+            <div className="mb-2 h-3 w-24 rounded bg-ink-200" />
+            <Row className="items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-ink-200" />
+              <Col className="flex-1 gap-1">
+                <div className="h-4 w-24 rounded bg-ink-200" />
+                <div className="h-3 w-16 rounded bg-ink-200" />
+              </Col>
+            </Row>
+          </div>
+          <div className="h-8 w-full rounded bg-ink-200" />
+        </div>
+      </Card>
+    )
+  }
+
+  // No giveaway data available - don't render card
+  if (!giveaway) {
+    return null
+  }
+
+  const isCurrentUserChampion = user && champion && user.id === champion.id
+
+  // Check if user has the trophy entitlement
+  const trophyEntitlement = entitlements?.find(
+    (e) => e.entitlementId === CHARITY_CHAMPION_ENTITLEMENT_ID
+  )
+  const hasTrophy = !!trophyEntitlement
+  const isTrophyEnabled = trophyEntitlement?.enabled ?? false
+
+  const handleClaim = async () => {
+    if (!user || !isCurrentUserChampion) return
+
+    setClaiming(true)
+    try {
+      const result = await api('claim-charity-champion', { enabled: true })
+      if (result.success) {
+        toast.success('Claimed Charity Champion Trophy!')
+        onEntitlementsChange?.(result.entitlements as UserEntitlement[])
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to claim trophy')
+    } finally {
+      setClaiming(false)
+    }
+  }
+
+  const handleToggle = async () => {
+    if (!user || !hasTrophy) return
+
+    const newEnabled = !isTrophyEnabled
+    setToggling(true)
+    try {
+      const result = await api('shop-toggle', {
+        itemId: 'charity-champion-trophy',
+        enabled: newEnabled,
+      })
+      if (result.success) {
+        toast.success(newEnabled ? 'Trophy enabled' : 'Trophy disabled')
+        onEntitlementsChange?.(result.entitlements as UserEntitlement[])
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to toggle trophy')
+    } finally {
+      setToggling(false)
+    }
+  }
+
+  return (
+    <div className="group relative h-full pb-2">
+      {/* NEW sticker — sibling of Card so it can overflow the card's clipping */}
+      {isNew && <NewBadge variant="sticker" />}
+      <Card
+        className={clsx(
+          'relative flex h-full flex-col gap-2 overflow-hidden p-4 transition-all duration-200',
+          'dark:via-yellow-900/15 bg-gradient-to-br from-amber-50/50 via-yellow-50/30 to-orange-50/50 dark:from-amber-900/20 dark:to-orange-900/20',
+          'group-hover:-translate-y-1 group-hover:shadow-xl group-hover:shadow-amber-200/50 group-hover:ring-2 group-hover:ring-amber-500 dark:group-hover:shadow-amber-900/30',
+          className
+        )}
+      >
+        {/* Floating trophy background decoration */}
+        <ShopCardFloatingTrophy />
+
+        {/* Header */}
+        <Row className="items-center gap-2">
+          <FaTrophy className="h-5 w-5 shrink-0 text-amber-500" />
+          <span className="text-lg font-semibold text-amber-700 dark:text-amber-400">
+            Champion Trophy
+          </span>
+          {showHiddenBadge && (
+            <Tooltip text="This item is only visible because you already own it">
+              <div className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 sm:px-2 sm:text-xs">
+                Hidden
+              </div>
+            </Tooltip>
+          )}
+        </Row>
+
+        {/* Current trophy holder section */}
+        <div className="rounded-lg bg-white/60 px-3 py-2 dark:bg-ink-800/60">
+          {trophyHolder ? (
+            <Link href={`/${trophyHolder.username}`} className="block">
+              <Row className="items-center gap-2 transition-opacity hover:opacity-80">
+                <Avatar
+                  avatarUrl={trophyHolder.avatarUrl}
+                  username={trophyHolder.username}
+                  size="xs"
+                  noLink
+                  className="ring-2 ring-amber-400"
+                />
+                <Col className="min-w-0 flex-1">
+                  <Row className="items-center gap-1">
+                    <UserHovercard userId={trophyHolder.id}>
+                      <span className="truncate text-sm font-semibold text-amber-700 hover:underline dark:text-amber-400">
+                        {trophyHolder.name}
+                      </span>
+                    </UserHovercard>
+                    <FaTrophy
+                      className="h-3 w-3 shrink-0 text-amber-500"
+                      style={{
+                        filter: 'drop-shadow(0 0 2px rgba(245, 158, 11, 0.4))',
+                      }}
+                    />
+                  </Row>
+                  <span className="text-xs font-semibold text-amber-600">
+                    {Math.floor(trophyHolder.totalTickets).toLocaleString()}{' '}
+                    {Math.floor(trophyHolder.totalTickets) === 1
+                      ? 'entry'
+                      : 'entries'}
+                  </span>
+                </Col>
+              </Row>
+              <div className="text-ink-400 mt-1 whitespace-nowrap text-xs">
+                Held since <RelativeTimestamp time={trophyHolder.claimedTime} />
+              </div>
+              {previousTrophyHolder && (
+                <div className="text-ink-400 text-xs">
+                  Previously{' '}
+                  <UserHovercard userId={previousTrophyHolder.id}>
+                    <Link
+                      href={`/${previousTrophyHolder.username}`}
+                      className="font-semibold text-amber-600 hover:underline dark:text-amber-400"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      @{previousTrophyHolder.username}
+                    </Link>
+                  </UserHovercard>
+                </div>
+              )}
+            </Link>
+          ) : (
+            <Row className="items-center gap-2">
+              <div className="h-6 w-6 shrink-0 rounded-full bg-ink-200 ring-2 ring-ink-300" />
+              <span className="text-ink-400 text-sm italic">Unclaimed</span>
+            </Row>
+          )}
+        </div>
+
+        {/* Top buyers leaderboard */}
+        {topUsers && topUsers.length > 0 && (
+          <MiniLeaderboard
+            topUsers={topUsers}
+            yourEntry={yourEntry}
+            user={user}
+          />
+        )}
+
+        {/* Description */}
+        <p className="text-ink-500 text-xs">
+          Reserved for the person with the most entries in the charity giveaway.
+        </p>
+
+        {/* Footer */}
+        <Col className="mt-auto pt-1">
+          {hasTrophy ? (
+            // Has trophy - show toggle (even if outbid)
+            <Row className="items-center justify-center gap-3">
+              <label className="relative inline-flex cursor-pointer items-center">
+                <input
+                  type="checkbox"
+                  checked={isTrophyEnabled}
+                  onChange={handleToggle}
+                  disabled={toggling}
+                  className="peer sr-only"
+                />
+                <div className="peer h-6 w-11 rounded-full bg-ink-300 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-amber-500 peer-checked:after:translate-x-full" />
+                <span className="text-ink-700 ml-2 text-sm">
+                  {isTrophyEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </label>
+            </Row>
+          ) : isCurrentUserChampion ? (
+            // Champion but hasn't claimed - show claim button
+            <Button
+              color="amber"
+              size="sm"
+              className="w-full"
+              onClick={handleClaim}
+              loading={claiming}
+            >
+              <FaTrophy className="mr-2 h-4 w-4" />
+              Claim Trophy
+            </Button>
+          ) : (
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-canvas-100 py-2 text-sm text-ink-600 dark:bg-ink-800">
+              <FaLock className="h-3 w-3" />
+              <span>
+                {champion
+                  ? `Outbid @${champion.username} to claim`
+                  : 'Get entries in the giveaway to claim'}
+              </span>
+            </div>
+          )}
+        </Col>
+      </Card>
+    </div>
+  )
+}
+
+function MiniLeaderboard(props: {
+  topUsers: NonNullable<CharityGiveawayData['topUsers']>
+  yourEntry?: CharityGiveawayData['yourEntry']
+  user?: User | null
+}) {
+  const { topUsers, yourEntry, user } = props
+
+  // Always show top 3, then show the user's row below if they're not already visible
+  const visibleUsers = topUsers.slice(0, 3)
+  const userAlreadyShown = user && visibleUsers.some((u) => u.id === user.id)
+  const showYourRow = user && yourEntry && !userAlreadyShown
+
+  return (
+    <Col className="gap-0.5 rounded-lg bg-amber-50/80 px-3 py-2 dark:bg-amber-900/20">
+      {visibleUsers.map((u) => {
+        const isYou = user && u.id === user.id
+        return (
+          <LeaderboardRow
+            key={u.id}
+            rank={u.rank}
+            name={isYou ? 'You' : u.name}
+            tickets={u.totalTickets}
+            isLeader={u.rank === 1}
+            isYou={!!isYou}
+          />
+        )
+      })}
+      {showYourRow && (
+        <>
+          <div className="text-ink-400 px-1 text-xs leading-tight">···</div>
+          <LeaderboardRow
+            rank={yourEntry.rank}
+            name="You"
+            tickets={yourEntry.totalTickets}
+            isLeader={false}
+            isYou
+          />
+        </>
+      )}
+    </Col>
+  )
+}
+
+function LeaderboardRow(props: {
+  rank: number
+  name: string
+  tickets: number
+  isLeader: boolean
+  isYou: boolean
+}) {
+  const { rank, name, tickets, isLeader, isYou } = props
+  return (
+    <Row className="items-center gap-1.5 text-sm">
+      {isLeader ? (
+        <FaTrophy
+          className="h-3 w-3 shrink-0 text-amber-500"
+          style={{ filter: 'drop-shadow(0 0 2px rgba(245, 158, 11, 0.4))' }}
+        />
+      ) : (
+        <span className="text-ink-400 w-3 shrink-0 text-center text-xs">
+          {rank}
+        </span>
+      )}
+      <span
+        className={clsx(
+          'min-w-0 truncate',
+          isYou
+            ? 'font-bold text-teal-700 dark:text-teal-400'
+            : isLeader
+            ? 'font-semibold text-amber-700 dark:text-amber-400'
+            : 'text-ink-600'
+        )}
+      >
+        {name}
+      </span>
+      <span className="text-ink-400 ml-auto shrink-0 text-xs">
+        {Math.floor(tickets).toLocaleString()}
+      </span>
+    </Row>
+  )
+}
+
+function ShopCardFloatingTrophy() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 flex items-center overflow-hidden"
+      style={{ justifyContent: 'right', paddingRight: '3%' }}
+    >
+      <style>
+        {`
+          @keyframes sc-trophy-float {
+            0%, 100% { transform: translateY(0px) rotate(-4deg); }
+            50% { transform: translateY(-10px) rotate(4deg); }
+          }
+        `}
+      </style>
+      <div className="bg-amber-400/15 absolute h-20 w-20 rounded-full blur-2xl" />
+      <div
+        className="relative flex items-center justify-center opacity-40"
+        style={{ animation: 'sc-trophy-float 6s ease-in-out infinite' }}
+      >
+        <TrophySvg />
+      </div>
+    </div>
+  )
+}

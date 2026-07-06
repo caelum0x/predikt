@@ -1,0 +1,255 @@
+import { RESERVED_PATHS } from 'common/envs/constants'
+import { DEV_CONFIG } from 'common/envs/dev'
+import { PROD_CONFIG } from 'common/envs/prod'
+import { PrivateUser } from 'common/user'
+import { getDefaultNotificationPreferences } from 'common/user-notification-preferences'
+import { cleanDisplayName, cleanUsername } from 'common/util/clean-username'
+import { randomString } from 'common/util/random'
+import * as admin from 'firebase-admin'
+import { getStorage } from 'firebase-admin/storage'
+import { track } from 'shared/analytics'
+import { trackSignupFB } from 'shared/fb-analytics'
+import {
+  getAverageContractEmbedding,
+  getAverageGroupEmbedding,
+  getDefaultEmbedding,
+  normalizeAndAverageVectors,
+} from 'shared/helpers/embeddings'
+import { generateAvatarUrl } from 'shared/helpers/generate-and-update-avatar-urls'
+import {
+  createSupabaseDirectClient,
+  SupabaseDirectClient,
+} from 'shared/supabase/init'
+import { getUser, getUserByUsername, isProd, log } from 'shared/utils'
+
+import { ValidatedAPIParams } from 'common/api/schema'
+import { APIError } from 'common/api/utils'
+import { PRE_KYC_STARTING_BALANCE } from 'common/economy'
+import { convertPrivateUser, convertUser } from 'common/supabase/users'
+import { onCreateUser } from 'shared/helpers/on-create-user'
+import { insert } from 'shared/supabase/utils'
+import { runTxnFromBank } from 'shared/txn/run-txn'
+
+export const createUserMain = async (
+  props: ValidatedAPIParams<'createuser'>,
+  userId: string,
+  ip: string,
+  host: string | undefined
+) => {
+  const { deviceToken: preDeviceToken, adminToken, visitedContractIds } = props
+  const firebaseUser = await admin.auth().getUser(userId)
+
+  const testUserAKAEmailPasswordUser =
+    firebaseUser.providerData[0].providerId === 'password'
+  if (
+    testUserAKAEmailPasswordUser &&
+    adminToken !== process.env.TEST_CREATE_USER_KEY
+  ) {
+    throw new APIError(
+      401,
+      'Must use correct TEST_CREATE_USER_KEY to create user with email/password'
+    )
+  }
+
+  log(`Create user from: ${host}`)
+
+  const deviceToken = testUserAKAEmailPasswordUser
+    ? randomString() + randomString()
+    : preDeviceToken
+
+  const fbUser = await admin.auth().getUser(userId)
+  const email = fbUser.email
+  const emailName = email?.replace(/@.*$/, '')
+
+  if (email?.includes('ccvem')) {
+    throw new APIError(403, 'Create user disabled temporarily')
+  }
+
+  const rawName = fbUser.displayName || emailName || 'User' + randomString(4)
+  const name = cleanDisplayName(rawName)
+
+  const bucket = getStorageBucket()
+  const avatarUrl = fbUser.photoURL
+    ? fbUser.photoURL
+    : await generateAvatarUrl(userId, name, bucket)
+
+  const pg = createSupabaseDirectClient()
+
+  const isBlocked = await pg.oneOrNone<{ id: number }>(
+    `select id from signup_blocklist
+     where (entry_type = 'ip' and value = $1)
+        or (entry_type = 'device_token' and value = $2)
+     limit 1`,
+    [ip, deviceToken]
+  )
+  if (isBlocked) {
+    throw new APIError(403, 'Account creation is not available')
+  }
+
+  let username = cleanUsername(name)
+
+  // Check username case-insensitive
+  const dupes = await pg.one<number>(
+    `select count(*) from users where username ilike $1`,
+    [username],
+    (r) => r.count
+  )
+  const usernameExists = dupes > 0
+  const isReservedName = RESERVED_PATHS.includes(username)
+  if (usernameExists || isReservedName) username += randomString(4)
+
+  const { user, privateUser } = await pg.tx(async (tx) => {
+    const preexistingUser = await getUser(userId, tx)
+    if (preexistingUser)
+      throw new APIError(403, 'User already exists', {
+        userId: userId,
+      })
+
+    // Check exact username to avoid problems with duplicate requests
+    const sameNameUser = await getUserByUsername(username, tx)
+    if (sameNameUser)
+      throw new APIError(403, 'Username already taken', { username })
+
+    const userData = {
+      id: userId,
+      avatarUrl,
+      streakForgiveness: 0,
+      shouldShowWelcome: true,
+      creatorTraders: { daily: 0, weekly: 0, monthly: 0, allTime: 0 },
+      signupBonusPaid: 0,
+    }
+
+    const privateUser: PrivateUser = {
+      id: userId,
+      email,
+      initialIpAddress: ip,
+      initialDeviceToken: deviceToken,
+      notificationPreferences: getDefaultNotificationPreferences(),
+      blockedUserIds: [],
+      blockedByUserIds: [],
+      blockedContractIds: [],
+      blockedGroupSlugs: [],
+    }
+
+    const userRow = await insert(tx, 'users', {
+      id: userId,
+      name: name,
+      username: username,
+      data: userData,
+    })
+
+    await runTxnFromBank(tx, {
+      fromType: 'BANK',
+      toId: userId,
+      toType: 'USER',
+      amount: PRE_KYC_STARTING_BALANCE,
+      token: 'M$',
+      category: 'PRE_KYC_BONUS',
+      description: 'Pre-KYC starting balance',
+    })
+
+    // Note: Full signup bonus is paid after identity verification (iDenfy)
+    // See backend/api/src/idenfy/callback.ts
+
+    const privateUserRow = await insert(tx, 'private_users', {
+      id: privateUser.id,
+      data: privateUser,
+    })
+
+    return {
+      user: convertUser(userRow),
+      privateUser: convertPrivateUser(privateUserRow),
+    }
+  })
+
+  log('created user ', { username: user.username, firebaseId: userId })
+
+  const continuation = async () => {
+    const pg = createSupabaseDirectClient()
+    await track(user.id, 'create user', { username: user.username }, { ip })
+
+    await addContractsToSeenMarketsTable(userId, visitedContractIds, pg)
+    await upsertNewUserEmbeddings(userId, visitedContractIds, pg)
+
+    if (process.env.FB_ACCESS_TOKEN)
+      await trackSignupFB(
+        process.env.FB_ACCESS_TOKEN,
+        user.id,
+        email ?? '',
+        ip
+      ).catch((e) => log('error fb tracking:', e))
+    else log('no FB_ACCESS_TOKEN')
+    await onCreateUser(user, privateUser)
+  }
+
+  return {
+    result: {
+      user,
+      privateUser,
+    },
+    continue: continuation,
+  }
+}
+
+async function addContractsToSeenMarketsTable(
+  userId: string,
+  visitedContractIds: string[] | undefined,
+  pg: SupabaseDirectClient
+) {
+  if (!visitedContractIds || visitedContractIds.length === 0) return
+
+  await Promise.all(
+    visitedContractIds.map((contractId) =>
+      pg.none(
+        `insert into user_contract_views (user_id, contract_id, page_views, last_page_view_ts)
+            values ($1, $2, 1, now())`,
+        [userId, contractId]
+      )
+    )
+  )
+}
+
+async function upsertNewUserEmbeddings(
+  userId: string,
+  visitedContractIds: string[] | undefined,
+  pg: SupabaseDirectClient
+): Promise<void> {
+  log('Averaging contract embeddings for user ' + userId, {
+    visitedContractIds,
+  })
+  let embed = await getAverageContractEmbedding(pg, visitedContractIds)
+  if (!embed) embed = await getDefaultEmbedding(pg)
+  const groupIds =
+    visitedContractIds && visitedContractIds.length > 0
+      ? await pg.map(
+          `select group_id
+        from group_contracts
+        where contract_id = any($1)`,
+          [visitedContractIds],
+          (r) => r.group_id
+        )
+      : []
+  log('Averaging group embeddings for user ' + userId, { groupIds })
+  const groupEmbed = await getAverageGroupEmbedding(pg, groupIds)
+  if (groupEmbed) {
+    embed = normalizeAndAverageVectors([embed, embed, groupEmbed])
+  }
+
+  await pg.none(
+    `insert into user_embeddings (user_id, interest_embedding, contract_view_embedding)
+            values ($1, $2, $2)
+            on conflict (user_id)
+            do update set
+            interest_embedding = $2,
+            contract_view_embedding = $2
+            `,
+    [userId, embed]
+  )
+}
+
+export function getStorageBucket() {
+  const id = isProd()
+    ? PROD_CONFIG.firebaseConfig.storageBucket
+    : DEV_CONFIG.firebaseConfig.storageBucket
+  return getStorage().bucket(id)
+}

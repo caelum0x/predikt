@@ -1,0 +1,25 @@
+{
+  "chain": "amoy",
+  "chainId": 80002,
+  "label": "Polygon Amoy testnet",
+  "rpc": "https://rpc-amoy.polygon.technology",
+  "dryRun": true,
+  "deployedAt": "2026-07-06T19:08:28.134Z",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "exchangeAdmin": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "relayOperator": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "contracts": {
+    "ctfExchange": "0x247Dc74c5Cc7164A1453AEf8745407F1d047E906",
+    "umaCtfAdapter": "0xPENDING_ADAPTER_run_live_to_populate",
+    "fpmmFactory": "0xPENDING_FPMMFACTORY_run_live_to_populate"
+  },
+  "primitives": {
+    "conditionalTokens": "0x69308FB512518e39F9b16112fA8d994F4e2Bf8bB",
+    "collateral": "0x9c4e1703476e875070ee25b56a58b008cfb8fa78",
+    "usdcDecimals": 6,
+    "umaFinder": "0x28077B47Cd03326De7838926A63699849DD4fa87",
+    "umaOptimisticOracle": "0x38fAc33bD20D4c4Cce085C0f347153C06CbA2968",
+    "proxyFactory": "0x0000000000000000000000000000000000000000",
+    "safeFactory": "0xaacFeEa03eb1561C4e67d661e40682Bd20E3541b"
+  }
+}

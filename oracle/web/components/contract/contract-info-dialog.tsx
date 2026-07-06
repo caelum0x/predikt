@@ -1,0 +1,858 @@
+import { formatTimeWithTimezone } from 'client-common/lib/time'
+import clsx from 'clsx'
+import { ELASTICITY_BET_AMOUNT } from 'common/calculate-metrics'
+import { Contract, contractPool } from 'common/contract'
+import {
+  ENV_CONFIG,
+  isAdminId,
+  isModId,
+  supabaseConsoleContractPath,
+  TRADED_TERM,
+} from 'common/envs/constants'
+import { UNRANKED_GROUP_ID } from 'common/supabase/groups'
+import { BETTORS, User } from 'common/user'
+import { formatWithCommas } from 'common/util/format'
+import dayjs from 'dayjs'
+import { capitalize, sumBy } from 'lodash'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
+import { useAdmin, useDev, useTrusted } from 'web/hooks/use-admin'
+import { api, updateMarket } from 'web/lib/api/api'
+import { MoneyDisplay } from '../bet/money-display'
+import { CopyLinkOrShareButton } from '../buttons/copy-link-button'
+import { ShareEmbedButton, ShareIRLButton } from '../buttons/share-embed-button'
+import { ShareQRButton } from '../buttons/share-qr-button'
+import { Modal } from '../layout/modal'
+import { Row } from '../layout/row'
+import { Col } from '../layout/col'
+import { Button } from '../buttons/button'
+import SuperBanControl from '../SuperBanControl'
+import { useSweepstakes } from '../sweepstakes-provider'
+import { InfoBox } from '../widgets/info-box'
+import { InfoTooltip } from '../widgets/info-tooltip'
+import ShortToggle from '../widgets/short-toggle'
+import { linkClass } from '../widgets/site-link'
+import { Table } from '../widgets/table'
+import { ContractHistoryButton } from './contract-edit-history-button'
+
+export const Stats = (props: {
+  contract: Contract
+  user?: User | null | undefined
+  onRequestCreatorBan?: () => void
+}) => {
+  const { contract, user, onRequestCreatorBan } = props
+  const { creatorId } = contract
+  const shouldAnswersSumToOne =
+    contract.mechanism === 'cpmm-multi-1'
+      ? contract.shouldAnswersSumToOne
+      : false
+  const addAnswersMode =
+    contract.mechanism === 'cpmm-multi-1' ? contract.addAnswersMode : 'DISABLED'
+  const isCashContract = contract.token === 'CASH'
+
+  const hideAdvanced = !user
+  const isDev = useDev()
+  const isAdmin = !!user && isAdminId(user?.id)
+  const isTrusty = !!user && isModId(user?.id)
+  const isMod = isAdmin || isTrusty
+  const isCreator = user?.id === creatorId
+  const isPublic = contract.visibility === 'public'
+  const isMulti = contract.mechanism === 'cpmm-multi-1'
+  const addAnswersPossible =
+    isMulti && (shouldAnswersSumToOne ? addAnswersMode !== 'DISABLED' : true)
+  const creatorOnly = isMulti && addAnswersMode === 'ONLY_CREATOR'
+  const wasUnlistedByCreator = contract.unlistedById
+    ? contract.unlistedById === creatorId
+    : false
+
+  const {
+    createdTime,
+    closeTime,
+    resolutionTime,
+    uniqueBettorCount,
+    mechanism,
+    viewCount,
+    outcomeType,
+    id,
+    elasticity,
+  } = contract
+
+  const typeDisplay =
+    outcomeType === 'BINARY'
+      ? 'YES / NO'
+      : outcomeType === 'MULTIPLE_CHOICE'
+      ? 'Multiple choice'
+      : outcomeType === 'BOUNTIED_QUESTION'
+      ? 'Bounty'
+      : outcomeType === 'POLL'
+      ? 'Poll'
+      : outcomeType === 'PSEUDO_NUMERIC' || outcomeType === 'NUMBER'
+      ? 'Numeric'
+      : outcomeType.toLowerCase()
+
+  const mechanismDisplay =
+    mechanism === 'cpmm-1'
+      ? {
+          label: 'Fixed',
+          desc: `Each YES share is worth ${ENV_CONFIG.moneyMoniker}1 if YES wins`,
+        }
+      : mechanism === 'cpmm-multi-1'
+      ? contract.shouldAnswersSumToOne
+        ? {
+            label: 'Dependent',
+            desc: `Each share in an outcome is worth ${ENV_CONFIG.moneyMoniker}1 if it is chosen. Only one outcome can be chosen`,
+          }
+        : {
+            label: 'Independent',
+            desc: `Each answer is a separate binary contract with shares worth ${ENV_CONFIG.moneyMoniker}1 if chosen. Any number of answers can be chosen`,
+          }
+      : mechanism == 'none'
+      ? undefined
+      : { label: 'Mistake', desc: "Likely one of Austin's bad ideas" }
+
+  const isBettingContract = contract.mechanism !== 'none'
+  const drizzler = mechanism === 'cpmm-1' || mechanism === 'cpmm-multi-1'
+  const drizzled = drizzler
+    ? contract.totalLiquidity -
+      contract.subsidyPool -
+      ('answers' in contract ? sumBy(contract.answers, 'subsidyPool') : 0)
+    : 0
+
+  const { prefersPlay, setPrefersPlay } = useSweepstakes()
+  const isPlay = contract.token == 'MANA'
+  const sweepsEnabled = !!contract.siblingContractId
+
+  const isNonBetPollOrBountiedQuestion =
+    contract.mechanism === 'none' &&
+    (contract.outcomeType === 'POLL' ||
+      contract.outcomeType === 'BOUNTIED_QUESTION')
+
+  return (
+    <Table className="table-fixed whitespace-normal sm:whitespace-nowrap">
+      <tbody>
+        <tr>
+          <td>Type</td>
+          <td className="flex gap-1">
+            {typeDisplay}
+            {mechanismDisplay && (
+              <>
+                <div className="mx-1 select-none">&middot;</div>
+                {mechanismDisplay.label}{' '}
+                <InfoTooltip text={mechanismDisplay.desc} />
+              </>
+            )}
+          </td>
+        </tr>
+
+        <tr>
+          <td>Question created</td>
+          <td>{formatTimeWithTimezone(createdTime)}</td>
+        </tr>
+
+        {contract.outcomeType == 'BOUNTIED_QUESTION' && (
+          <>
+            <tr>
+              <td>
+                Total bounty{' '}
+                <InfoTooltip text="The total bounty the creator has put up" />
+              </td>
+              <td>
+                <MoneyDisplay
+                  amount={contract.totalBounty}
+                  isCashContract={isCashContract}
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Bounty left <InfoTooltip text="Bounty left to pay out" />
+              </td>
+              <td>
+                <MoneyDisplay
+                  amount={contract.bountyLeft}
+                  isCashContract={isCashContract}
+                />
+              </td>
+            </tr>
+          </>
+        )}
+
+        {closeTime &&
+          (isBettingContract ||
+            contract.outcomeType == 'BOUNTIED_QUESTION') && (
+            <tr>
+              <td>Question close{closeTime > Date.now() ? 's' : 'd'}</td>
+
+              <td>
+                {!closeTime ||
+                dayjs(closeTime).isAfter(
+                  dayjs(contract.createdTime).add(dayjs.duration(900, 'year'))
+                )
+                  ? 'Never'
+                  : formatTimeWithTimezone(closeTime)}
+              </td>
+            </tr>
+          )}
+
+        {resolutionTime && isBettingContract && (
+          <tr>
+            <td>Question resolved</td>
+            <td>{formatTimeWithTimezone(resolutionTime)}</td>
+          </tr>
+        )}
+
+        {isBettingContract && (
+          <>
+            <tr>
+              <td>
+                <span className="mr-1">24 hour volume</span>
+                <InfoTooltip text="Amount bought or sold in the last 24 hours" />
+              </td>
+              <td>
+                <MoneyDisplay
+                  amount={contract.volume24Hours}
+                  isCashContract={isCashContract}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <span className="mr-1">Total volume</span>
+                <InfoTooltip text="Total amount bought or sold" />
+              </td>
+              <td>
+                <MoneyDisplay
+                  amount={contract.volume}
+                  isCashContract={isCashContract}
+                />
+              </td>
+            </tr>
+
+            {/* <tr>
+              <td>
+                <span className="mr-1">Collected fees</span>
+                <InfoTooltip text="Includes both platform and creator fees" />
+              </td>
+              <td>
+                <MoneyDisplay
+                  amount={sum(Object.values(contract.collectedFees))}
+                  isCashContract={isCashContract}
+                  numberType="toDecimal"
+                />
+              </td>
+            </tr> */}
+
+            <tr>
+              <td>{capitalize(BETTORS)}</td>
+              <td>{formatWithCommas(uniqueBettorCount ?? 0)}</td>
+            </tr>
+
+            <tr>
+              <td>Views</td>
+              <td>{formatWithCommas(viewCount ?? 0)}</td>
+            </tr>
+          </>
+        )}
+        {!hideAdvanced && !contract.resolution && isBettingContract && (
+          <tr>
+            <td>
+              <Row>
+                <span className="mr-1">Elasticity</span>
+                <InfoTooltip
+                  text={
+                    mechanism === 'cpmm-1' ? (
+                      <>
+                        Log-odds change between a{' '}
+                        <MoneyDisplay
+                          amount={ELASTICITY_BET_AMOUNT}
+                          isCashContract={isCashContract}
+                        />{' '}
+                        {TRADED_TERM} on YES and NO
+                      </>
+                    ) : (
+                      <>
+                        Log-odds change from a{' '}
+                        <MoneyDisplay
+                          amount={ELASTICITY_BET_AMOUNT}
+                          isCashContract={isCashContract}
+                        />{' '}
+                        {TRADED_TERM}
+                      </>
+                    )
+                  }
+                />
+              </Row>
+            </td>
+            <td>{elasticity.toFixed(2)}</td>
+          </tr>
+        )}
+
+        {isBettingContract && (
+          <>
+            <tr>
+              <td>Liquidity subsidies</td>
+              <td>
+                {drizzler ? (
+                  <>
+                    <MoneyDisplay
+                      amount={drizzled}
+                      isCashContract={isCashContract}
+                    />{' '}
+                    /{' '}
+                    <MoneyDisplay
+                      amount={contract.totalLiquidity}
+                      isCashContract={isCashContract}
+                    />
+                  </>
+                ) : (
+                  <MoneyDisplay amount={100} isCashContract={isCashContract} />
+                )}
+              </td>
+            </tr>
+          </>
+        )}
+        {drizzler && drizzled !== contract.totalLiquidity ? (
+          <tr>
+            <td colSpan={2}>
+              <InfoBox
+                title="Where's my liquidity?"
+                text="Liquidity is
+                  drizzled in slowly to prevent manipulation"
+              />
+            </td>
+          </tr>
+        ) : null}
+
+        {!hideAdvanced && isBettingContract && (
+          <tr>
+            <td>Pool</td>
+            <td>
+              {mechanism === 'cpmm-1' && outcomeType === 'BINARY'
+                ? `${formatWithCommas(
+                    Math.round(contract.pool.YES)
+                  )} YES, ${formatWithCommas(Math.round(contract.pool.NO))} NO`
+                : mechanism === 'cpmm-1' && outcomeType === 'PSEUDO_NUMERIC'
+                ? `${formatWithCommas(
+                    Math.round(contract.pool.YES)
+                  )} HIGHER, ${formatWithCommas(
+                    Math.round(contract.pool.NO)
+                  )} LOWER`
+                : contractPool(contract)}
+            </td>
+          </tr>
+        )}
+        {sweepsEnabled && !isNonBetPollOrBountiedQuestion && (
+          <tr>
+            <td>Sweepstakes</td>
+            <td className={linkClass}>
+              <Link
+                href={
+                  contract.token === 'CASH'
+                    ? `/${contract.creatorUsername}/${contract.slug.replace(
+                        '--cash',
+                        ''
+                      )}`
+                    : `/${contract.creatorUsername}/${contract.slug}--cash`
+                }
+              >
+                {contract.token === 'CASH' ? 'True' : 'False'}
+              </Link>
+            </td>
+          </tr>
+        )}
+
+        {addAnswersPossible && (isCreator || isAdmin || isMod) && (
+          <tr className={clsx(isMod && 'bg-purple-500/30')}>
+            <td>
+              Creator only{' '}
+              <InfoTooltip
+                text={
+                  creatorOnly
+                    ? 'Only creator can add answers'
+                    : 'Anyone can add answers'
+                }
+              />
+            </td>
+            <td>
+              <ShortToggle
+                className="mr-1 align-middle"
+                on={creatorOnly}
+                setOn={(on) =>
+                  updateMarket({
+                    contractId: contract.id,
+                    addAnswersMode: on ? 'ONLY_CREATOR' : 'ANYONE',
+                  })
+                }
+              />
+              {addAnswersMode === 'DISABLED' && <span>(Disabled for all)</span>}
+            </td>
+          </tr>
+        )}
+
+        {!hideAdvanced && (
+          <tr className={clsx(isMod && 'bg-purple-500/30')}>
+            <td>
+              🔎 Publicly listed{' '}
+              <InfoTooltip
+                text={
+                  isPublic
+                    ? 'Visible on home page and search results'
+                    : 'Only visible via link'
+                }
+              />
+            </td>
+            <td>
+              <CheckOrSwitch
+                canToggle={isMod || isCreator}
+                disabled={!isPublic && !isMod && !wasUnlistedByCreator}
+                on={isPublic}
+                setOn={(pub) =>
+                  updateMarket({
+                    contractId: contract.id,
+                    visibility: pub ? 'public' : 'unlisted',
+                  })
+                }
+              />
+            </td>
+          </tr>
+        )}
+
+        {!hideAdvanced && isBettingContract && (
+          <tr className={clsx(isMod && 'bg-purple-500/30')}>
+            <td>
+              🏆 Ranked{' '}
+              <InfoTooltip
+                text={'Profit from this market count towards leagues'}
+              />
+            </td>
+            <td>
+              <CheckOrSwitch
+                canToggle={isMod}
+                disabled={!isPublic}
+                on={isPublic && contract.isRanked !== false}
+                setOn={(on) => {
+                  toast.promise(
+                    api('market/:contractId/group', {
+                      contractId: contract.id,
+                      groupId: UNRANKED_GROUP_ID,
+                      remove: on,
+                    }),
+                    {
+                      loading: `${
+                        on ? 'Removing' : 'Adding'
+                      } question to the unranked topic...`,
+                      success: `Successfully ${
+                        on ? 'removed' : 'added'
+                      } question to the unranked topic!`,
+                      error: `Error ${
+                        on ? 'removing' : 'adding'
+                      } topic. Try again?`,
+                    }
+                  )
+                }}
+              />
+            </td>
+          </tr>
+        )}
+
+        {!hideAdvanced && isBettingContract && (
+          <tr className={clsx(isMod && 'bg-purple-500/30')}>
+            <td>
+              🚫 Disable creator betting{' '}
+              <InfoTooltip
+                text={
+                  'Prevent the creator from placing bets on this market. This cannot be undone except by a moderator or admin.'
+                }
+              />
+            </td>
+            <td>
+              <CheckOrSwitch
+                canToggle={
+                  isAdmin ||
+                  (isMod && !isCreator) ||
+                  (isCreator && !contract.creatorBannedFromBetting)
+                }
+                on={contract.creatorBannedFromBetting === true}
+                setOn={(on) => {
+                  if (on) {
+                    onRequestCreatorBan?.()
+                  } else if ((isMod && !isCreator) || isAdmin) {
+                    toast.promise(
+                      updateMarket({
+                        contractId: contract.id,
+                        creatorBannedFromBetting: false,
+                      }),
+                      {
+                        loading: 'Reversing creator betting ban...',
+                        success: 'Creator can now bet on this market.',
+                        error: 'Error reversing ban. Try again?',
+                      }
+                    )
+                  }
+                }}
+              />
+            </td>
+          </tr>
+        )}
+
+        {!hideAdvanced && contract.outcomeType === 'DATE' && (
+          <tr className={clsx(isMod && 'bg-purple-500/30')}>
+            <td>
+              🕒 Clock mode{' '}
+              <InfoTooltip
+                text={'Display date as a clock instead of the default view'}
+              />
+            </td>
+            <td>
+              <CheckOrSwitch
+                canToggle={isMod || isCreator}
+                on={contract.display === 'clock'}
+                setOn={(on) =>
+                  updateMarket({
+                    contractId: contract.id,
+                    display: on ? 'clock' : 'default',
+                  })
+                }
+              />
+            </td>
+          </tr>
+        )}
+
+        {/* Admin debug info - show at the very end */}
+        {(isAdmin || isMod || isDev) && (
+          <>
+            {(isAdmin || isMod) && (
+              <AdminHomePageScoreAdjustmentRows
+                contract={contract}
+                canEdit={isAdmin || isMod}
+              />
+            )}
+            <tr className="bg-purple-500/30">
+              <td>Supabase link</td>
+              <td>
+                <a
+                  href={supabaseConsoleContractPath(id)}
+                  target="_blank"
+                  className="text-primary-600"
+                  rel="noreferrer"
+                >
+                  {id}
+                </a>
+              </td>
+            </tr>
+            <tr className="bg-purple-500/30">
+              <td>SQL query</td>
+              <td>
+                <span className="truncate">select * from contracts...</span>
+                <CopyLinkOrShareButton
+                  url={`select * from contracts where id = '${id}';`}
+                  tooltip="Copy sql query to contract id"
+                  eventTrackingName={'admin copy contract id'}
+                  className="!py-0 align-middle"
+                  trackingInfo={{ contractId: id }}
+                />
+              </td>
+            </tr>
+          </>
+        )}
+      </tbody>
+    </Table>
+  )
+}
+
+function AdminHomePageScoreAdjustmentRows(props: {
+  contract: Contract
+  canEdit: boolean
+}) {
+  const { contract, canEdit } = props
+  const [adjustment, setAdjustment] = useState(
+    contract.homePageScoreAdjustment?.toString() ?? ''
+  )
+  const [days, setDays] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    setAdjustment(contract.homePageScoreAdjustment?.toString() ?? '')
+    setDays('')
+  }, [
+    contract.homePageScoreAdjustment,
+    contract.homePageScoreAdjustmentExpiresAt,
+    contract.id,
+  ])
+
+  const saveAdjustment = async () => {
+    const parsedAdjustment = Number(adjustment)
+    const parsedDays = Number(days)
+
+    if (
+      adjustment.trim() === '' ||
+      Number.isNaN(parsedAdjustment) ||
+      parsedAdjustment < -1 ||
+      parsedAdjustment > 1
+    ) {
+      toast.error('Adjustment must be a number between -1 and 1.')
+      return
+    }
+
+    if (
+      days.trim() === '' ||
+      !Number.isInteger(parsedDays) ||
+      parsedDays <= 0
+    ) {
+      toast.error('Duration must be a positive whole number of days.')
+      return
+    }
+
+    setIsSaving(true)
+    await toast
+      .promise(
+        updateMarket({
+          contractId: contract.id,
+          homePageScoreAdjustment: parsedAdjustment,
+          homePageScoreAdjustmentDays: parsedDays,
+        }),
+        {
+          loading: 'Saving home page score adjustment...',
+          success: 'Saved home page score adjustment.',
+          error: 'Failed to save home page score adjustment.',
+        }
+      )
+      .finally(() => setIsSaving(false))
+  }
+
+  const clearAdjustment = async () => {
+    setIsSaving(true)
+    await toast
+      .promise(
+        updateMarket({
+          contractId: contract.id,
+          homePageScoreAdjustment: null,
+        }),
+        {
+          loading: 'Clearing home page score adjustment...',
+          success: 'Cleared home page score adjustment.',
+          error: 'Failed to clear home page score adjustment.',
+        }
+      )
+      .then(() => {
+        setAdjustment('')
+        setDays('')
+      })
+      .finally(() => setIsSaving(false))
+  }
+
+  const expiresAt = contract.homePageScoreAdjustmentExpiresAt
+  const hasValidExpiry = expiresAt !== undefined && Number.isFinite(expiresAt)
+  const hasActiveAdjustment =
+    contract.homePageScoreAdjustment !== undefined &&
+    (!hasValidExpiry || expiresAt > Date.now())
+
+  return (
+    <>
+      <tr className="bg-purple-500/30">
+        <td>Importance score</td>
+        <td>{contract.importanceScore.toFixed(3)}</td>
+      </tr>
+      <tr className="bg-purple-500/30">
+        <td>Freshness score</td>
+        <td>{contract.freshnessScore.toFixed(3)}</td>
+      </tr>
+      <tr className="bg-purple-500/30">
+        <td colSpan={2} className="whitespace-normal">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div>
+              Home page score adjustment{' '}
+              <InfoTooltip text="Adds a value from -1 to 1 to both importance and freshness scores until it expires." />
+            </div>
+            <div className="sm:text-right">
+              {hasActiveAdjustment ? (
+                <span>
+                  {contract.homePageScoreAdjustment?.toFixed(3)}
+                  {hasValidExpiry
+                    ? ` until ${formatTimeWithTimezone(expiresAt)}`
+                    : ''}
+                </span>
+              ) : contract.homePageScoreAdjustment !== undefined ? (
+                <span>
+                  {contract.homePageScoreAdjustment.toFixed(3)}
+                  {hasValidExpiry
+                    ? ` (expired ${formatTimeWithTimezone(expiresAt)})`
+                    : ' (expired)'}
+                </span>
+              ) : (
+                'None'
+              )}
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr className="bg-purple-500/30 align-top">
+        <td colSpan={2} className="whitespace-normal">
+          <div className="flex max-w-full flex-col gap-3">
+            <div className="text-sm font-medium">Adjust home page score</div>
+            <div className="grid grid-cols-1 gap-2 sm:max-w-sm sm:grid-cols-2">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-ink-600">Adjustment</span>
+                <input
+                  type="number"
+                  min={-1}
+                  max={1}
+                  step={0.01}
+                  value={adjustment}
+                  disabled={isSaving || !canEdit}
+                  onChange={(e) => setAdjustment(e.target.value)}
+                  className="bg-canvas-0 border-ink-300 w-full rounded-md border px-3 py-2"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-ink-600">Days</span>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={days}
+                  disabled={isSaving || !canEdit}
+                  onChange={(e) => setDays(e.target.value)}
+                  className="bg-canvas-0 border-ink-300 w-full rounded-md border px-3 py-2"
+                />
+              </label>
+            </div>
+            <div className="flex max-w-full flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                disabled={isSaving || !canEdit}
+                onClick={saveAdjustment}
+                className="bg-primary-600 hover:bg-primary-700 disabled:bg-ink-300 w-full rounded-md px-3 py-2 text-sm font-medium text-white sm:w-auto"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                disabled={
+                  isSaving ||
+                  !canEdit ||
+                  contract.homePageScoreAdjustment === undefined
+                }
+                onClick={clearAdjustment}
+                className="border-ink-300 text-ink-700 hover:bg-canvas-50 disabled:text-ink-400 w-full rounded-md border px-3 py-2 text-sm font-medium sm:w-auto"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="text-ink-600 max-w-sm text-sm">
+              Negative values derank the market on home. Positive values boost
+              it.
+            </div>
+          </div>
+        </td>
+      </tr>
+    </>
+  )
+}
+
+export const CheckOrSwitch = (props: {
+  canToggle: boolean
+  disabled?: boolean
+  on: boolean
+  setOn: (on: boolean) => void
+}) => {
+  const { on, setOn, canToggle, disabled } = props
+  return canToggle ? (
+    <ShortToggle
+      className="align-middle"
+      disabled={disabled}
+      on={on}
+      setOn={setOn}
+    />
+  ) : on ? (
+    <>✅</>
+  ) : (
+    <>❌</>
+  )
+}
+
+export function ContractInfoDialog(props: {
+  contract: Contract
+  user: User | null | undefined
+  open: boolean
+  setOpen: (open: boolean) => void
+}) {
+  const { contract, user, open, setOpen } = props
+  const isAdmin = useAdmin()
+  const isTrusted = useTrusted()
+  const [showCreatorBanConfirm, setShowCreatorBanConfirm] = useState(false)
+
+  return (
+    <Modal
+      open={open}
+      setOpen={setOpen}
+      className="bg-canvas-0 flex flex-col gap-4 rounded p-6"
+    >
+      <Stats
+        contract={contract}
+        user={user}
+        onRequestCreatorBan={() => setShowCreatorBanConfirm(true)}
+      />
+
+      {!!user && (
+        <Row className="flex-wrap gap-2">
+          <ContractHistoryButton contract={contract} />
+          <ShareQRButton contract={contract} />
+          <ShareIRLButton contract={contract} />
+          <ShareEmbedButton contract={contract} />
+        </Row>
+      )}
+
+      {(isAdmin || isTrusted) && (
+        <SuperBanControl userId={contract.creatorId} />
+      )}
+
+      <Modal
+        open={showCreatorBanConfirm}
+        setOpen={setShowCreatorBanConfirm}
+        className="bg-canvas-0 rounded-lg"
+      >
+        <Col className="gap-4 p-6">
+          <h3 className="text-ink-1000 text-lg font-semibold">
+            Block yourself from betting?
+          </h3>
+          <p className="text-ink-700 text-sm">
+            You are about to block yourself from betting on this market. This
+            action <strong>cannot be undone</strong> except by a moderator or
+            admin. Your existing limit orders will be cancelled and you will not
+            be able to buy or sell any shares.
+          </p>
+          <Row className="justify-end gap-2">
+            <Button
+              color="gray"
+              onClick={() => setShowCreatorBanConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              onClick={() => {
+                setShowCreatorBanConfirm(false)
+                toast.promise(
+                  updateMarket({
+                    contractId: contract.id,
+                    creatorBannedFromBetting: true,
+                  }),
+                  {
+                    loading: 'Blocking creator from betting...',
+                    success: 'You are now blocked from betting on this market.',
+                    error: 'Error setting ban. Try again?',
+                  }
+                )
+              }}
+            >
+              Confirm
+            </Button>
+          </Row>
+        </Col>
+      </Modal>
+    </Modal>
+  )
+}

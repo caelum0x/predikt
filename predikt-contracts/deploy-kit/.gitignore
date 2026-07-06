@@ -1,0 +1,3 @@
+node_modules/
+# addresses.<chain>.json are PUBLIC (no secrets) and safe to commit if you want a
+# record of a real deploy. The dry-run sample (addresses.amoy.json) is committed.

@@ -1,0 +1,188 @@
+import { OutcomeType } from 'common/contract'
+import {
+  answerCostTiers,
+  getTierIndexFromLiquidity,
+  getTierIndexFromLiquidityAndAnswers,
+  liquidityTiers,
+} from './tier'
+
+export const DEFAULT_CASH_ANTE = 50
+export const MINIMUM_BOUNTY = 1000
+
+export const getAnte = (
+  outcomeType: OutcomeType,
+  numAnswers: number | undefined,
+  liquidityTier: number // this could be 100, 1000, 10000, 100000 (aka tiers)
+) => {
+  if (outcomeType === 'POLL') {
+    return 10
+  }
+
+  if (
+    outcomeType === 'MULTIPLE_CHOICE' ||
+    outcomeType === 'MULTI_NUMERIC' ||
+    outcomeType === 'DATE'
+  ) {
+    const tierIndex = getTierIndexFromLiquidity(liquidityTier)
+    return numAnswers
+      ? Math.max(numAnswers * answerCostTiers[tierIndex], liquidityTier)
+      : liquidityTiers[tierIndex]
+  }
+
+  return liquidityTier
+}
+
+/* Sweeps bonuses */
+export const KYC_VERIFICATION_BONUS_CASH = 3
+export const BETTING_STREAK_SWEEPS_BONUS_AMOUNT = 0.05
+export const BETTING_STREAK_SWEEPS_BONUS_MAX = 0.25
+
+/* Mana bonuses */
+// Unverified users now get a usable starting balance so they can participate.
+// On KYC verification they receive STARTING_BALANCE as a top-up — the total
+// mana a fully-verified new user receives is PRE_KYC_STARTING_BALANCE + STARTING_BALANCE.
+export const PRE_KYC_STARTING_BALANCE = 500
+export const STARTING_BALANCE = 500
+// for sus users, i.e. multiple sign ups for same person
+export const SUS_STARTING_BALANCE = 10
+export const PHONE_VERIFICATION_BONUS = 1000
+
+// Referral payout is split: M250 when the referred user places their first bet,
+// M1000 when they complete identity verification.
+export const REFERRAL_BET_BONUS = 250
+export const REFERRAL_VERIFY_BONUS = 1000
+// Total a referrer can earn per referred user across both events.
+export const REFERRAL_AMOUNT = REFERRAL_BET_BONUS + REFERRAL_VERIFY_BONUS
+
+const TRADER_BONUS_PROMO_MULTIPLIER = 2
+const uniqueBettorBonusAmounts = [3, 10, 15, 20].map(
+  (n) => n * TRADER_BONUS_PROMO_MULTIPLIER
+)
+export const getUniqueBettorBonusAmount = (
+  liquidity: number,
+  numAnswers: number
+) => {
+  return uniqueBettorBonusAmounts[
+    getTierIndexFromLiquidityAndAnswers(liquidity, numAnswers)
+  ]
+}
+
+/* Disabled bonuses */
+export const NEXT_DAY_BONUS = 100 // Paid on day following signup
+export const MARKET_VISIT_BONUS = 100 // Paid on first distinct 5 market visits
+export const MARKET_VISIT_BONUS_TOTAL = 500
+export const UNIQUE_BETTOR_LIQUIDITY = 20
+export const SMALL_UNIQUE_BETTOR_LIQUIDITY = 5
+export const MAX_TRADERS_FOR_BIG_BONUS = 50
+export const MAX_TRADERS_FOR_BONUS = 10000
+
+export const SUBSIDY_FEE = 0
+
+export const BETTING_STREAK_BONUS_AMOUNT = 5
+export const BETTING_STREAK_BONUS_MAX = 25
+
+export const MANACHAN_TWEET_COST = 250
+export const PUSH_NOTIFICATION_BONUS = 1000
+export const BURN_MANA_USER_ID = 'SlYWAUtOzGPIYyQfXfvmHPt8eu22'
+
+// Credit card purchases are flat 100 mana per $1 USD (no purchase bonuses; those
+// are reserved for crypto purchases).
+const PaymentAmounts = [
+  {
+    mana: 500,
+    priceInDollars: 5,
+    bonusInDollars: 0,
+    devStripeId: 'price_1QrTemGdoFKoCJW7meXJDJLt',
+    prodStripeId: 'price_1QrTeRGdoFKoCJW7I0AZVVIm',
+  },
+  {
+    mana: 2_500,
+    priceInDollars: 25,
+    bonusInDollars: 0,
+    devStripeId: 'price_1QrTUhGdoFKoCJW7VIWwpLD8',
+    prodStripeId: 'price_1QrTRIGdoFKoCJW776dK3ZDo',
+  },
+  {
+    mana: 10_000,
+    priceInDollars: 100,
+    bonusInDollars: 0,
+    devStripeId: 'price_1QrTU0GdoFKoCJW7OLzDtdaM',
+    prodStripeId: 'price_1QrTPCGdoFKoCJW7aXHQAGy4',
+  },
+  {
+    mana: 100_000,
+    priceInDollars: 1_000,
+    bonusInDollars: 0,
+    devStripeId: 'price_1QrTT7GdoFKoCJW79y4VgggM',
+    prodStripeId: 'price_1N0TeXGdoFKoCJW7htfCrFd7',
+  },
+]
+export type PaymentAmount = (typeof PaymentAmounts)[number] & {
+  sku?: string
+}
+
+export const WEB_PRICES = PaymentAmounts
+
+export type WebPriceInDollars =
+  (typeof PaymentAmounts)[number]['priceInDollars']
+export const IOS_PRICES = PaymentAmounts
+export const OLD_IOS_PRICES = [
+  {
+    mana: 1_000,
+    priceInDollars: 14.99,
+    bonusInDollars: 0,
+    sku: 'mana_1000',
+  },
+  {
+    mana: 2_500,
+    priceInDollars: 35.99,
+    bonusInDollars: 0,
+    sku: 'mana_2500',
+  },
+  {
+    mana: 10_000,
+    priceInDollars: 142.99,
+    bonusInDollars: 0,
+    sku: 'mana_10000',
+  },
+] as PaymentAmount[]
+export const MANI_IOS_PRICES = [
+  {
+    mana: 1000,
+    priceInDollars: 9.99,
+    bonusInDollars: 0,
+    sku: 'S10',
+  },
+  {
+    mana: 2500,
+    priceInDollars: 24.99,
+    bonusInDollars: 0,
+    sku: 'S25',
+  },
+  {
+    mana: 10000,
+    priceInDollars: 99.99,
+    bonusInDollars: 0,
+    sku: 'S100',
+  },
+] as PaymentAmount[]
+
+export const SWEEPIES_CASHOUT_FEE = 5
+export const MIN_CASHOUT_AMOUNT = 25
+
+// Crypto purchase rate: 100 mana per $1 USDC
+export const CRYPTO_MANA_PER_DOLLAR = 100
+
+// Crypto purchase bonuses
+export const CRYPTO_FIRST_PURCHASE_BONUS_PCT = 0.1 // 10% for first crypto purchase
+export const CRYPTO_BULK_PURCHASE_BONUS_PCT = 0.1 // 10% for $1000+ purchases
+export const CRYPTO_BULK_THRESHOLD_INTERNAL = 995 // Internal threshold (covers fees)
+export const CRYPTO_BULK_THRESHOLD_DISPLAY = 1000 // Displayed threshold
+
+export const SWEEPS_MIN_BET = 1
+export const MANA_MIN_BET = 1
+export const PROFIT_FEE_FRACTION = 0.1
+export const BOOST_COST_MANA = 10000
+export const DEV_BOOST_STRIPE_PRICE_ID = 'price_1QuI5BGdoFKoCJW7lMjCIuKW'
+export const PROD_BOOST_STRIPE_PRICE_ID = 'price_1QuItEGdoFKoCJW7t9qtiGoD'
+export const FREE_MARKET_USER_ID = 'rQPOELuW5zaapaNPnBYQBMoonk92' // Tumbles

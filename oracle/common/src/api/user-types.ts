@@ -1,0 +1,43 @@
+import { BOT_USERNAMES, ENV_CONFIG, MOD_IDS } from 'common/envs/constants'
+import { UserEntitlement } from 'common/shop/types'
+import { User } from 'common/user'
+
+export type DisplayUser = {
+  id: string
+  name: string
+  username: string
+  avatarUrl: string
+  isBot?: boolean
+  isBannedFromPosting?: boolean
+  entitlements?: UserEntitlement[]
+}
+
+export type FullUser = User & {
+  url: string
+  isBot?: boolean
+  isAdmin?: boolean
+  isTrustworthy?: boolean
+}
+
+/**
+ * Convert user to API response format.
+ *
+ * Strips admin-only verification fields that must never reach the public User
+ * surface. The user/:username and user/by-id/:id endpoints are unauthenticated,
+ * so this is stripped centrally for every FullUser consumer. Admins read the
+ * flag reason via the admin-gated get-user-info endpoint instead.
+ */
+export function toUserAPIResponse(user: User): FullUser {
+  const {
+    verificationFlagReason: _adminOnlyReason,
+    previousBonusEligibility: _adminOnlyPreviousEligibility,
+    ...rest
+  } = user
+  return {
+    ...rest,
+    url: `https://${ENV_CONFIG.domain}/${user.username}`,
+    isBot: user.isBot ?? BOT_USERNAMES.includes(user.username),
+    isAdmin: ENV_CONFIG.adminIds.includes(user.id),
+    isTrustworthy: MOD_IDS.includes(user.id),
+  }
+}

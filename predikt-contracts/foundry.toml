@@ -1,0 +1,23 @@
+# Predikt on-chain layer — Foundry workspace root.
+#
+# The two Solidity packages each keep their own self-contained Foundry setup and
+# lib/ submodules (so `forge build`/`forge test` still work from inside each dir).
+# This root file plus the Makefile drive them together as one Predikt workspace.
+#
+#   settlement -> uma-ctf-adapter  (UMA Optimistic Oracle resolution)
+#   trading    -> ctf-exchange     (non-custodial CTF Exchange)
+#   orders     -> clob-client      (@predikt/orders EIP-712 order SDK)
+#
+# Run `make build` / `make test` from this directory to drive every package.
+
+[profile.settlement]
+src = "uma-ctf-adapter/src"
+out = "uma-ctf-adapter/out"
+libs = ["uma-ctf-adapter/lib"]
+solc = "0.8.15"
+
+[profile.trading]
+src = "ctf-exchange/src"
+out = "ctf-exchange/out"
+libs = ["ctf-exchange/lib"]
+solc = "0.8.15"

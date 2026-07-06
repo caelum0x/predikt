@@ -1,0 +1,24 @@
+{
+    "name": "@predikt/uma-ctf-adapter",
+    "description": "Predikt on-chain settlement layer: resolves Predikt prediction markets trustlessly via UMA's Optimistic Oracle (CTF adapter)",
+    "version": "3.0.0",
+    "license": "MIT",
+    "keywords": [
+        "predikt",
+        "prediction-markets",
+        "blockchain",
+        "ethereum",
+        "foundry",
+        "smart-contracts",
+        "solidity",
+        "uma",
+        "optimistic-oracle"
+    ],
+    "scripts": {
+        "test": "forge test"
+    },
+    "devDependencies": {
+        "prettier": "^2.5.1",
+        "prettier-plugin-solidity": "^1.0.0-beta.19"
+    }
+}

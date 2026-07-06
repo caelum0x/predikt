@@ -1,0 +1,13 @@
+{
+  "name": "@predikt/demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "One-command local full-stack demo for Predikt: boots anvil + the full on-chain stack (USDC, ConditionalTokens, CTFExchange, FPMM factory, UMA CTF adapter), the relay CLOB, seeds both venues, runs a router self-check, and stays up for manual poking.",
+  "license": "MIT",
+  "scripts": {
+    "predemo": "node setup-deps.mjs",
+    "demo": "node run.mjs",
+    "demo:selfcheck": "DEMO_SELFCHECK_ONLY=1 node run.mjs"
+  }
+}

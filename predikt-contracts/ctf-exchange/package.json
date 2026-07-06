@@ -1,0 +1,24 @@
+{
+    "name": "@predikt/ctf-exchange",
+    "description": "Predikt on-chain trading layer: non-custodial CTF Exchange for atomic swaps of CTF outcome tokens against ERC20 collateral",
+    "version": "1.0.0",
+    "license": "MIT",
+    "keywords": [
+        "predikt",
+        "prediction-markets",
+        "exchange",
+        "clob",
+        "blockchain",
+        "ethereum",
+        "foundry",
+        "smart-contracts",
+        "solidity"
+    ],
+    "scripts": {
+        "test": "forge test"
+    },
+    "devDependencies": {
+        "prettier": "^2.5.1",
+        "prettier-plugin-solidity": "^1.0.0-beta.19"
+    }
+}

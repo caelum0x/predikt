@@ -1,0 +1,167 @@
+import { Modal } from 'web/components/layout/modal'
+import { Col } from 'web/components/layout/col'
+import {
+  BETTING_STREAK_BONUS_AMOUNT,
+  BETTING_STREAK_BONUS_MAX,
+} from 'common/economy'
+import { formatMoney } from 'common/util/format'
+import { getEffectiveTier, User } from 'common/user'
+import { getEffectiveBonusMultiplier } from 'common/supporter-config'
+import dayjs from 'dayjs'
+import timezone from 'dayjs/plugin/timezone'
+import utc from 'dayjs/plugin/utc'
+import clsx from 'clsx'
+import { VerifyPhoneNumberBanner } from 'web/components/user/verify-phone-number-banner'
+import { ReducedBonusNotice } from 'web/components/upsell/reduced-bonus-notice'
+
+// Initialize dayjs plugins
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+export function BettingStreakModal(props: {
+  isOpen: boolean
+  setOpen: (open: boolean) => void
+  currentUser: User | null | undefined
+  previewFrozen?: boolean
+}) {
+  const { isOpen, setOpen, currentUser, previewFrozen } = props
+  const missingStreak = currentUser && !hasCompletedStreakToday(currentUser)
+  const wasFrozen =
+    previewFrozen || (currentUser && wasStreakFrozenRecently(currentUser))
+  const showFrozen = previewFrozen || (missingStreak && wasFrozen)
+
+  // Streak multiplier driven by effective tier (verification + subscription).
+  // Unverified: 0.2x, verified: 1x, subscribers higher.
+  const effectiveTier = currentUser ? getEffectiveTier(currentUser) : 'verified'
+  const streakMultiplier = getEffectiveBonusMultiplier(effectiveTier, 'streak')
+  const bonusAmount = Math.floor(BETTING_STREAK_BONUS_AMOUNT * streakMultiplier)
+  const bonusMax = Math.floor(BETTING_STREAK_BONUS_MAX * streakMultiplier)
+
+  // Determine emoji visual state:
+  // - Normal (colored): streak completed today
+  // - Frozen: streak not completed but freeze was used (or previewFrozen) - show ice cube, no filter
+  // - Grayscale: streak not completed, no freeze used
+  const getEmojiStyle = () => {
+    if (showFrozen) return '' // Ice cube emoji is already blue, no filter needed
+    if (!missingStreak) return '' // Normal colored
+    return 'grayscale' // Gray
+  }
+
+  return (
+    <Modal open={isOpen} setOpen={setOpen}>
+      <Col className="bg-canvas-0 text-ink-1000 items-center gap-4 rounded-md px-8 py-6">
+        <span className={clsx('text-8xl', getEmojiStyle())}>
+          {showFrozen ? '🧊' : '🔥'}
+        </span>
+        {showFrozen && (
+          <Col className="gap-2 text-center">
+            <span className="font-bold text-blue-500">
+              Your streak was frozen! 🧊
+            </span>
+            <span className="ml-2">
+              A streak freeze was used to protect your{' '}
+              {currentUser?.currentBettingStreak ?? 0}-day streak. Make a
+              prediction today to keep it going!
+            </span>
+          </Col>
+        )}
+        {missingStreak && !showFrozen && (
+          <Col className={' gap-2 text-center'}>
+            <span className={'font-bold'}>
+              You haven't predicted yet today!
+            </span>
+            <span className={'ml-2'}>
+              If the fire icon is gray, this means you haven't predicted yet
+              today to get your streak bonus. Get out there and make a
+              prediction!
+            </span>
+          </Col>
+        )}
+        <span className="text-xl">Daily prediction streaks</span>
+        <VerifyPhoneNumberBanner user={currentUser} />
+        {currentUser &&
+          (effectiveTier === 'unverified' ||
+            effectiveTier === 'restricted') && (
+            <ReducedBonusNotice
+              tier={effectiveTier}
+              kind="streak"
+              earned={bonusAmount}
+            />
+          )}
+        <Col className={'gap-2'}>
+          <span className={'text-primary-700'}>• What are they?</span>
+          <span className={'ml-2'}>
+            You get {formatMoney(bonusAmount)} for each consecutive day of
+            predicting, up to {formatMoney(bonusMax)}. The more days you predict
+            in a row, the more you earn!
+            {streakMultiplier > 1 && (
+              <span className="text-primary-600">
+                {' '}
+                ({streakMultiplier}x membership bonus!)
+              </span>
+            )}
+          </span>
+          <span className={'text-primary-700'}>
+            • Can I save my streak if I forget?
+          </span>
+          <span className={'ml-2'}>
+            Streak freezes protect your streak from resetting. You can purchase
+            them in the shop.
+            {currentUser && (currentUser.streakForgiveness ?? 0) > 0 && (
+              <span>
+                {' '}
+                Right now you have
+                <span className={'mx-1 font-bold'}>
+                  {currentUser.streakForgiveness}
+                </span>
+                available.
+              </span>
+            )}
+          </span>
+        </Col>
+      </Col>
+    </Modal>
+  )
+}
+
+export function hasCompletedStreakToday(user: User) {
+  if (user.currentBettingStreak === 0) return false
+
+  // Get current time in Pacific
+  const now = dayjs().tz('America/Los_Angeles')
+
+  // Get today's reset time (midnight Pacific)
+  const todayResetTime = now.startOf('day')
+
+  // Get yesterday's reset time
+  const yesterdayResetTime = todayResetTime.subtract(1, 'day')
+
+  // Use yesterday's reset time if we haven't hit today's yet
+  const resetTime = now.isBefore(todayResetTime)
+    ? yesterdayResetTime
+    : todayResetTime
+
+  return (user?.lastBetTime ?? 0) > resetTime.valueOf()
+}
+
+// Check if a streak freeze was used recently (within last day since last reset)
+export function wasStreakFrozenRecently(user: User) {
+  if (!user.lastStreakFreezeTime) return false
+
+  // Get current time in Pacific
+  const now = dayjs().tz('America/Los_Angeles')
+
+  // Get today's reset time (midnight Pacific)
+  const todayResetTime = now.startOf('day')
+
+  // Get yesterday's reset time
+  const yesterdayResetTime = todayResetTime.subtract(1, 'day')
+
+  // Use yesterday's reset time if we haven't hit today's yet
+  const resetTime = now.isBefore(todayResetTime)
+    ? yesterdayResetTime
+    : todayResetTime
+
+  // Freeze was used if it happened after the reset time
+  return user.lastStreakFreezeTime > resetTime.valueOf()
+}

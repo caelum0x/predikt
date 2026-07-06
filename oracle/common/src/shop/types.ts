@@ -1,0 +1,84 @@
+// Database row from user_entitlements table
+export type UserEntitlement = {
+  userId: string
+  entitlementId: string // matches ShopItem.id (e.g., 'pampu-skin')
+  grantedTime: number // timestamp
+  expiresTime?: number // null = permanent
+  enabled: boolean
+  autoRenew: boolean // for membership subscriptions
+  metadata?: Record<string, any> // custom data (e.g., selected button text)
+}
+
+// Database row from shop_orders table
+export type ShopOrder = {
+  id: string
+  userId: string
+  itemId: string // matches ShopItem.id
+  priceMana: number
+  quantity: number
+  txnId?: string // reference to txns table
+  printfulOrderId?: string // from Printful API (future)
+  printfulStatus?: string // synced from Printful (future)
+  // Note: 'DELIVERED' / `deliveredTime` were removed — Printful's webhook API
+  // doesn't push delivery events (only `package_shipped` / `_returned`), so
+  // the carrier-level delivery state never reached us. If Printful adds a
+  // delivery event later, we can re-add the column + status branch.
+  status:
+    | 'CREATED'
+    | 'COMPLETED'
+    | 'PENDING_FULFILLMENT'
+    | 'SHIPPED'
+    | 'CANCELLED'
+    | 'FAILED'
+    | 'REFUNDED'
+  metadata?: Record<string, any> // size, color, variant, etc.
+  createdTime: number
+  shippedTime?: number
+}
+
+// Converter from database row (snake_case) to TypeScript type (camelCase)
+export const convertEntitlement = (row: {
+  user_id: string
+  entitlement_id: string
+  granted_time: string
+  expires_time?: string | null
+  enabled: boolean
+  auto_renew?: boolean // Optional for backwards compatibility with existing queries
+  metadata?: Record<string, any> | null
+}): UserEntitlement => ({
+  userId: row.user_id,
+  entitlementId: row.entitlement_id,
+  grantedTime: new Date(row.granted_time).getTime(),
+  expiresTime: row.expires_time ? new Date(row.expires_time).getTime() : undefined,
+  enabled: row.enabled,
+  autoRenew: row.auto_renew ?? false, // Default to false if not selected
+  metadata: row.metadata ?? undefined,
+})
+
+export const convertShopOrder = (row: {
+  id: string
+  user_id: string
+  item_id: string
+  price_mana: number
+  quantity: number
+  txn_id?: string | null
+  printful_order_id?: string | null
+  printful_status?: string | null
+  status: string
+  metadata?: Record<string, any> | null
+  created_time: string
+  shipped_time?: string | null
+}): ShopOrder => ({
+  id: row.id,
+  userId: row.user_id,
+  itemId: row.item_id,
+  priceMana: row.price_mana,
+  quantity: row.quantity,
+  txnId: row.txn_id ?? undefined,
+  printfulOrderId: row.printful_order_id ?? undefined,
+  printfulStatus: row.printful_status ?? undefined,
+  status: row.status as ShopOrder['status'],
+  metadata: row.metadata ?? undefined,
+  createdTime: new Date(row.created_time).getTime(),
+  shippedTime: row.shipped_time ? new Date(row.shipped_time).getTime() : undefined,
+})

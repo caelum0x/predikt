@@ -1,0 +1,16 @@
+{
+  "name": "@predikt/deploy-kit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Guided, ordered go-live for the Predikt on-chain stack. Orchestrates the repos' OWN deploy scripts (CTFExchange, UmaCtfAdapter, FPMM factory) + grants the relay operator role. Writes addresses.<chain>.json and emits the env blocks to paste. No new Solidity; no secrets on disk.",
+  "license": "MIT",
+  "scripts": {
+    "predeploy": "node setup-deps.mjs",
+    "deploy": "node deploy.mjs",
+    "dry:amoy": "node setup-deps.mjs && node deploy.mjs --chain amoy --dry-run",
+    "dry:polygon": "node setup-deps.mjs && node deploy.mjs --chain polygon --dry-run",
+    "deploy:amoy": "node setup-deps.mjs && node deploy.mjs --chain amoy",
+    "deploy:polygon": "node setup-deps.mjs && node deploy.mjs --chain polygon"
+  }
+}

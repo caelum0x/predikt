@@ -1,0 +1,643 @@
+import { escapeRegExp } from 'lodash'
+import { DEV_CONFIG } from './dev'
+import { EnvConfig, PROD_CONFIG } from './prod'
+
+export const ENV = (process.env.NEXT_PUBLIC_FIREBASE_ENV ?? 'PROD') as
+  | 'PROD'
+  | 'DEV'
+
+export const CONFIGS: { [env: string]: EnvConfig } = {
+  PROD: PROD_CONFIG,
+  DEV: DEV_CONFIG,
+}
+
+export const TWOMBA_CASHOUT_ENABLED = true
+export const SWEEP_PRODUCTION_ENABLED = false
+export const SPICE_PRODUCTION_ENABLED = false
+export const STRIPE_PAYMENTS_ENABLED = true
+export const SPICE_TO_MANA_CONVERSION_RATE = 1
+export const CASH_TO_MANA_CONVERSION_RATE = 100
+export const MIN_CASH_DONATION = 25
+export const MIN_SPICE_DONATION = 25000
+export const CASH_TO_CHARITY_DOLLARS = 1
+export const NY_FL_CASHOUT_LIMIT = 5000
+export const DOLLAR_PURCHASE_LIMIT = 5000
+
+export const SPICE_NAME = 'Prize Point'
+export const SWEEPIES_NAME = 'sweepcash'
+export const SPICE_MARKET_TOOLTIP = `Prize market! Earn ${SPICE_NAME}s on resolution`
+export const SWEEPIES_MARKET_TOOLTIP = `Sweepstakes market! Win real cash prizes.`
+export const CASH_SUFFIX = '--cash'
+
+export const TRADE_TERM = 'bet'
+export const TRADED_TERM = 'bet'
+export const TRADING_TERM = 'betting'
+export const TRADER_TERM = 'trader'
+
+export const ENV_CONFIG = CONFIGS[ENV]
+
+export function isAdminId(id: string) {
+  return ENV_CONFIG.adminIds.includes(id)
+}
+
+export function isModId(id: string) {
+  return MOD_IDS.includes(id)
+}
+export function isSweepstakesModId(id: string) {
+  return SWEEPSTAKES_MOD_IDS.includes(id)
+}
+export const DOMAIN = ENV_CONFIG.domain
+export const FIREBASE_CONFIG = ENV_CONFIG.firebaseConfig
+export const PROJECT_ID = ENV_CONFIG.firebaseConfig.projectId
+export const IS_PRIVATE_MANIFOLD = ENV_CONFIG.visibility === 'PRIVATE'
+
+export const AUTH_COOKIE_NAME = `FBUSER_${PROJECT_ID.toUpperCase().replace(
+  /-/g,
+  '_'
+)}`
+
+// Oracle's domain or any subdomains thereof
+export const CORS_ORIGIN_MANIFOLD = new RegExp(
+  '^https?://(?:[a-zA-Z0-9\\-]+\\.)*' + escapeRegExp(ENV_CONFIG.domain) + '$'
+)
+
+export const CORS_ORIGIN_CHARITY = new RegExp(
+  '^https?://(?:[a-zA-Z0-9\\-]+\\.)*' + escapeRegExp('manifund.org') + '$'
+)
+
+// Vercel deployments, used for testing.
+export const CORS_ORIGIN_VERCEL = new RegExp(
+  '^https?://[a-zA-Z0-9\\-]+' + escapeRegExp('mantic.vercel.app') + '$'
+)
+// Any localhost server on any port
+export const CORS_ORIGIN_LOCALHOST = /^http:\/\/localhost:\d+$/
+
+// TODO: These should maybe be part of the env config?
+/** @deprecated Use is_bot column on users table. Kept only as fallback during transition. */
+export const BOT_USERNAMES = [
+  'Terminator2',
+  'Cvillsbot',
+  'TenShinoBot',
+  'JDVance1',
+  'Merchant',
+  'benedict',
+  'subooferbot',
+  'pos',
+  'v',
+  'acc',
+  'jerk',
+  'snap',
+  'ArbitrageBot',
+  'MarketManagerBot',
+  'Botlab',
+  'JuniorBot',
+  'OracleDream',
+  'OracleBugs',
+  'ACXBot',
+  'JamesBot',
+  'jimbot',
+  'RyanBot',
+  'trainbot',
+  'runebot',
+  'LiquidityBonusBot',
+  '538',
+  'FairlyRandom',
+  'Anatolii',
+  'JeremyK',
+  'Botmageddon',
+  'GenAIBot',
+  'SmartBot',
+  'ShifraGazsi',
+  'NiciusBot',
+  'Bot',
+  'Mason',
+  'VersusBot',
+  'GPT4',
+  'EntropyBot',
+  'veat',
+  'ms_test',
+  'arb',
+  'Turbot',
+  'MetaculusBot',
+  'burkebot',
+  'Botflux',
+  '7',
+  'hyperkaehler',
+  'NcyBot',
+  'ithaca',
+  'GigaGaussian',
+  'BottieMcBotface',
+  'Seldon',
+  'OnePercentBot',
+  'arrbit',
+  'ManaMaximizer',
+  'rita',
+  'uhh',
+  'ArkPoint',
+  'EliBot',
+  'manifestussy',
+  'mirrorbot',
+  'JakeBot',
+  'loopsbot',
+  'breezybot',
+  'echo',
+  'Sayaka',
+  'cc7',
+  'Yuna',
+  'OracleLove',
+  'a',
+  'bonkbot',
+  'NermitBundaloy',
+  'FirstBot',
+  'bawt',
+  'FireTheCEO',
+  'JointBot',
+  'WrenTec',
+  'TigerMcBot',
+  'Euclidean',
+  'manakin',
+  'LUCAtheory',
+  'TunglBot',
+  'timetraveler',
+  'bayesianbot',
+  'CharlesLienBot',
+  'JaguarMcBot',
+  'AImogus',
+  'HakariBot',
+  'brake',
+  'brontobot',
+  'OracleBot',
+  'spacedroplet',
+  'AriZernerBot',
+  'PV_bot',
+  'draaglom_bot',
+  'SiriusBOT',
+  'bradbot',
+  'ShrimpLute',
+  'kbot',
+  'ataribot',
+  'RISKBOT',
+  'harmonia',
+  'Dagonet',
+  'Galahad',
+  'zn_bot',
+  'abot',
+  'GoodheartLabsBot',
+  'Evansbot',
+  'PugBot',
+  'cot',
+  'timestwo',
+  'XBot',
+  'Gluten',
+  'Rice',
+  'pythia',
+]
+
+export const MOD_IDS = [
+  'qnIAzz9RamaodeiJSiGZO6xRGC63', // Agh
+  'srFlJRuVlGa7SEJDM4cY9B5k4Lj2', // bayesian
+  'EJQOCF3MfLTFYbhiKncrNefQDBz1', // chrisjbillington
+  'MV9fTVHetcfp3h6CVYzpypIsbyN2', // CodeandSolder
+  'HTbxWFlzWGeHUTiwZvvF0qm8W433', // Conflux
+  '9dAaZrNSx5OT0su6rpusDoG9WPN2', // dglid
+  '5XMvQhA3YgcTzyoJRiNqGWyuB9k2', // dreev
+  '946iB1LqFIR06G7d8q89um57PHh2', // egroj
+  'hqdXgp0jK2YMMhPs067eFK4afEH3', // Eliza
+  'kbHiTAGBahXdX9Z4sW29JpNrB0l2', // Ernie
+  'W4yEF6idSMcNWEVUquowziSCZFI3', // EvanDaniel
+  '2VhlvfTaRqZbFn2jqxk2Am9jgsE2', // Gabrielle
+  'cA1JupYR5AR8btHUs2xvkui7jA93', // Gen
+  'YGZdZUSFQyM8j2YzPaBqki8NBz23', // jack
+  'cgrBqe2O3AU4Dnng7Nc9wuJHLKb2', // jskf
+  '4juQfJkFnwX9nws3dFOpz4gc1mi2', // jacksonpolack
+  'XeQf3ygmrGM1MxdsE3JSlmq8vL42', // Jacy
+  'eSqS9cD5mzYcP2o7FrST8aC5IWn2', // PlasmaBallin (previously JosephNoonan)
+  'JlVpsgzLsbOUT4pajswVMr0ZzmM2', // Joshua
+  '7HhTMy4xECaVKvl5MmEAfVUkRCS2', // KevinBurke
+  'jO7sUhIDTQbAJ3w86akzncTlpRG2', // MichaelWheatley
+  'lkkqZxiWCpOgtJ9ztJcAKz4d9y33', // NathanpmYoung
+  'fSrex43BDjeneNZ4ZLfxllSb8b42', // NcyRocks
+  'BgCeVUcOzkexeJpSPRNomWQaQaD3', // SemioticRivalry
+  'KHX2ThSFtLQlau58hrjtCX7OL2h2', // shankypanky (stefanie)
+  'hUM4SO8a8qhfqT1gEZ7ElTCGSEz2', // Stralor
+  'tO4DwIsujySUwtSnrr2hnU1WJtJ3', // WieDan
+  'oPxjIzlvC5fRbGCaVgkvAiyoXBB2', // mattyb
+  'Iua2KQvL6KYcfGLGNI6PVeGkseo1', // Ziddletwix
+  'Gg7t9vPD4WPD1iPgj9RUFLYTxgH2', // nikki
+  'XNrWcIrA22hpv20fHn4ApoTPsh63', // bagelfan
+  '0k1suGSJKVUnHbCPEhHNpgZPkUP2', // Sinclair
+  'sCOvPc5J2sOacn0DYjwL7OAMzcV2', // bens
+]
+
+export const SWEEPSTAKES_MOD_IDS = [
+  'uglwf3YKOZNGjjEXKc5HampOFRE2', // SirSalty
+  'KHX2ThSFtLQlau58hrjtCX7OL2h2', // shankypanky (stefanie)
+  '2VhlvfTaRqZbFn2jqxk2Am9jgsE2', // Gabrielle
+  'HTbxWFlzWGeHUTiwZvvF0qm8W433', // Conflux
+  'YGZdZUSFQyM8j2YzPaBqki8NBz23', // jack
+  'JlVpsgzLsbOUT4pajswVMr0ZzmM2', // Joshua
+]
+
+export const MVP = ['Eliza', 'Gabrielle', 'jacksonpolack']
+
+export const VERIFIED_USERNAMES = [
+  'EliezerYudkowsky',
+  'ScottAlexander',
+  'Aella',
+  'ZviMowshowitz',
+  'GavrielK',
+  'CGPGrey',
+  'LexFridman',
+  'patio11',
+  'RichardHanania',
+  'Qualy',
+  'Roko',
+  'JonathanBlow',
+  'DwarkeshPatel',
+  'ByrneHobart',
+  'RobertWiblin',
+  'KelseyPiper',
+  'SpencerGreenberg',
+  'PaulChristiano',
+  'BuckShlegeris',
+  'Natalia',
+  'zero',
+  'OzzieGooen',
+  'OliverHabryka',
+  'Alicorn',
+  'RazibKhan',
+  'JamesMedlock',
+  'Writer',
+  'geohot',
+  'ShayneCoplan',
+  'SanghyeonSeo',
+  'KatjaGrace',
+  'EmmettShear',
+  'CateHall',
+  'RobertSKMiles',
+  'TarekMansour',
+  'DylanMatthews',
+  'RobinHanson',
+  'KevinRoose18ac',
+  'KnowNothing',
+  'SantaPawsSSB',
+  'AndersSandberg',
+  'JosephWeisenthal',
+  'LawrenceLessig',
+  'NatFriedman',
+  'patrissimo',
+  'postjawline',
+  'MatthewYglesias',
+  'MatthewYglesiasvuyf',
+  'BillyMcRascal',
+  'kyootbot',
+  'MaximLott',
+  'liron',
+  'LarsDoucet',
+  'PeterWildeford',
+  'SneakySly',
+  'ConorSen',
+  'transmissions11',
+  'DanHendrycks',
+  'Cremieux',
+  'tracewoodgrains',
+  'LuigiMangione',
+  'LeahLibresco',
+  'ModernDayDebate',
+  'NickyCase',
+  'TamayBesiroglu',
+  'realTomBayes',
+]
+
+export const BANNED_TRADING_USER_IDS = [
+  'zgCIqq8AmRUYVu6AdQ9vVEJN8On1', // firstuserhere aka _deleted_
+  'LIBAoi7tpqeNLYM1xxJ1QJBQqW32', // lastuserhere
+  'p3ADzwIUS3fk0ka80XYEE3OM3S32', // PC
+  '4JuXgDx47xPagH5mcLDqLzUSN5g2', // BTE
+  'iD1ObV4sInhkBXs3Ten96j4Co6O2', // BTE alt
+  'zRMxfUt51RcEIcZkuw6ySiNJYBE3', // BTE alt
+  'wo2LRCvgaNSllK3q0Wnv8hlusTa2', // BTE alt
+  'os2ilMb1d8WDeXxiQAo6btlig1Z2', // BTE alt
+  'zRMxfUt51RcEIcZkuw6ySiNJYBE3', // BTE alt
+  'fnuHBW8dHwZp2TbEt2MKJY9d28V2', // Klob (Caleb)
+  'RK6Nd7IBfMVOcLekfqcN9Ys17qJ2', // PeterNjeim
+  // Start of ghost of evan accounts:
+  'Vw4wQTRZp3hKTENjWa8OaTs76kg1',
+  'ZWttBVb1BFU54kGE2ff49ebinVG2',
+  'Vb0fUDViyCXZvZBp88bJ9aNFjdh2',
+  'LUijikhdrfa9FzxQF5hwqRuN36Z2',
+  'ZhV8MUIS9JSTCxp33eavKP2gSgE3',
+  '16rOdWFFXFc6idTenMn100azjIr2',
+  'Yc1HwZkeqDN0yVdRD0drVRpQml43',
+  'HZYHxhextKRmr2ys6Cn4yDkta0U2',
+  'Eiz9zq5BcTNRggZuAXOPPfCuzgI3',
+  '4yoKkFh6HFUPnMBwF2NrjlrIQ5a2',
+  'C9roFyyxahOzmPN6zWm4Un2oMyi2',
+  'JXhsE372TkSSJOdtzORFJyivI9V2',
+  'NDn1pN4cPkYrW3A64vWZ7aLZrzw1',
+  'H0VWQhrLxEOnTLpypd8TMstkzY42',
+  'j5nPUVKJQNQVPU3uP2SEBDo1khg1',
+  '2uKT2CCmGJZ2ZVrzp3pj28HHAlm2',
+  'oyrIZrv7nqcdMEj4LTsdJsIsWPq2',
+  'n5H3UfiMgcc4rgbm4i3IOewc1EA3',
+  'fGfp30EWMBUP4CYtBW8ZFTXvsA82',
+  '0jBoNTUqm3RJGddAVlcSaOoHc4m2',
+  '6oYZ83MbxqScz5ANhz0R5QEeolL2',
+  'a9ZUA2eGquTxoTCTXjvPxLqAq2X2',
+  '6Bf1GgbE7MdiGh4F4NCgkLCF9Mm1',
+  'smzdPGfW29XzWkyfJfE0rDr3qYm2',
+  // End of ghost of evan accounts
+]
+
+export const PARTNER_USER_IDS: string[] = [
+  'sTUV8ejuM2byukNZp7qKP2OKXMx2', // NFL
+  'rFJu0EIdR6RP8d1vHKSh62pbnbH2', // SimonGrayson
+  'cb6PJqGOSVPEUhprDHCKWWMuJqu1', // DanMan314
+  'HTbxWFlzWGeHUTiwZvvF0qm8W433', // Conflux
+  'YGZdZUSFQyM8j2YzPaBqki8NBz23', // jack
+  'hDq0cvn68jbAUVd6aWIU9aSv9ZA2', // strutheo
+  'OEbsAczmbBc4Sl1bacYZNPJLLLc2', // SirCryptomind
+  'JlVpsgzLsbOUT4pajswVMr0ZzmM2', // Joshua
+  'xQqqZqlgcoSxTgPe03BiXmVE2JJ2', // Soli
+  'Iiok8KHMCRfUiwtMq1tl5PeDbA73', // Lion
+  'SqOJYkeySMQjqP3UAypw6DxPx4Z2', // Shump
+  'hqdXgp0jK2YMMhPs067eFK4afEH3', // Eliza
+  'BgCeVUcOzkexeJpSPRNomWQaQaD3', // SemioticRivalry
+  'X1xu1kvOxuevx09xuR2urWfzf7i1', // KeenenWatts
+  '4juQfJkFnwX9nws3dFOpz4gc1mi2', // jacksonpolack
+  '8WEiWcxUd7QLeiveyI8iqbSIffU2', // goblinodds
+  'Iua2KQvL6KYcfGLGNI6PVeGkseo1', // Ziddletwix
+  'GRaWlYn2fNah0bvr6OW28l28nFn1', // cash
+  'ZKkL3lFRFaYfiaT9ZOdiv2iUJBM2', // mint
+  'hRbPwezgxnat6GpJQxoFxq1xgUZ2', // AmmonLam
+  'foOeshHZOET3yMvRTMPINpnb8Bj2', // PunishedFurry
+  'EBGhoFSxRtVBu4617SLZUe1FeJt1', // FranklinBaldo
+  '4xOTMCIOkGesdJft50wVFZFb5IB3', // Tripping
+  'srFlJRuVlGa7SEJDM4cY9B5k4Lj2', // Bayesian
+  'H6b5PWELWfRV6HhyHAlCGq7yJJu2', // AndrewG
+  'EJQOCF3MfLTFYbhiKncrNefQDBz1', // chrisjbillington
+  '7HhTMy4xECaVKvl5MmEAfVUkRCS2', // KevinBurke
+  'oPxjIzlvC5fRbGCaVgkvAiyoXBB2', // mattyb
+  'OdBj5DW6PbYtnImvybpyZzfhb133', // jim
+  'm5K4FlZLo0aeDd5Z7W4xX3TAGHs1', // JeffBerman
+  'LmtawaGf6jO0oFGzth1UCrUXFW82', // AaronSimansky
+]
+
+export const NEW_USER_HERLPER_IDS = [
+  '2VhlvfTaRqZbFn2jqxk2Am9jgsE2', // Gabrielle
+  'BgCeVUcOzkexeJpSPRNomWQaQaD3', // SemioticRivalry
+  'rQPOELuW5zaapaNPnBYQBMoonk92', // Tumbles
+  'tlmGNz9kjXc2EteizMORes4qvWl2', // Stephen
+  'AJwLWoo3xue32XIiAVrL5SyR1WB2', // Ian
+  'uglwf3YKOZNGjjEXKc5HampOFRE2', // D4vid
+  'cA1JupYR5AR8btHUs2xvkui7jA93', // Genzy
+  'srFlJRuVlGa7SEJDM4cY9B5k4Lj2', // Bayesian
+  'Gg7t9vPD4WPD1iPgj9RUFLYTxgH2', // nikki
+  'OdBj5DW6PbYtnImvybpyZzfhb133', // jim
+]
+
+export const OPTED_OUT_OF_LEAGUES = [
+  'vuI5upWB8yU00rP7yxj95J2zd952', // OraclePolitics
+  '8lZo8X5lewh4hnCoreI7iSc0GxK2', // OracleAI
+  'IPTOzEqrpkWmEzh6hwvAyY9PqFb2', // Oracle
+  'tRZZ6ihugZQLXPf6aPRneGpWLmz1', // OracleLove
+  'BhNkw088bMNwIFF2Aq5Gg9NTPzz1', // acc
+  'JlVpsgzLsbOUT4pajswVMr0ZzmM2', // Joshua
+  'oPxjIzlvC5fRbGCaVgkvAiyoXBB2', // mattyb
+  'NndHcEmeJhPQ6n7e7yqAPa3Oiih2', // josh
+]
+
+export const HIDE_FROM_LEADERBOARD_USER_IDS = [
+  'BhNkw088bMNwIFF2Aq5Gg9NTPzz1', // acc
+  'tRZZ6ihugZQLXPf6aPRneGpWLmz1', // OracleLove
+]
+
+export const INSTITUTIONAL_PARTNER_USER_IDS: string[] = []
+
+export const BEING_DEAD_HEADS = [
+  '6hHpzvRG0pMq8PNJs7RZj2qlZGn2',
+  'AJwLWoo3xue32XIiAVrL5SyR1WB2',
+  'D8O4yNtFhEU8Y7Taf3BilznJOcu2',
+  'tlmGNz9kjXc2EteizMORes4qvWl2',
+]
+
+export const HOUSE_BOT_USERNAME = 'acc'
+
+export function supabaseUserConsolePath(userId: string) {
+  const tableId = ENV === 'DEV' ? 19247 : 25916
+  return `https://supabase.com/dashboard/project/${ENV_CONFIG.supabaseInstanceId}/editor/${tableId}/?filter=id%3Aeq%3A${userId}`
+}
+
+export function supabasePrivateUserConsolePath(userId: string) {
+  const tableId = ENV === 'DEV' ? 2189688 : 153495548
+  return `https://supabase.com/dashboard/project/${ENV_CONFIG.supabaseInstanceId}/editor/${tableId}/?filter=id%3Aeq%3A${userId}`
+}
+
+export function supabaseConsoleContractPath(contractId: string) {
+  const tableId = ENV === 'DEV' ? 19254 : 25924
+  return `https://supabase.com/dashboard/project/${ENV_CONFIG.supabaseInstanceId}/editor/${tableId}?filter=id%3Aeq%3A${contractId}`
+}
+
+export function supabaseConsoleTxnPath(txnId: string) {
+  const tableId = ENV === 'DEV' ? 20014 : 25940
+  return `https://supabase.com/dashboard/project/${ENV_CONFIG.supabaseInstanceId}/editor/${tableId}?filter=id%3Aeq%3A${txnId}`
+}
+
+// TODO(SHIP): replace with the real Predikt store listing URLs once the apps
+// are published. The Play URL can already use the final package id.
+export const GOOGLE_PLAY_APP_URL =
+  'https://play.google.com/store/apps/details?id=com.predikt.app'
+export const APPLE_APP_URL = 'REPLACE_WITH_APP_STORE_URL'
+
+export const TEN_YEARS_SECS = 60 * 60 * 24 * 365 * 10
+
+export const DESTINY_GROUP_SLUG = 'destinygg'
+export const PROD_MANIFOLD_LOVE_GROUP_SLUG = 'manifoldlove-relationships'
+
+export const RATING_GROUP_SLUGS = ['nonpredictive', 'unsubsidized']
+
+export const GROUP_SLUGS_TO_IGNORE_IN_MARKETS_EMAIL = [
+  'manifold-6748e065087e',
+  'manifold-features-25bad7c7792e',
+  'bugs',
+  'manifold-leagues',
+  ...RATING_GROUP_SLUGS,
+  DESTINY_GROUP_SLUG,
+  PROD_MANIFOLD_LOVE_GROUP_SLUG,
+]
+
+// - Hide markets from signed-out landing page
+// - Hide from onboarding topic selector
+// - De-emphasize markets in the very first feed items generated for new users
+export const HIDE_FROM_NEW_USER_SLUGS = [
+  'fun',
+  'selfresolving',
+  'experimental',
+  'trading-bots',
+  'gambling',
+  'free-money',
+  'mana',
+  'whale-watching',
+  'spam',
+  'test',
+  'no-resolution',
+  'eto',
+  'friend-stocks',
+  'ancient-markets',
+  'jokes',
+  'planecrash',
+  'glowfic',
+  'all-stonks',
+  'the-market',
+  'nonpredictive-profits',
+  'personal-goals',
+  'personal',
+  'rationalussy',
+  'nsfw',
+  'manifold-6748e065087e',
+  'bugs',
+  'new-years-resolutions-2024',
+  'metamarkets',
+  'metaforecasting',
+  'death-markets',
+  ...GROUP_SLUGS_TO_IGNORE_IN_MARKETS_EMAIL,
+]
+
+export const GROUP_SLUGS_TO_NOT_INTRODUCE_IN_FEED = [
+  'rationalussy',
+  'nsfw',
+  'planecrash',
+  'glowfic',
+  'no-resolution',
+  'the-market',
+  'spam',
+  'test',
+  'eto',
+  'friend-stocks',
+  'testing',
+  'all-stonks',
+  PROD_MANIFOLD_LOVE_GROUP_SLUG,
+]
+
+export const EXTERNAL_REDIRECTS = ['/umami']
+
+export const DISCORD_INVITE_LINK = 'https://discord.com/invite/eHQBNBqXuh'
+export const DISCORD_BOT_INVITE_LINK =
+  'https://discord.com/api/oauth2/authorize?client_id=1074829857537663098&permissions=328565385280&scope=bot%20applications.commands'
+
+export const YES_GRAPH_COLOR = '#11b981'
+
+export const RESERVED_PATHS = [
+  '_next',
+  'about',
+  'ad',
+  'add-funds',
+  'ads',
+  'activity',
+  'analytics',
+  'api',
+  'browse',
+  'calibration',
+  'calculator',
+  'card',
+  'cards',
+  'career',
+  'careers',
+  'charity',
+  'checkout',
+  'common',
+  'comments',
+  'complexsystems',
+  'contact',
+  'contacts',
+  'cowp',
+  'create',
+  'create-post',
+  'date-docs',
+  'dashboard',
+  'discord',
+  'discord-bot',
+  'dream',
+  'embed',
+  'facebook',
+  'feed',
+  'find',
+  'github',
+  'google',
+  'group',
+  'groups',
+  'help',
+  'home',
+  'jobboard',
+  'jobs',
+  'jobsboard',
+  'lab',
+  'leaderboard',
+  'leaderboards',
+  'league',
+  'leagues',
+  'link',
+  'linkAccount',
+  'links',
+  'live',
+  'login',
+  'lootbox',
+  'mana-auction',
+  'manachan',
+  'manifest',
+  'markets',
+  'me',
+  'messages',
+  'mtg',
+  'my-calibration',
+  'news',
+  'notifications',
+  'og-test',
+  'pakman',
+  'payments',
+  'portfolio',
+  'posts',
+  'predictle',
+  'press',
+  'privacy',
+  'profile',
+  'public',
+  'questions',
+  'referral',
+  'referrals',
+  'redeem',
+  'register-on-discord',
+  'reports',
+  'send',
+  'server-sitemap',
+  'shop',
+  'sign-in',
+  'sign-in-waiting',
+  'sitemap',
+  'slack',
+  'stats',
+  'store',
+  'styles',
+  'supporter',
+  'swipe',
+  'team',
+  'terms',
+  'todo',
+  'tournament',
+  'tournaments',
+  'twitch',
+  'twitter',
+  'umami',
+  'user',
+  'users',
+  'versus',
+  'web',
+  'websocket-live',
+  'welcome',
+  'welcomeoffer',
+  'wrapped',
+  'yc-s23',
+]
+
+export const MANA_PURCHASE_RATE_CHANGE_DATE = new Date('2024-05-16T18:20:00Z')
+export const MANA_PURCHASE_RATE_REVERT_DATE = new Date('2024-09-17T17:06:00Z') // commit date of sweepcash - PR #2840 5e8b46d8

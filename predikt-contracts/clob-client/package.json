@@ -1,0 +1,46 @@
+{
+    "name": "@predikt/orders",
+    "description": "Predikt on-chain order SDK: builds and EIP-712 signs real orders for the Predikt CTF Exchange",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "files": [
+        "/dist"
+    ],
+    "sideEffects": false,
+    "keywords": [
+        "predikt",
+        "prediction-markets",
+        "orders",
+        "eip712",
+        "ctf-exchange",
+        "blockchain",
+        "ethereum"
+    ],
+    "engines": {
+        "node": ">=20.10"
+    },
+    "license": "MIT",
+    "packageManager": "pnpm@10.30.3",
+    "scripts": {
+        "build": "rm -rf dist && tsc -p tsconfig.build.json",
+        "typecheck": "tsc -p tsconfig.test.json --noEmit",
+        "test": "pnpm typecheck && vitest run",
+        "lint": "biome check ./src",
+        "ci": "pnpm lint && pnpm test && pnpm build"
+    },
+    "dependencies": {
+        "viem": "^2.46.3"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.4.5",
+        "@ethersproject/wallet": "^5.8.0",
+        "@types/node": "^22.19.1",
+        "@vitest/coverage-v8": "^4.0.18",
+        "dotenv": "^17.3.1",
+        "ethers": "^5.8.0",
+        "typescript": "^6.0.0",
+        "vitest": "^4.0.18"
+    }
+}

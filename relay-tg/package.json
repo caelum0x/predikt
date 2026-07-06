@@ -1,0 +1,22 @@
+{
+  "name": "relay-tg",
+  "version": "0.1.0",
+  "description": "Telegram companion bot for Predikt — mirrors the herald Discord bot against the same backend.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && esbuild src/index.ts --bundle --outfile=built/index.js --platform=node --target=node18 --format=esm --packages=external",
+    "start": "node built/index.js",
+    "dev": "node --experimental-strip-types --env-file=.env src/index.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "grammy": "^1.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.4.0"
+  }
+}

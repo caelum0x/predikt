@@ -1,0 +1,574 @@
+import clsx from 'clsx'
+import Link from 'next/link'
+import Router from 'next/router'
+import { Contract, contractPath, isBinaryMulti } from 'common/contract'
+import { ContractMetric } from 'common/contract-metric'
+import { ENV_CONFIG, SWEEPIES_NAME } from 'common/envs/constants'
+import { ContractCardView } from 'common/events'
+import { User } from 'common/user'
+import { formatWithToken, shortFormatNumber } from 'common/util/format'
+import { removeUndefinedProps } from 'common/util/object'
+import { removeEmojis } from 'common/util/string'
+import { TbDroplet, TbMoneybag } from 'react-icons/tb'
+import { BinaryMultiAnswersPanel } from 'web/components/answers/binary-multi-answers-panel'
+import { NumericBetButton } from 'web/components/bet/numeric-bet-button'
+import { OnchainMarker } from 'web/components/onchain/onchain-marker'
+import { isOnchainMarket } from 'web/lib/onchain/settlement'
+import { Button } from 'web/components/buttons/button'
+import { JSONEmpty } from 'web/components/contract/contract-description'
+import {
+  ContractStatusLabel,
+  VisibilityIcon,
+} from 'web/components/contract/contracts-table'
+import { TopicTag } from 'web/components/topics/topic-tag'
+import { Avatar } from 'web/components/widgets/avatar'
+import { Tooltip } from 'web/components/widgets/tooltip'
+import { UserLink } from 'web/components/widgets/user-link'
+import { useAPIGetter } from 'web/hooks/use-api-getter'
+import { useLiveContract } from 'web/hooks/use-contract'
+import { useIsVisible } from 'web/hooks/use-is-visible'
+import { useSavedContractMetrics } from 'web/hooks/use-saved-contract-metrics'
+import { useUser } from 'web/hooks/use-user'
+import { useDisplayUserById } from 'web/hooks/use-user-supabase'
+import { track } from 'web/lib/service/analytics'
+import { getMarketMovementInfo } from 'web/lib/supabase/feed-timeline/feed-market-movement-display'
+import { SpiceCoin } from 'web/public/custom-components/spiceCoin'
+import { SimpleAnswerBars } from '../answers/answers-panel'
+import { BetButton } from '../bet/feed-bet-button'
+import { RepostButton } from '../comments/repost-modal'
+import { FeedDropdown } from '../feed/card-dropdown'
+import { CardReason } from '../feed/card-reason'
+import { FeedBinaryChart } from '../feed/feed-chart'
+import FeedContractCardDescription from '../feed/feed-contract-card-description'
+import { Col } from '../layout/col'
+import { Row } from '../layout/row'
+import { PollPanel } from '../poll/poll-panel'
+import { LiquidityTooltip } from '../tiers/liquidity-tooltip'
+import { UserHovercard } from '../user/user-hovercard'
+import { ClickFrame } from '../widgets/click-frame'
+import { ReactButton } from './react-button'
+import { TradesButton } from './trades-button'
+import { SweepiesCoin } from 'web/public/custom-components/sweepiesCoin'
+import { capitalize } from 'lodash'
+import { getIsLive } from 'common/sports-info'
+import { fromNow } from 'client-common/lib/time'
+
+const DEBUG_FEED_CARDS =
+  typeof window != 'undefined' &&
+  window.location.toString().includes('localhost:3000')
+
+export function FeedContractCard(props: {
+  contract: Contract
+  children?: React.ReactNode
+  /** location of the card, to disambiguate card click events */
+  trackingPostfix?: string
+  className?: string
+  /** whether this card is small, like in card grids.*/
+  size?: 'md' | 'sm' | 'xs'
+  hide?: () => void
+  showGraph?: boolean
+  hideBottomRow?: boolean
+  hideTags?: boolean
+  feedReason?: string
+}) {
+  const {
+    trackingPostfix,
+    className,
+    children,
+    hide,
+    showGraph,
+    hideBottomRow,
+    size = 'md',
+    hideTags,
+    feedReason,
+  } = props
+  const user = useUser()
+
+  const contract = useLiveContract(props.contract)
+
+  const {
+    closeTime,
+    creatorId,
+    creatorName,
+    creatorUsername,
+    creatorAvatarUrl,
+    outcomeType,
+    mechanism,
+  } = contract
+
+  const creator = useDisplayUserById(creatorId)
+
+  const isBinaryMc = isBinaryMulti(contract)
+  const isBinaryCpmm = outcomeType === 'BINARY' && mechanism === 'cpmm-1'
+  const isStonk = outcomeType === 'STONK'
+  const isNumber = outcomeType === 'NUMBER'
+  const isClosed = closeTime && closeTime < Date.now()
+  const path = contractPath(contract)
+  const metrics = useSavedContractMetrics(contract)
+
+  // Note: if we ever make cards taller than viewport, we'll need to pass a lower threshold to the useIsVisible hook
+
+  const { ref } = useIsVisible(
+    () => {
+      if (!DEBUG_FEED_CARDS)
+        track('view market card', {
+          contractId: contract.id,
+          creatorId: contract.creatorId,
+          slug: contract.slug,
+        } as ContractCardView)
+    },
+    false,
+    true
+  )
+
+  const topics = useAPIGetter('market/:contractId/groups', {
+    contractId: contract.id,
+  })
+
+  const { probChange, startTime, ignore } = getMarketMovementInfo(contract)
+
+  const trackClick = () =>
+    track(
+      ('click market card ' + trackingPostfix).trim(),
+      removeUndefinedProps({
+        contractId: contract.id,
+        creatorId: contract.creatorId,
+        slug: contract.slug,
+        feedReason: feedReason,
+      })
+    )
+
+  const nonTextDescription = !JSONEmpty(contract.description)
+  const isPrizeMarket = !!contract.isSpicePayout
+  const isCashContract = contract.token == 'CASH'
+
+  return (
+    <ClickFrame
+      tabIndex={-1}
+      className={clsx(
+        'relative cursor-pointer transition-colors',
+        'flex w-full flex-col gap-2 rounded-xl px-4 py-3',
+        'bg-canvas-0 border-ink-200 hover:border-primary-300 border',
+        size === 'sm' && 'bg-canvas-50',
+        className
+      )}
+      onClick={(e) => {
+        trackClick()
+        Router.push(path)
+        e.currentTarget.focus() // focus the div like a button, for style
+      }}
+      ref={ref}
+    >
+      {isPrizeMarket ? (
+        <div
+          className={clsx(
+            'absolute right-4 top-0 z-40 -translate-y-1/2 transform bg-amber-200 text-amber-700',
+            'rounded-full px-2 py-0.5 text-xs font-semibold'
+          )}
+        >
+          <span>
+            <SpiceCoin className="-mt-0.5" /> Prize Market
+          </span>
+        </div>
+      ) : (
+        <></>
+      )}
+      <Col className={clsx('w-full', size === 'xs' ? '' : 'gap-2')}>
+        {getIsLive(contract) && (
+          <Row className="text-scarlet-500 items-center gap-2 text-sm">
+            <div className="bg-scarlet-500 h-2 w-2 animate-pulse rounded-full" />
+            Live
+          </Row>
+        )}
+
+        {/* Prominent question */}
+        <Row className="w-full items-start justify-between gap-2">
+          {/* Title is link to contract for open in new tab and a11y */}
+          <Link
+            className="hover:text-primary-700 text-ink-900 grow items-start text-base font-semibold leading-snug transition-colors sm:text-lg"
+            href={path}
+            onClick={trackClick}
+          >
+            <VisibilityIcon contract={contract} />{' '}
+            {removeEmojis(contract.question)}
+          </Link>
+          <Row className="shrink-0 items-center gap-2">
+            {isOnchainMarket(contract) && <OnchainMarker />}
+            {isCashContract && (
+              <span
+                className={clsx(
+                  'bg-amber-200 text-amber-700',
+                  'rounded-full px-2 pt-1 text-xs font-semibold'
+                )}
+              >
+                <SweepiesCoin className="-mt-0.5" /> {capitalize(SWEEPIES_NAME)}{' '}
+              </span>
+            )}
+            {hide && (
+              <FeedDropdown
+                contract={contract}
+                itemCreatorId={undefined}
+                interesting={true}
+                toggleInteresting={hide}
+                importanceScore={props.contract.importanceScore}
+              />
+            )}
+          </Row>
+        </Row>
+
+        {contract.outcomeType !== 'MULTIPLE_CHOICE' && (
+          <Col className="gap-2">
+            <Row className="items-center justify-between">
+              <ContractStatusLabel
+                className="text-xl font-bold"
+                contract={contract}
+                chanceLabel
+              />
+              {feedReason ? (
+                <CardReason
+                  reason={feedReason as any}
+                  probChange={probChange}
+                  since={startTime}
+                />
+              ) : (
+                <LiquidityTooltip contract={contract} />
+              )}
+            </Row>
+            {/* Polymarket-style prominent YES/NO buy buttons */}
+            {isBinaryCpmm && !isClosed && (
+              <BetButton
+                feedReason={feedReason}
+                contract={contract}
+                user={user}
+                variant="prominent"
+                className="h-min"
+                questionTitle={contract.question}
+              />
+            )}
+            {!isClosed && isStonk && (
+              <BetButton
+                feedReason={feedReason}
+                contract={contract}
+                user={user}
+                variant="prominent"
+                className="h-min"
+                labels={{ yes: 'Buy', no: 'Short' }}
+                questionTitle={contract.question}
+              />
+            )}
+            {isNumber && (
+              <Row className="justify-end">
+                <NumericBetButton contract={contract} user={user} />
+              </Row>
+            )}
+          </Col>
+        )}
+      </Col>
+
+      <div
+        className={clsx(
+          'w-full overflow-hidden',
+          size === 'xs' ? 'pt-0.5' : 'pt-2'
+        )}
+      >
+        {contract.outcomeType === 'POLL' && (
+          <PollPanel contract={contract} maxOptions={4} />
+        )}
+        {contract.outcomeType === 'MULTIPLE_CHOICE' && !isBinaryMc && (
+          <SimpleAnswerBars
+            contract={contract}
+            maxAnswers={4}
+            feedReason={feedReason}
+          />
+        )}
+
+        {isBinaryMc &&
+          contract.mechanism === 'cpmm-multi-1' &&
+          contract.outcomeType !== 'NUMBER' &&
+          contract.outcomeType !== 'MULTI_NUMERIC' &&
+          contract.outcomeType !== 'DATE' && (
+            <BinaryMultiAnswersPanel
+              contract={contract}
+              feedReason={feedReason}
+            />
+          )}
+
+        {isBinaryCpmm && (showGraph || !ignore) && (
+          <FeedBinaryChart
+            contract={contract}
+            className="my-4"
+            startDate={startTime ? startTime : contract.createdTime}
+          />
+        )}
+
+        {isBinaryCpmm && metrics && metrics.hasShares && (
+          <YourMetricsFooter
+            metrics={metrics}
+            isCashContract={contract.token === 'CASH'}
+          />
+        )}
+
+        {size === 'md' && feedReason == 'freshness' && nonTextDescription && (
+          <FeedContractCardDescription
+            contract={contract}
+            nonTextDescription={nonTextDescription}
+          />
+        )}
+        {/* Compact muted footer: creator + close time */}
+        <Row className="text-ink-500 mt-2 items-center gap-1.5 text-xs">
+          <UserHovercard userId={creatorId}>
+            <Row
+              className="items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Avatar
+                size="2xs"
+                avatarUrl={creator?.avatarUrl ?? creatorAvatarUrl}
+                username={creator?.username ?? creatorUsername}
+                entitlements={creator?.entitlements}
+                displayContext="feed"
+              />
+              <UserLink
+                user={{
+                  id: creatorId,
+                  name: creator?.name ?? creatorName,
+                  username: creator?.username ?? creatorUsername,
+                  entitlements: creator?.entitlements,
+                }}
+                displayContext="feed"
+                className="max-w-[9rem] text-ellipsis"
+              />
+            </Row>
+          </UserHovercard>
+          {closeTime && (
+            <>
+              <span className="text-ink-400">·</span>
+              <span className="whitespace-nowrap">
+                {isClosed ? 'closed ' : 'closes '}
+                {fromNow(closeTime)}
+              </span>
+            </>
+          )}
+        </Row>
+
+        {!hideBottomRow && (
+          <Col>
+            {!hideTags && (
+              <CategoryTags
+                categories={topics.data}
+                className="flex-wrap gap-1"
+              />
+            )}
+            <BottomActionRow
+              contract={contract}
+              user={user}
+              underline={!!children}
+              feedReason={feedReason}
+            />
+            {children}
+          </Col>
+        )}
+      </div>
+    </ClickFrame>
+  )
+}
+
+// ensures that the correct spacing is between buttons
+const BottomRowButtonWrapper = (props: { children: React.ReactNode }) => {
+  return (
+    <Row className="basis-10 justify-start whitespace-nowrap">
+      {props.children}
+    </Row>
+  )
+}
+
+const BottomActionRow = (props: {
+  contract: Contract
+  user: User | null | undefined
+  underline?: boolean
+  feedReason?: string
+}) => {
+  const { contract, feedReason, user, underline } = props
+  const { question } = contract
+  const isCashContract = contract.token == 'CASH'
+
+  return (
+    <Row
+      className={clsx(
+        'justify-between pt-2',
+        underline ? 'border-1 border-ink-200 border-b pb-3' : 'pb-2'
+      )}
+    >
+      <BottomRowButtonWrapper>
+        <TradesButton contract={contract} className={'h-full'} />
+      </BottomRowButtonWrapper>
+
+      {contract.outcomeType === 'BOUNTIED_QUESTION' && (
+        <BottomRowButtonWrapper>
+          <div className="text-ink-500 z-10 flex items-center gap-1.5 text-sm">
+            <TbMoneybag className="h-6 w-6 stroke-2" />
+            <div>
+              {ENV_CONFIG.moneyMoniker}
+              {shortFormatNumber(contract.bountyLeft)}
+            </div>
+          </div>
+        </BottomRowButtonWrapper>
+      )}
+
+      {/* cpmm markets */}
+      {'totalLiquidity' in contract && (
+        <BottomRowButtonWrapper>
+          <Button
+            disabled={true}
+            size={'2xs'}
+            color={'gray-white'}
+            className={'disabled:cursor-pointer'}
+          >
+            <Tooltip text={`Total liquidity`} placement="top" noTap>
+              <Row
+                className={'text-ink-500 h-full items-center gap-1.5 text-sm'}
+              >
+                <TbDroplet className="h-6 w-6 stroke-2" />
+                <div className="text-ink-600">
+                  {formatWithToken({
+                    amount: contract.totalLiquidity,
+                    token: isCashContract ? 'CASH' : 'M$',
+                    short: true,
+                  })}
+                </div>
+              </Row>
+            </Tooltip>
+          </Button>
+        </BottomRowButtonWrapper>
+      )}
+
+      <BottomRowButtonWrapper>
+        <RepostButton
+          playContract={contract}
+          size={'2xs'}
+          className={'h-full'}
+          iconClassName={'text-ink-500'}
+        />
+      </BottomRowButtonWrapper>
+      <BottomRowButtonWrapper>
+        <ReactButton
+          contentId={contract.id}
+          contentCreatorId={contract.creatorId}
+          user={user}
+          contentType={'contract'}
+          contentText={question}
+          size={'xs'}
+          trackingLocation={'contract card (feed)'}
+          placement="top"
+          feedReason={feedReason}
+          contractId={contract.id}
+          heartClassName="stroke-ink-500"
+        />
+      </BottomRowButtonWrapper>
+    </Row>
+  )
+}
+export function YourMetricsFooter(props: {
+  metrics: ContractMetric
+  isCashContract: boolean
+  className?: string
+}) {
+  const { metrics, isCashContract, className } = props
+  const { totalShares, maxSharesOutcome, profit } = metrics
+  const { YES: yesShares, NO: noShares } = totalShares
+
+  const profitPositive = profit && profit > 0
+  const profitNegative = profit && profit < 0
+
+  return (
+    <Row
+      className={clsx(
+        'border-ink-200 mt-2 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t pt-2 text-sm',
+        className
+      )}
+    >
+      <Row className="items-center gap-1.5">
+        <span className="text-ink-500 text-xs">Position</span>
+        <span
+          className={clsx(
+            'font-semibold',
+            maxSharesOutcome === 'YES' ? 'text-teal-600' : 'text-scarlet-600'
+          )}
+        >
+          {maxSharesOutcome === 'YES'
+            ? formatWithToken({
+                amount: yesShares,
+                token: isCashContract ? 'CASH' : 'M$',
+              })
+            : formatWithToken({
+                amount: noShares,
+                token: isCashContract ? 'CASH' : 'M$',
+              })}{' '}
+          {maxSharesOutcome}
+        </span>
+      </Row>
+      <Row className="items-center gap-1.5">
+        <span className="text-ink-500 text-xs">Profit</span>
+        <span
+          className={clsx(
+            'font-semibold',
+            profitPositive && 'text-teal-600',
+            profitNegative && 'text-scarlet-600',
+            !profitPositive && !profitNegative && 'text-ink-600'
+          )}
+        >
+          {profit
+            ? (profitPositive ? '+' : '') +
+              formatWithToken({
+                amount: profit,
+                token: isCashContract ? 'CASH' : 'M$',
+              })
+            : '--'}
+        </span>
+      </Row>
+    </Row>
+  )
+}
+
+export function CategoryTags(props: {
+  categories?: { slug: string; name: string }[]
+  className?: string
+  maxGroups?: number
+}) {
+  const { categories, className, maxGroups = 3 } = props
+  if (!categories || categories.length <= 0) return null
+  return (
+    <Row className={clsx(className)}>
+      {categories.slice(0, maxGroups).map((category) => (
+        <TopicTag location={'feed card'} key={category.slug} topic={category} />
+      ))}
+    </Row>
+  )
+}
+
+export const LoadingCards = (props: { rows?: number }) => {
+  const { rows = 3 } = props
+  return (
+    <Col className="w-full">
+      {[...Array(rows)].map((r, i) => (
+        <Col
+          key={'loading-' + i}
+          className="bg-canvas-0 border-canvas-0 mb-4 gap-2 rounded-xl border p-4 drop-shadow-md"
+        >
+          <Row className="mb-2 items-center gap-2">
+            <div className="h-8 w-8 animate-pulse rounded-full bg-canvas-100" />
+            <div className="h-4 w-1/4 animate-pulse rounded bg-canvas-100" />
+          </Row>
+          <div className="mb-2 h-4 w-3/4 animate-pulse rounded bg-canvas-100" />
+          <div className="mb-4 h-4 w-1/2 animate-pulse rounded bg-canvas-100" />
+          <Row className="justify-between">
+            <div className="h-6 w-1/12 animate-pulse rounded bg-canvas-100" />
+            <div className="h-6 w-1/12 animate-pulse rounded bg-canvas-100" />
+            <div className="h-6 w-1/12 animate-pulse rounded bg-canvas-100" />
+            <div className="h-6 w-1/12 animate-pulse rounded bg-canvas-100" />
+          </Row>
+        </Col>
+      ))}
+    </Col>
+  )
+}

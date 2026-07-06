@@ -1,0 +1,140 @@
+{
+ "_comment": "Standard Gnosis ConditionalTokens (CTF) interface. This primitive is ALREADY deployed on Polygon at its canonical address; not vendored. Only the functions the Predikt web client calls are included.",
+ "abi": [
+  {
+   "type": "function",
+   "name": "splitPosition",
+   "stateMutability": "nonpayable",
+   "inputs": [
+    { "name": "collateralToken", "type": "address" },
+    { "name": "parentCollectionId", "type": "bytes32" },
+    { "name": "conditionId", "type": "bytes32" },
+    { "name": "partition", "type": "uint256[]" },
+    { "name": "amount", "type": "uint256" }
+   ],
+   "outputs": []
+  },
+  {
+   "type": "function",
+   "name": "mergePositions",
+   "stateMutability": "nonpayable",
+   "inputs": [
+    { "name": "collateralToken", "type": "address" },
+    { "name": "parentCollectionId", "type": "bytes32" },
+    { "name": "conditionId", "type": "bytes32" },
+    { "name": "partition", "type": "uint256[]" },
+    { "name": "amount", "type": "uint256" }
+   ],
+   "outputs": []
+  },
+  {
+   "type": "function",
+   "name": "redeemPositions",
+   "stateMutability": "nonpayable",
+   "inputs": [
+    { "name": "collateralToken", "type": "address" },
+    { "name": "parentCollectionId", "type": "bytes32" },
+    { "name": "conditionId", "type": "bytes32" },
+    { "name": "indexSets", "type": "uint256[]" }
+   ],
+   "outputs": []
+  },
+  {
+   "type": "function",
+   "name": "balanceOf",
+   "stateMutability": "view",
+   "inputs": [
+    { "name": "owner", "type": "address" },
+    { "name": "positionId", "type": "uint256" }
+   ],
+   "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+   "type": "function",
+   "name": "isApprovedForAll",
+   "stateMutability": "view",
+   "inputs": [
+    { "name": "owner", "type": "address" },
+    { "name": "operator", "type": "address" }
+   ],
+   "outputs": [{ "name": "", "type": "bool" }]
+  },
+  {
+   "type": "function",
+   "name": "setApprovalForAll",
+   "stateMutability": "nonpayable",
+   "inputs": [
+    { "name": "operator", "type": "address" },
+    { "name": "approved", "type": "bool" }
+   ],
+   "outputs": []
+  },
+  {
+   "type": "function",
+   "name": "payoutDenominator",
+   "stateMutability": "view",
+   "inputs": [{ "name": "conditionId", "type": "bytes32" }],
+   "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+   "type": "function",
+   "name": "payoutNumerators",
+   "stateMutability": "view",
+   "inputs": [
+    { "name": "conditionId", "type": "bytes32" },
+    { "name": "index", "type": "uint256" }
+   ],
+   "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+   "type": "function",
+   "name": "getConditionId",
+   "stateMutability": "pure",
+   "inputs": [
+    { "name": "oracle", "type": "address" },
+    { "name": "questionId", "type": "bytes32" },
+    { "name": "outcomeSlotCount", "type": "uint256" }
+   ],
+   "outputs": [{ "name": "", "type": "bytes32" }]
+  },
+  {
+   "type": "function",
+   "name": "getCollectionId",
+   "stateMutability": "view",
+   "inputs": [
+    { "name": "parentCollectionId", "type": "bytes32" },
+    { "name": "conditionId", "type": "bytes32" },
+    { "name": "indexSet", "type": "uint256" }
+   ],
+   "outputs": [{ "name": "", "type": "bytes32" }]
+  },
+  {
+   "type": "function",
+   "name": "getPositionId",
+   "stateMutability": "pure",
+   "inputs": [
+    { "name": "collateralToken", "type": "address" },
+    { "name": "collectionId", "type": "bytes32" }
+   ],
+   "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+   "type": "function",
+   "name": "getOutcomeSlotCount",
+   "stateMutability": "view",
+   "inputs": [{ "name": "conditionId", "type": "bytes32" }],
+   "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+   "type": "event",
+   "name": "ConditionResolution",
+   "inputs": [
+    { "name": "conditionId", "type": "bytes32", "indexed": true },
+    { "name": "oracle", "type": "address", "indexed": true },
+    { "name": "questionId", "type": "bytes32", "indexed": true },
+    { "name": "outcomeSlotCount", "type": "uint256", "indexed": false },
+    { "name": "payoutNumerators", "type": "uint256[]", "indexed": false }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,334 @@
+import clsx from 'clsx'
+import {
+  ChevronDoubleDownIcon,
+  ChevronDoubleUpIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/solid'
+import { Fragment, useState } from 'react'
+import Link from 'next/link'
+import { sortBy } from 'lodash'
+
+import { Row } from '../layout/row'
+import {
+  DIVISION_NAMES,
+  capPromotionDemotion,
+  league_user_info,
+} from 'common/leagues'
+import { formatMoney } from 'common/util/format'
+import { useUsers } from 'web/hooks/use-user-supabase'
+import { Col } from '../layout/col'
+import { LoadingIndicator } from '../widgets/loading-indicator'
+import { Avatar } from '../widgets/avatar'
+import { UserBadge } from '../widgets/user-link'
+import { UserHovercard } from '../user/user-hovercard'
+import { ManaEarnedBreakdown } from './mana-earned-breakdown'
+import { Tooltip } from '../widgets/tooltip'
+import { DisplayUser } from 'common/api/user-types'
+import { getRankZoneStyles } from './division-badge'
+
+export const CohortTable = (props: {
+  season: number
+  cohort: string
+  rows: league_user_info[]
+  highlightedUserId: string | undefined
+  demotionCount: number
+  promotionCount: number
+  doublePromotionCount: number
+}) => {
+  const {
+    season,
+    cohort,
+    rows,
+    highlightedUserId,
+    demotionCount,
+    promotionCount,
+    doublePromotionCount,
+  } = props
+  const sortedRows = sortBy(rows, (row) => row.rank)
+  const users = useUsers(sortedRows.map((row) => row.user_id))
+  if (!users || users.length !== sortedRows.length) return <LoadingIndicator />
+
+  const division = sortedRows[0].division
+  const nextDivision = division + 1
+  const nextNextDivision = division + 2
+  const nextDivisionName = DIVISION_NAMES[nextDivision]
+  const nextNextDivisionName = DIVISION_NAMES[nextNextDivision]
+  const prevDivision = Math.max(division - 1, 1)
+  const prevDivisionName = DIVISION_NAMES[prevDivision]
+
+  const noPromotionDemotion = cohort === 'bots'
+  const shouldTruncateZeros = division === 1 || division === 2 || division === 3
+
+  // Cap counts so demotion zone never overlaps promotion zone in small cohorts
+  const capped = capPromotionDemotion(
+    promotionCount,
+    doublePromotionCount,
+    demotionCount,
+    sortedRows.length
+  )
+
+  const adjustedDoublePromotionCount =
+    division === 1
+      ? Math.min(
+          sortedRows.findLastIndex((row) => row.mana_earned >= 100) + 1,
+          capped.doublePromotion
+        )
+      : capped.doublePromotion
+  const adjustedPromotionCount =
+    division === 1
+      ? Math.min(
+          sortedRows.findLastIndex((row) => row.mana_earned >= 100) + 1,
+          capped.promotion
+        )
+      : capped.promotion
+  const adjustedDemotionCount = capped.demotion
+
+  return (
+    <Col className="gap-3">
+      {division === 1 && (
+        <p className="text-ink-500 text-sm">
+          Requires 100 mana earned to promote from Bronze
+        </p>
+      )}
+
+      <Col className="bg-canvas-0 divide-ink-100 border-ink-200 divide-y rounded-lg border">
+        {sortedRows.map((row, i) => {
+          const user = users[i]
+          if (!user) return null
+
+          const zoneStyles = !noPromotionDemotion
+            ? getRankZoneStyles(
+                row.rank,
+                sortedRows.length,
+                adjustedPromotionCount,
+                adjustedDoublePromotionCount,
+                adjustedDemotionCount
+              )
+            : { zone: 'stay' as const, classes: '' }
+
+          const shouldShow =
+            !shouldTruncateZeros ||
+            !!row.mana_earned ||
+            highlightedUserId === user.id
+
+          return (
+            <Fragment key={user.id}>
+              {user && shouldShow && (
+                <UserRow
+                  {...row}
+                  user={user}
+                  isHighlighted={highlightedUserId === user.id}
+                  mana_earned_breakdown={row.mana_earned_breakdown as any}
+                  season={season}
+                  zoneClasses={zoneStyles.classes}
+                  isFirst={i === 0}
+                  isLast={i === sortedRows.length - 1}
+                />
+              )}
+              {user &&
+                shouldTruncateZeros &&
+                row.mana_earned === 0 &&
+                (i === sortedRows.length - 1 ||
+                  sortedRows[i + 1].mana_earned !== 0) && (
+                  <Row className="text-ink-400 justify-center py-3 text-sm">
+                    ···
+                  </Row>
+                )}
+              {!noPromotionDemotion && (
+                <>
+                  {adjustedDoublePromotionCount > 0 &&
+                    i + 1 === adjustedDoublePromotionCount && (
+                      <ZoneDivider
+                        label={`Promotes to ${nextNextDivisionName}`}
+                        type="promote"
+                      />
+                    )}
+                  {adjustedDoublePromotionCount !== adjustedPromotionCount &&
+                    adjustedPromotionCount > 0 &&
+                    i + 1 === adjustedPromotionCount && (
+                      <ZoneDivider
+                        label={`Promotes to ${nextDivisionName}`}
+                        type="promote"
+                      />
+                    )}
+                  {adjustedDemotionCount > 0 &&
+                    sortedRows.length - (i + 1) === adjustedDemotionCount && (
+                      <ZoneDivider
+                        label={`Demotes to ${prevDivisionName}`}
+                        type="demote"
+                      />
+                    )}
+                </>
+              )}
+            </Fragment>
+          )
+        })}
+      </Col>
+    </Col>
+  )
+}
+
+function ZoneDivider(props: { label: string; type: 'promote' | 'demote' }) {
+  const { label, type } = props
+
+  return (
+    <Row className="items-center gap-3 px-4 py-2">
+      <div
+        className={clsx(
+          'h-px flex-1',
+          type === 'promote' ? 'bg-teal-300' : 'bg-scarlet-300'
+        )}
+      />
+      <span
+        className={clsx(
+          'text-xs font-medium',
+          type === 'promote' ? 'text-teal-600' : 'text-scarlet-600'
+        )}
+      >
+        {label}
+      </span>
+      <div
+        className={clsx(
+          'h-px flex-1',
+          type === 'promote' ? 'bg-teal-300' : 'bg-scarlet-300'
+        )}
+      />
+    </Row>
+  )
+}
+
+const UserRow = (props: {
+  user: DisplayUser
+  season: number
+  mana_earned: number
+  mana_earned_breakdown: { [key: string]: number }
+  rank: number
+  rank_snapshot: number | null
+  isHighlighted: boolean
+  zoneClasses: string
+  isFirst: boolean
+  isLast: boolean
+}) => {
+  const {
+    user,
+    season,
+    mana_earned,
+    mana_earned_breakdown,
+    rank,
+    rank_snapshot,
+    isHighlighted,
+    zoneClasses,
+    isFirst,
+    isLast,
+  } = props
+
+  const [showDialog, setShowDialog] = useState(false)
+  const rankDiff = rank_snapshot ? rank - rank_snapshot : 0
+
+  return (
+    <>
+      <div
+        className={clsx(
+          'hover:bg-canvas-50 group cursor-pointer transition-colors',
+          isHighlighted && 'bg-primary-50',
+          zoneClasses,
+          isFirst && 'rounded-t-lg',
+          isLast && 'rounded-b-lg'
+        )}
+        onClick={() => setShowDialog(true)}
+      >
+        <Row className="items-center gap-3 px-4 py-3">
+          {/* Rank */}
+          <Row className="w-14 shrink-0 items-center gap-1">
+            <Tooltip
+              text={
+                rankDiff
+                  ? `${rankDiff < 0 ? 'Up' : 'Down'} ${Math.abs(
+                      rankDiff
+                    )} today`
+                  : undefined
+              }
+            >
+              <Row className="items-center gap-0.5">
+                <div className="w-4">
+                  {rankDiff < -1 ? (
+                    <ChevronDoubleUpIcon className="h-4 w-4 text-teal-500" />
+                  ) : rankDiff === -1 ? (
+                    <ChevronUpIcon className="h-4 w-4 text-teal-500" />
+                  ) : rankDiff === 1 ? (
+                    <ChevronDownIcon className="text-scarlet-500 h-4 w-4" />
+                  ) : rankDiff > 1 ? (
+                    <ChevronDoubleDownIcon className="text-scarlet-500 h-4 w-4" />
+                  ) : null}
+                </div>
+                <span
+                  className={clsx(
+                    'text-sm font-medium tabular-nums',
+                    rank <= 3 ? 'text-ink-900' : 'text-ink-600'
+                  )}
+                >
+                  {rank}
+                </span>
+              </Row>
+            </Tooltip>
+          </Row>
+
+          {/* User info */}
+          <UserHovercard userId={user.id} className="min-w-0 flex-1">
+            <Row className="items-center gap-2.5">
+              <Avatar
+                avatarUrl={user.avatarUrl}
+                username={user.username}
+                size="sm"
+                noLink
+                entitlements={user.entitlements}
+                displayContext="leagues"
+              />
+              <Link
+                href={`/${user.username}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-ink-900 inline-flex items-center gap-1 truncate text-sm font-medium hover:underline"
+              >
+                <span className="truncate">{user.name}</span>
+                <UserBadge
+                  userId={user.id}
+                  username={user.username}
+                  isBot={user.isBot}
+                  entitlements={user.entitlements}
+                  displayContext="leagues"
+                />
+              </Link>
+            </Row>
+          </UserHovercard>
+
+          {/* Mana earned - column on right with fixed width for alignment */}
+          <span
+            className={clsx(
+              'min-w-[90px] shrink-0 text-right text-sm font-medium tabular-nums',
+              mana_earned > 0
+                ? 'text-teal-600'
+                : mana_earned < 0
+                ? 'text-scarlet-500'
+                : 'text-ink-1000'
+            )}
+          >
+            {mana_earned > 0 ? '+' : ''}
+            {formatMoney(mana_earned)}
+          </span>
+        </Row>
+      </div>
+
+      {showDialog && (
+        <ManaEarnedBreakdown
+          user={user}
+          season={season}
+          showDialog={showDialog}
+          setShowDialog={setShowDialog}
+          mana_earned={mana_earned}
+          mana_earned_breakdown={mana_earned_breakdown}
+        />
+      )}
+    </>
+  )
+}

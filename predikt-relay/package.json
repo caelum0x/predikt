@@ -1,0 +1,39 @@
+{
+  "name": "@predikt/relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Predikt CLOB Relay Operator: off-chain price-time-priority order book + on-chain matcher that settles real EIP-712 orders through the Predikt CTFExchange.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.10"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js",
+    "dev": "node --watch --experimental-strip-types src/server.ts",
+    "mm": "node --experimental-strip-types src/marketmaker/mm.ts",
+    "mm:build": "node dist/marketmaker/mm.js",
+    "e2e": "node test/e2e/run.mjs"
+  },
+  "dependencies": {
+    "@predikt/orders": "file:../predikt-contracts/clob-client",
+    "better-sqlite3": "^11.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
+    "viem": "^2.46.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.19.1",
+    "typescript": "^5.7.3"
+  }
+}

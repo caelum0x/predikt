@@ -1,0 +1,824 @@
+// A txn (pronounced "texan") respresents a payment between two ids on Oracle
+// Shortened from "transaction" to distinguish from Firebase transactions (and save chars)
+
+import { QuestType } from 'common/quest'
+import {
+  MANA_PURCHASE_RATE_CHANGE_DATE,
+  MANA_PURCHASE_RATE_REVERT_DATE,
+} from './envs/constants'
+import { league_user_info } from './leagues'
+
+type AnyTxnType =
+  | Donation
+  | Tip
+  | LootBoxPurchase
+  | AdminReward
+  | Manalink
+  | Referral
+  | UniqueBettorBonus
+  | BettingStreakBonus
+  | CancelUniqueBettorBonus
+  | CharityFee
+  | ManaPurchase
+  | SignupBonus
+  | ContractOldResolutionPayout
+  | ContractProduceSpice
+  | ContractUndoProduceSpice
+  | ConsumeSpice
+  | ConsumeSpiceDone
+  | ConvertCash
+  | ConvertCashDone
+  | QfPayment
+  | QfAddPool
+  | QfDividend
+  | PostAdCreate
+  | PostAdRedeem
+  | MarketAdCreate
+  | MarketAdRedeem
+  | MarketAdRedeemFee
+  | QuestReward
+  | QAndACreate
+  | QAndAAward
+  | LeaguePrize
+  | BountyPosted
+  | BountyAwarded
+  | BountyAdded
+  | BountyCanceled
+  | ManaPay
+  | MarginLoan
+  | Loan
+  | LoanPayment
+  | PushNotificationBonus
+  | LikePurchase
+  | ContractUndoOldResolutionPayout
+  | ContractAnte
+  | AddSubsidy
+  | RemoveSubsidy
+  | ReclaimMana
+  | ManachanTweet
+  | BotCommentFee
+  | AirDrop
+  | ManifestAirDrop
+  | ExtraPurchasedMana
+  | OracleTopUp
+  | CashBonus
+  | CashOutPending
+  | KycBonus
+  | ProfitFee
+  | UndoResolutionFee
+  | ContractBoostPurchase
+  | CharityGiveawayTicket
+  | SweepstakesTicket
+  | SweepstakesEntriesVoided
+  | ShopPurchase
+  | ShopRefund
+  | MembershipPayment
+  | PreKycBonus
+
+export type AnyTxnCategory = AnyTxnType['category']
+
+export type SourceType = 'USER' | 'CONTRACT' | 'CHARITY' | 'BANK' | 'AD'
+
+export type Txn<T extends AnyTxnType = AnyTxnType> = {
+  id: string
+  createdTime: number
+
+  fromId: string
+  fromType: SourceType
+
+  toId: string
+  toType: SourceType
+
+  amount: number
+  token: 'M$' | 'SHARE' | 'SPICE' | 'CASH' // if you add a new type, update the check in txn table schema
+
+  category: AnyTxnType['category']
+
+  /** Human-readable description. In data->>'description' in the db */
+  description?: string
+
+  /** Any extra data. For legacy reasons, in data->'data' in the db */
+  data?: { [key: string]: any }
+} & T
+
+type LootBoxPurchase = {
+  category: 'LOOTBOX_PURCHASE'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+}
+
+type Donation = {
+  fromType: 'USER'
+  toType: 'CHARITY'
+  category: 'CHARITY'
+  token: 'SPICE' | 'M$' | 'CASH'
+}
+
+type Tip = {
+  fromType: 'USER'
+  toType: 'USER'
+  category: 'TIP'
+  data: {
+    commentId: string
+    contractId?: string
+    groupId?: string
+  }
+}
+
+type Manalink = {
+  fromType: 'USER'
+  toType: 'USER'
+  category: 'MANALINK'
+}
+
+type Referral = {
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'REFERRAL'
+}
+
+type UniqueBettorBonus = {
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'UNIQUE_BETTOR_BONUS'
+  data: {
+    contractId: string
+    uniqueNewBettorId?: string
+    // Old unique bettor bonus txns stored all unique bettor ids
+    uniqueBettorIds?: string[]
+    isPartner: boolean
+    // Creator's effective tier at award time + multiplier applied. Used by
+    // the income notification to render the upsell line when the creator is
+    // unverified (and the amount is therefore reduced).
+    effectiveTier?: string
+    uniqueTraderMultiplier?: number
+  }
+}
+
+type BettingStreakBonus = {
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'BETTING_STREAK_BONUS'
+  data: {
+    currentBettingStreak?: number
+    contractId?: string
+    // Effective tier at time of award + multiplier applied. Used by notifications
+    // to render the upsell line when the recipient is unverified.
+    effectiveTier?: string
+    streakMultiplier?: number
+    supporterBonus?: boolean
+  }
+}
+
+type CancelUniqueBettorBonus = {
+  fromType: 'USER'
+  toType: 'BANK'
+  category: 'CANCEL_UNIQUE_BETTOR_BONUS'
+  data: {
+    contractId: string
+  }
+}
+
+type CharityFee = {
+  fromType: 'USER'
+  toType: 'BANK'
+  category: 'CHARITY_FEE'
+  token: 'SPICE' | 'CASH'
+  data: {
+    charityId: string
+  }
+}
+
+type ManaPurchase = {
+  fromId: 'EXTERNAL'
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'MANA_PURCHASE'
+  data:
+    | {
+        iapTransactionId: string
+        type: 'apple'
+        // paidInCents is in USD cents for Apple purchases.
+        // Some historical rows are missing this; use getPaidDollarsFromManaPurchase.
+        paidInCents?: number
+      }
+    | {
+        stripeTransactionId: string
+        type: 'stripe'
+        // Stripe historically stored priceInDollars in paidInCents (i.e. dollars, not cents).
+        // Some historical rows are missing this; use getPaidDollarsFromManaPurchase.
+        paidInCents?: number
+      }
+    | {
+        transactionId: string
+        type: 'gidx'
+        sessionId: string
+        paidInCents: number
+      }
+    | {
+        daimoPaymentId?: string
+        daimoSessionId?: string
+        daimoEventId?: string
+        daimoTxHash?: string
+        type: 'crypto'
+        paidInCents: number
+        bonusAmount: number
+        bonusPct: number
+        isFirstCryptoPurchase: boolean
+        isBulkPurchase: boolean
+      }
+}
+
+// Convert a mana purchase txn to paid USD dollars with legacy safeguards.
+// - Stripe stored dollars in paidInCents, while others store cents.
+// - Some historical rows are missing paidInCents entirely.
+// - Mana purchase rate changed temporarily in 2024, so we infer dollars from mana by date.
+// NOTE: This logic is duplicated in SQL in backend/api/src/admin-get-top-whale-users.ts
+// for performance. If you update this function, update the SQL query too.
+export function getPaidDollarsFromManaPurchase(
+  txn: Txn & ManaPurchase
+): number {
+  const data = txn.data ?? {}
+  const paidInCents = data.paidInCents
+  if (paidInCents != null) {
+    return data.type === 'stripe' ? paidInCents : paidInCents / 100
+  }
+
+  const isThousandToOne =
+    txn.createdTime > MANA_PURCHASE_RATE_CHANGE_DATE.getTime() &&
+    txn.createdTime < MANA_PURCHASE_RATE_REVERT_DATE.getTime()
+  const dollarsPerMana = isThousandToOne ? 1 / 1000 : 1 / 100
+  return txn.amount * dollarsPerMana
+}
+type CashBonus = {
+  fromId: 'EXTERNAL'
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'CASH_BONUS'
+  data:
+    | {
+        transactionId: string
+        type: 'gidx'
+        sessionId: string
+        paidInCents: number
+      }
+    | {
+        iapTransactionId: string
+        type: 'apple'
+        paidInCents: number
+      }
+}
+
+type CashOutPending = {
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'CASH'
+  category: 'CASH_OUT'
+  data:
+    | {
+        sessionId: string
+        transactionId: string
+        type: 'gidx'
+        payoutInDollars: number
+      }
+    | {
+        merchantSessionId: string
+        transactionId: string
+        type: 'manual'
+        payoutInDollars: number
+      }
+}
+
+type KycBonus = {
+  category: 'KYC_BONUS'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'CASH'
+}
+
+type SignupBonus = {
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'SIGNUP_BONUS'
+}
+
+type PreKycBonus = {
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'PRE_KYC_BONUS'
+  token: 'M$'
+}
+
+type ContractOldResolutionPayout = {
+  fromType: 'CONTRACT'
+  toType: 'USER'
+  category: 'CONTRACT_RESOLUTION_PAYOUT'
+  token: 'M$' | 'CASH'
+  data: {
+    /** @deprecated - we use CONTRACT_UNDO_RESOLUTION_PAYOUT **/
+    reverted?: boolean
+    deposit?: number
+    payoutStartTime?: number
+    answerId?: string
+  }
+}
+
+// destroys mana in contract
+type ContractProduceSpice = {
+  fromType: 'CONTRACT'
+  toType: 'USER'
+  category: 'PRODUCE_SPICE'
+  token: 'SPICE'
+  data: {
+    deposit?: number
+    payoutStartTime?: number
+    answerId?: string
+  }
+}
+
+// these come in pairs to convert spice to mana
+type ConsumeSpice = {
+  fromType: 'USER'
+  toType: 'BANK'
+  category: 'CONSUME_SPICE'
+  token: 'SPICE'
+  data: {
+    insertTime: number
+  }
+}
+type ConsumeSpiceDone = {
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'CONSUME_SPICE_DONE'
+  token: 'M$'
+  data: {
+    insertTime: number
+  }
+}
+
+// these come in pairs to convert cash to mana
+type ConvertCash = {
+  fromType: 'USER'
+  toType: 'BANK'
+  category: 'CONVERT_CASH'
+  token: 'CASH'
+  data: {
+    insertTime: number
+  }
+}
+
+type ConvertCashDone = {
+  fromType: 'BANK'
+  toType: 'USER'
+  category: 'CONVERT_CASH_DONE'
+  token: 'M$'
+  data: {
+    insertTime: number
+  }
+}
+
+type ContractAnte = {
+  fromType: 'USER' | 'BANK'
+  toType: 'CONTRACT'
+  category: 'CREATE_CONTRACT_ANTE'
+  token: 'M$' | 'CASH'
+}
+
+type ContractUndoOldResolutionPayout = {
+  fromType: 'USER'
+  toType: 'CONTRACT'
+  category: 'CONTRACT_UNDO_RESOLUTION_PAYOUT'
+  token: 'M$' | 'CASH'
+  data: {
+    revertsTxnId: string
+  }
+}
+
+type ContractUndoProduceSpice = {
+  fromType: 'USER'
+  toType: 'CONTRACT'
+  category: 'CONTRACT_UNDO_PRODUCE_SPICE'
+  token: 'SPICE'
+  data: {
+    revertsTxnId: string
+  }
+}
+
+type QfId = {
+  qfId: string
+}
+
+type QfPayment = {
+  category: 'QF_PAYMENT'
+  fromType: 'USER'
+  toType: 'USER'
+  data: {
+    answerId: string
+  }
+}
+
+type QfAddPool = {
+  category: 'QF_ADD_POOL'
+  fromType: 'USER'
+  toType: 'CONTRACT'
+}
+
+type QfDividend = {
+  category: 'QF_DIVIDEND'
+  fromType: 'CONTRACT'
+  toType: 'USER'
+}
+
+type PostAdCreate = {
+  category: 'AD_CREATE'
+  fromType: 'USER'
+  toType: 'AD'
+}
+
+type PostAdRedeem = {
+  category: 'AD_REDEEM'
+  fromType: 'AD'
+  toType: 'USER'
+}
+
+type MarketAdCreate = {
+  category: 'MARKET_BOOST_CREATE'
+  fromType: 'USER'
+  toType: 'AD'
+  data: {
+    contractId?: string
+  }
+}
+
+type MarketAdRedeem = {
+  category: 'MARKET_BOOST_REDEEM'
+  fromType: 'AD'
+  toType: 'USER'
+}
+
+type MarketAdRedeemFee = {
+  category: 'MARKET_BOOST_REDEEM_FEE'
+  fromType: 'AD'
+  toType: 'BANK'
+}
+
+type QuestReward = {
+  category: 'QUEST_REWARD'
+  fromType: 'BANK'
+  toType: 'USER'
+  data: {
+    questType: QuestType
+    questCount: number
+    // See BettingStreakBonus.data for usage of these fields.
+    effectiveTier?: string
+    questMultiplier?: number
+    supporterBonus?: boolean
+  }
+}
+
+type QAndACreate = {
+  category: 'Q_AND_A_CREATE'
+  fromType: 'USER'
+  toType: 'BANK'
+  data: {
+    q_and_a_id: string
+  }
+}
+
+type QAndAAward = {
+  category: 'Q_AND_A_AWARD'
+  fromType: 'BANK'
+  toType: 'USER'
+  data: {
+    q_and_a_id: string
+  }
+}
+
+type LeaguePrize = {
+  category: 'LEAGUE_PRIZE'
+  fromType: 'BANK'
+  toType: 'USER'
+  data: league_user_info
+}
+
+type BountyPosted = {
+  category: 'BOUNTY_POSTED'
+  fromType: 'USER'
+  toType: 'CONTRACT'
+  token: 'M$'
+}
+
+type BountyAdded = {
+  category: 'BOUNTY_ADDED'
+  fromType: 'USER'
+  toType: 'CONTRACT'
+  token: 'M$'
+}
+
+type BountyAwarded = {
+  category: 'BOUNTY_AWARDED'
+  fromType: 'CONTRACT'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type BountyCanceled = {
+  category: 'BOUNTY_CANCELED'
+  fromType: 'CONTRACT'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type ManaPay = {
+  category: 'MANA_PAYMENT'
+  fromType: 'USER'
+  toType: 'USER'
+  token: 'M$' | 'SPICE' | 'CASH'
+  data: {
+    visibility: 'public' | 'private'
+    message: string
+    groupId: string // for multiple payments
+    postId?: string
+  }
+}
+
+type MarginLoan = {
+  category: 'MARGIN_LOAN'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type Loan = {
+  category: 'LOAN'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type LoanPayment = {
+  category: 'LOAN_PAYMENT'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+  data?: { amountRepaid: number }
+}
+
+type PushNotificationBonus = {
+  category: 'PUSH_NOTIFICATION_BONUS'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type LikePurchase = {
+  category: 'LIKE_PURCHASE'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+}
+
+type AddSubsidy = {
+  category: 'ADD_SUBSIDY'
+  fromType: 'USER'
+  toType: 'CONTRACT'
+  token: 'M$' | 'CASH'
+}
+
+type RemoveSubsidy = {
+  category: 'REMOVE_SUBSIDY'
+  fromType: 'CONTRACT'
+  toType: 'USER'
+  token: 'M$' | 'CASH'
+}
+
+type ReclaimMana = {
+  category: 'RECLAIM_MANA'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+}
+
+type ManachanTweet = {
+  category: 'MANACHAN_TWEET'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+}
+
+type BotCommentFee = {
+  category: 'BOT_COMMENT_FEE'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+}
+
+type AirDrop = {
+  category: 'AIR_DROP'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$' | 'CASH'
+}
+
+type ManifestAirDrop = {
+  category: 'MANIFEST_AIR_DROP'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type ExtraPurchasedMana = {
+  category: 'EXTRA_PURCHASED_MANA'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type OracleTopUp = {
+  category: 'MANIFOLD_TOP_UP'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type ProfitFee = {
+  category: 'CONTRACT_RESOLUTION_FEE'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$' | 'CASH'
+  data: {
+    contractId: string
+    payoutStartTime: number
+    answerId?: string
+  }
+}
+
+type UndoResolutionFee = {
+  category: 'UNDO_CONTRACT_RESOLUTION_FEE'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$' | 'CASH'
+  data: {
+    revertsTxnId: string
+    contractId: string
+  }
+}
+
+type AdminReward = {
+  category: 'ADMIN_REWARD'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+  data: {
+    reportId: number
+    updateType: string
+  }
+}
+
+type ContractBoostPurchase = {
+  category: 'CONTRACT_BOOST_PURCHASE'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+  data: {
+    contractId?: string
+    postId?: string
+    boostId: string
+  }
+}
+
+type CharityGiveawayTicket = {
+  category: 'CHARITY_GIVEAWAY_TICKET'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+  data: {
+    giveawayNum: number
+    charityId: string
+    numTickets: number
+    ticketId: string
+  }
+}
+
+type SweepstakesTicket = {
+  category: 'SWEEPSTAKES_TICKET'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+  data: {
+    sweepstakesNum: number
+    numTickets: number
+    ticketId: string
+  }
+}
+
+// Bank-to-user reversal that refunds a voided sweepstakes entry — issued when
+// an admin voids a user's outstanding entries (e.g. flagging the buyer
+// prize-ineligible with voidOutstandingEntries). Refunds the mana the user
+// paid, not USD — the prize pool is paid out in USDC, but entries are bought
+// with mana, and mana is what got debited.
+type SweepstakesEntriesVoided = {
+  category: 'SWEEPSTAKES_ENTRIES_VOIDED'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+  data: {
+    sweepstakesNum: number
+    entryId: string
+    voidedReason: string
+  }
+}
+
+type ShopPurchase = {
+  category: 'SHOP_PURCHASE'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+  data: {
+    itemId: string
+  }
+}
+
+type ShopRefund = {
+  category: 'SHOP_REFUND'
+  fromType: 'BANK'
+  toType: 'USER'
+  token: 'M$'
+}
+
+type MembershipPayment = {
+  category: 'MEMBERSHIP_PAYMENT'
+  fromType: 'USER'
+  toType: 'BANK'
+  token: 'M$'
+  data: {
+    itemId: string // e.g., 'supporter-plus'
+    upgradeCredit?: number // prorated credit from previous tier
+    isAutoRenewal?: boolean // true if from scheduler job
+  }
+}
+
+export type AddSubsidyTxn = Txn & AddSubsidy
+export type RemoveSubsidyTxn = Txn & RemoveSubsidy
+export type DonationTxn = Txn & Donation
+export type TipTxn = Txn & Tip
+export type ManalinkTxn = Txn & Manalink
+export type ReferralTxn = Txn & Referral
+export type BettingStreakBonusTxn = Txn & BettingStreakBonus
+export type UniqueBettorBonusTxn = Txn & UniqueBettorBonus
+export type CancelUniqueBettorBonusTxn = Txn & CancelUniqueBettorBonus
+export type CharityFeeTxn = Txn & CharityFee
+export type ManaPurchaseTxn = Txn & ManaPurchase
+export type SignupBonusTxn = Txn & SignupBonus
+export type ContractOldResolutionPayoutTxn = Txn & ContractOldResolutionPayout
+export type ContractUndoOldResolutionPayoutTxn = Txn &
+  ContractUndoOldResolutionPayout
+export type ContractProduceSpiceTxn = Txn & ContractProduceSpice
+export type ContractUndoProduceSpiceTxn = Txn & ContractUndoProduceSpice
+export type ConsumeSpiceTxn = Txn & ConsumeSpice
+export type ConsumeSpiceDoneTxn = Txn & ConsumeSpiceDone
+export type ConvertCashTxn = Txn & ConvertCash
+export type ConvertCashDoneTxn = Txn & ConvertCashDone
+export type QfTxn = Txn & QfId
+export type QfPaymentTxn = QfTxn & QfPayment
+export type QfAddPoolTxn = QfTxn & QfAddPool
+export type QfDividendTxn = QfTxn & QfDividend
+export type PostAdCreateTxn = Txn & PostAdCreate
+export type PostAdRedeemTxn = Txn & PostAdRedeem
+export type MarketAdCreateTxn = Txn & MarketAdCreate
+export type MarketAdRedeemTxn = Txn & MarketAdRedeem
+export type MarketAdRedeemFeeTxn = Txn & MarketAdRedeemFee
+export type QuestRewardTxn = Txn & QuestReward
+export type LootBoxPurchaseTxn = Txn & LootBoxPurchase
+export type QAndACreateTxn = Txn & QAndACreate
+export type QAndAAwardTxn = Txn & QAndAAward
+export type LeaguePrizeTxn = Txn & LeaguePrize
+export type BountyAwardedTxn = Txn & BountyAwarded
+export type BountyPostedTxn = Txn & BountyPosted
+export type BountyAddedTxn = Txn & BountyAdded
+export type BountyCanceledTxn = Txn & BountyCanceled
+export type ManaPayTxn = Txn & ManaPay
+export type MarginLoanTxn = Txn & MarginLoan
+export type LoanTxn = Txn & Loan
+export type LoanPaymentTxn = Txn & LoanPayment
+export type PushNotificationBonusTxn = Txn & PushNotificationBonus
+export type LikePurchaseTxn = Txn & LikePurchase
+export type ReclaimManaTxn = Txn & ReclaimMana
+export type ManachanTweetTxn = Txn & ManachanTweet
+export type BotCommentFeeTxn = Txn & BotCommentFee
+export type AirDropTxn = Txn & AirDrop
+export type ManifestAirDropTxn = Txn & ManifestAirDrop
+export type ExtraPurchasedManaTxn = Txn & ExtraPurchasedMana
+export type OracleTopUpTxn = Txn & OracleTopUp
+export type KycBonusTxn = Txn & KycBonus
+export type CashOutPendingTxn = Txn & CashOutPending
+export type ProfitFeeTxn = Txn & ProfitFee
+export type UndoResolutionFeeTxn = Txn & UndoResolutionFee
+export type AdminRewardTxn = Txn & AdminReward
+export type ContractBoostPurchaseTxn = Txn & ContractBoostPurchase
+export type CharityGiveawayTicketTxn = Txn & CharityGiveawayTicket
+export type SweepstakesTicketTxn = Txn & SweepstakesTicket
+export type ShopPurchaseTxn = Txn & ShopPurchase
+export type MembershipPaymentTxn = Txn & MembershipPayment
+export type PreKycBonusTxn = Txn & PreKycBonus

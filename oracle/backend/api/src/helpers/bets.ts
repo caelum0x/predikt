@@ -1,0 +1,674 @@
+import { NewBetResult } from 'api/place-bet'
+import { redeemShares } from 'api/redeem-shares'
+import { Answer } from 'common/answer'
+import { APIError } from 'common/api/utils'
+import { isUserBanned, getUserBanMessage } from 'common/ban-utils'
+import { LimitBet, maker } from 'common/bet'
+import { MarginalBet } from 'common/calculate-metrics'
+import { Contract, MarketContract } from 'common/contract'
+import { ContractMetric, isSummary } from 'common/contract-metric'
+import { getUniqueBettorBonusAmount } from 'common/economy'
+import {
+  BANNED_TRADING_USER_IDS,
+  PARTNER_USER_IDS,
+} from 'common/envs/constants'
+import { CandidateBet } from 'common/new-bet'
+import { convertBet } from 'common/supabase/bets'
+import { convertAnswer, convertContract } from 'common/supabase/contracts'
+import { convertUser } from 'common/supabase/users'
+import { UniqueBettorBonusTxn } from 'common/txn'
+import { User, UserBan } from 'common/user'
+import {
+  getEffectiveBonusMultiplier,
+  resolveEffectiveTier,
+  roundTierBonus,
+  SUPPORTER_ENTITLEMENT_IDS,
+} from 'common/supporter-config'
+import { convertEntitlement } from 'common/shop/types'
+import { floatingEqual } from 'common/util/math'
+import { removeUndefinedProps } from 'common/util/object'
+import {
+  groupBy,
+  mapValues,
+  orderBy,
+  sortBy,
+  sumBy,
+  uniq,
+  uniqBy,
+} from 'lodash'
+import { bulkUpdateUserMetricsWithNewBetsOnly } from 'shared/helpers/user-contract-metrics'
+import { log } from 'shared/monitoring/log'
+import {
+  pgp,
+  SupabaseDirectClient,
+  SupabaseTransaction,
+} from 'shared/supabase/init'
+import { getInsertQuery } from 'shared/supabase/utils'
+import { txnToRow } from 'shared/txn/run-txn'
+import { contractColumnsToSelect } from 'shared/utils'
+
+type BetDataBody = {
+  contractId: string
+  amount?: number | undefined
+  answerId?: string
+  answerIds?: string[]
+  outcome: 'YES' | 'NO'
+}
+
+// Shared SQL fragments for selecting a contract's open limit orders. These are
+// reused by both fetchContractBetDataAndValidate (pre-transaction read) and
+// lockContractAndGetBetData (in-transaction locked re-read) so the two paths
+// can't drift. The fragments assume the query is formatted with
+// [uid, contractId, answerIds, outcome] bound to $1..$4.
+const getLimitOrderQueryFragments = (body: BetDataBody) => {
+  const answerIds =
+    'answerIds' in body
+      ? body.answerIds
+      : 'answerId' in body && body.answerId !== undefined
+      ? [body.answerId]
+      : undefined
+
+  const isSumsToOne = `(select coalesce((data->>'shouldAnswersSumToOne')::boolean, false) from contracts where id = $2)`
+  const whereLimitOrderBets = `
+    b.contract_id = $2 and not b.is_filled and not b.is_cancelled and
+    (b.expires_at is null or b.expires_at > now()) and
+    (
+      -- For sums to one markets:
+      (${isSumsToOne} and (
+        -- Get opposite outcome bets for selected answers
+        ($3 is null or b.answer_id in ($3:list)) and b.outcome != $4
+        or
+        -- Get same outcome bets for other answers
+        ($3 is null or b.answer_id not in ($3:list)) and b.outcome = $4
+      ))
+      or
+      -- For non-sums to one markets, just get opposite outcome bets
+      (not ${isSumsToOne} and ($3 is null or b.answer_id in ($3:list)) and b.outcome != $4)
+    )
+  `
+  return { answerIds, isSumsToOne, whereLimitOrderBets }
+}
+
+export const fetchContractBetDataAndValidate = async (
+  pgTrans: SupabaseTransaction | SupabaseDirectClient,
+  body: {
+    contractId: string
+    amount: number | undefined
+    answerId?: string
+    answerIds?: string[]
+    outcome: 'YES' | 'NO'
+  },
+  uid: string,
+  isApi: boolean,
+  isAdminTrade: boolean = false
+) => {
+  const startTime = Date.now()
+  const { amount, contractId, outcome } = body
+  const { answerIds, isSumsToOne, whereLimitOrderBets } =
+    getLimitOrderQueryFragments(body)
+  const queries = pgp.as.format(
+    `
+    select * from users where id = $1;
+    select ${contractColumnsToSelect} from contracts where id = $2;
+    select * from answers
+      where contract_id = $2 and (
+        $3 is null or id in ($3:list) or ${isSumsToOne}
+      ) order by index;
+    select b.*, u.balance from contract_bets b join users u on b.user_id = u.id
+      where ${whereLimitOrderBets};
+    -- My contract metrics
+    select data, margin_loan, loan from user_contract_metrics ucm where
+      contract_id = $2 and user_id = $1
+      and (
+        -- Get metrics for selected answers
+        $3 is null or ucm.answer_id in ($3:list)
+        or
+        -- Get null answer metrics
+        ucm.answer_id is null
+      );
+    -- Limit orderers' contract metrics
+    with matching_user_answer_pairs as (
+      select distinct b.user_id, b.answer_id
+      from contract_bets b
+      where ${whereLimitOrderBets}
+    )
+    select data, margin_loan, loan from user_contract_metrics ucm
+    where contract_id = $2
+      and user_id in (select user_id from matching_user_answer_pairs)
+      and (answer_id in (select answer_id from matching_user_answer_pairs)
+        or answer_id is null);
+    select status from system_trading_status where token = (select token from contracts where id = $2);
+    select * from user_bans where user_id = $1 and ended_at is null and (end_time is null or end_time > now());
+    -- Creator user for bonus eligibility check
+    select * from users where id = (select creator_id from contracts where id = $2);
+    -- Creator's active supporter entitlements: subscription wins in
+    -- resolveEffectiveTier, so the creator's unique-trader bonus must see them.
+    -- (convertUser doesn't load entitlements, so without this a subscriber
+    -- creator would be mis-tiered as unverified.)
+    select user_id, entitlement_id, granted_time, expires_time, enabled, auto_renew, metadata
+      from user_entitlements
+      where user_id = (select creator_id from contracts where id = $2)
+        and entitlement_id in ($5:list)
+        and enabled = true
+        and (expires_time is null or expires_time > now());
+  `,
+    [
+      uid,
+      contractId,
+      answerIds ?? null,
+      outcome,
+      [...SUPPORTER_ENTITLEMENT_IDS],
+    ]
+  )
+  const results = await pgTrans.multi(queries)
+  const user = convertUser(results[0][0])
+  const contract = convertContract(results[1][0])
+  const creatorRow = results[8]?.[0]
+  const creator = creatorRow ? convertUser(creatorRow) : undefined
+  // Attach the creator's active supporter entitlements (loaded above) so
+  // resolveEffectiveTier recognizes a subscriber creator — otherwise their
+  // unique-trader bonus is computed at the unverified tier.
+  if (creator) {
+    creator.entitlements = (results[9] ?? []).map(convertEntitlement)
+  }
+  const answers = results[2].map(convertAnswer)
+  const unfilledBets = results[3].map(convertBet) as (LimitBet & {
+    balance: number
+  })[]
+  const myContractMetrics = results[4].map(
+    (r) =>
+      ({
+        ...r.data,
+        loan: r.loan ?? r.data.loan ?? 0,
+        marginLoan: r.margin_loan ?? r.data.marginLoan ?? 0,
+      } as ContractMetric)
+  )
+  // We get slightly more contract metrics than we need bc the contract_metrics index works poorly when selecting
+  // (user_id, answer_id) in (select user_id, answer_id from matching_user_answer_pairs)
+  const limitOrderersContractMetrics = results[5]
+    .map(
+      (r) =>
+        ({
+          ...r.data,
+          loan: r.loan ?? r.data.loan ?? 0,
+          marginLoan: r.margin_loan ?? r.data.marginLoan ?? 0,
+        } as ContractMetric)
+    )
+    .filter((m) =>
+      unfilledBets.some(
+        (b) =>
+          b.userId === m.userId && (b.answerId === m.answerId || isSummary(m))
+      )
+    )
+  const contractMetrics = uniqBy(
+    [...myContractMetrics, ...limitOrderersContractMetrics],
+    (m) => m.userId + m.answerId + m.contractId
+  )
+  const systemStatus = results[6][0]
+  const userBans = results[7] as UserBan[]
+
+  if (!systemStatus.status) {
+    throw new APIError(
+      403,
+      `Trading with ${contract.token} is currently disabled.`
+    )
+  }
+
+  if (!user) throw new APIError(404, 'User not found.')
+  if (!contract) throw new APIError(404, 'Contract not found.')
+  if (contract.mechanism === 'none' || contract.mechanism === 'qf')
+    throw new APIError(400, 'This is not a market')
+
+  if (contract.mechanism === 'cpmm-multi-1')
+    contract.answers = sortBy(
+      uniqBy([...answers, ...contract.answers], 'id'),
+      'index'
+    )
+
+  const { closeTime, isResolved } = contract
+  if (closeTime && Date.now() > closeTime)
+    throw new APIError(403, 'Trading is closed.')
+  if (isResolved) throw new APIError(403, 'Market is resolved.')
+
+  const balanceByUserId = Object.fromEntries(
+    uniqBy(unfilledBets, (b) => b.userId).map((bet) => [
+      bet.userId,
+      bet.balance,
+    ])
+  )
+  const unfilledBetUserIds = Object.keys(balanceByUserId)
+  const balance = user.balance
+  if (amount !== undefined && balance < amount)
+    throw new APIError(403, 'Insufficient balance.')
+
+  if (
+    (BANNED_TRADING_USER_IDS.includes(user.id) || user.userDeleted) &&
+    !isAdminTrade
+  ) {
+    throw new APIError(403, 'You are banned or deleted. And not #blessed.')
+  }
+
+  // Check new granular trading ban
+  if (!isAdminTrade && isUserBanned(userBans, 'trading')) {
+    const message = getUserBanMessage(userBans, 'trading')
+    const errorMsg = message
+      ? `You are banned from trading. Reason: ${message}`
+      : 'You are banned from trading'
+    throw new APIError(403, errorMsg)
+  }
+  if (contract.outcomeType === 'STONK' && isApi) {
+    throw new APIError(403, 'API users cannot bet on STONK contracts.')
+  }
+  if (
+    contract.creatorBannedFromBetting &&
+    uid === contract.creatorId &&
+    !isAdminTrade
+  ) {
+    throw new APIError(
+      403,
+      'You have blocked yourself from betting on this market. Contact a moderator if you need this reversed.'
+    )
+  }
+  log(
+    `Loaded user ${user.username} with id ${user.id} betting on slug ${contract.slug} with contract id: ${contract.id}.`
+  )
+  log(`Fetch bet data took ${Date.now() - startTime}ms`)
+
+  return {
+    user,
+    contract,
+    creator,
+    answers,
+    unfilledBets,
+    balanceByUserId,
+    unfilledBetUserIds,
+    contractMetrics,
+  }
+}
+
+// Lock the contract row FOR UPDATE and re-read its fresh pool/answers/open limit
+// orders, inside the transaction. fetchContractBetDataAndValidate runs *before*
+// the transaction (to keep the heavy validation/metric reads out of it), so the
+// pool it read can be stale by the time we write, and the in-process betsQueue
+// only serializes bets within a single API replica. Without this, two bets on the
+// same contract on different replicas could each compute against the same pool and
+// blind-write conflicting absolute values (a lost update).
+//
+// Because this read is inside the transaction callback it reruns on every
+// runTransactionWithRetries attempt, so each retry recomputes against current
+// state; the FOR UPDATE serializes same-contract bets/sells across replicas,
+// surfacing a concurrent write as a 40001 retry instead of a silent race.
+export const lockContractAndGetBetData = async (
+  pgTrans: SupabaseTransaction,
+  body: BetDataBody,
+  uid: string
+) => {
+  const { contractId, outcome } = body
+  const { answerIds, isSumsToOne, whereLimitOrderBets } =
+    getLimitOrderQueryFragments(body)
+  const queries = pgp.as.format(
+    `
+    select ${contractColumnsToSelect} from contracts where id = $2 for update;
+    select * from answers
+      where contract_id = $2 and (
+        $3 is null or id in ($3:list) or ${isSumsToOne}
+      ) order by index;
+    select b.*, u.balance from contract_bets b join users u on b.user_id = u.id
+      where ${whereLimitOrderBets};
+  `,
+    [uid, contractId, answerIds ?? null, outcome]
+  )
+  const results = await pgTrans.multi(queries)
+  const contract = convertContract(results[0][0]) as MarketContract
+  const answers = results[1].map(convertAnswer)
+  if (contract.mechanism === 'cpmm-multi-1')
+    contract.answers = sortBy(
+      uniqBy([...answers, ...contract.answers], 'id'),
+      'index'
+    )
+  const unfilledBets = results[2].map(convertBet) as (LimitBet & {
+    balance: number
+  })[]
+  const balanceByUserId = Object.fromEntries(
+    uniqBy(unfilledBets, (b) => b.userId).map((bet) => [
+      bet.userId,
+      bet.balance,
+    ])
+  )
+  const unfilledBetUserIds = Object.keys(balanceByUserId)
+  return {
+    contract,
+    answers,
+    unfilledBets,
+    balanceByUserId,
+    unfilledBetUserIds,
+  }
+}
+
+export const getUnfilledBets = async (
+  pg: SupabaseDirectClient,
+  contractId: string,
+  answerId?: string
+) => {
+  return await pg.map(
+    `select * from contract_bets
+    where contract_id = $1
+    and contract_bets.is_filled = false
+    and contract_bets.is_cancelled = false
+    ${answerId ? `and answer_id = $2` : ''}`,
+    [contractId, answerId],
+    (r) => convertBet(r) as LimitBet
+  )
+}
+export const getUserBalancesAndMetrics = async (
+  pgTrans: SupabaseTransaction | SupabaseDirectClient,
+  userIds: string[],
+  contract: Contract,
+  answerId?: string
+) => {
+  const startTime = Date.now()
+  const { id: contractId, mechanism } = contract
+  // TODO: if we pass the makers' answerIds, we don't need to fetch the metrics for all answers
+  const sumsToOne =
+    mechanism === 'cpmm-multi-1' && contract.shouldAnswersSumToOne
+  const results = await pgTrans.multi(
+    `
+      SELECT balance, id FROM users WHERE id = ANY($1);
+      select data, margin_loan, loan from user_contract_metrics where user_id = any($1) and contract_id = $2 and
+           ($3 is null or answer_id = $3 or answer_id is null);
+    `,
+    [userIds, contractId, sumsToOne ? null : answerId ?? null]
+  )
+  const balanceByUserId: Record<string, number> = Object.fromEntries(
+    results[0].map((user) => [user.id, user.balance])
+  )
+  const contractMetrics = results[1].map((r) => ({
+    ...r.data,
+    loan: r.loan ?? r.data.loan ?? 0,
+    marginLoan: r.margin_loan ?? r.data.marginLoan ?? 0,
+  })) as ContractMetric[]
+  log(`Fetch user balances and metrics took ${Date.now() - startTime}ms`)
+  return { balanceByUserId, contractMetrics }
+}
+export const getUnfilledBetsAndUserBalances = async (
+  pgTrans: SupabaseTransaction,
+  contract: Contract,
+  userId: string,
+  answerId?: string
+) => {
+  const unfilledBets = await getUnfilledBets(pgTrans, contract.id, answerId)
+  const userIds = uniq([userId, ...unfilledBets.map((bet) => bet.userId)])
+  const { balanceByUserId, contractMetrics } = await getUserBalancesAndMetrics(
+    pgTrans,
+    userIds,
+    contract,
+    answerId
+  )
+
+  return { unfilledBets, balanceByUserId, contractMetrics }
+}
+
+export const getBulkUpdateLimitOrdersQueryAndValues = (
+  updates: Array<
+    {
+      bet: LimitBet
+    } & Pick<LimitBet, 'fills' | 'isFilled' | 'amount' | 'shares'>
+  >
+) => {
+  if (updates.length === 0)
+    return { query: 'select 1 where false', updatedMakers: [] }
+  const results = updates.map((update) => {
+    const { bet, ...updateData } = update
+    const updatedBet = {
+      ...bet,
+      ...updateData,
+    }
+    const updateQ = `('${bet.id}', '${JSON.stringify(updateData)}'::jsonb)`
+    return { updatedBet, updateQ }
+  })
+
+  const values = results.map(({ updateQ }) => updateQ).join(',\n')
+  const updatedMakers = results.map(({ updatedBet }) => updatedBet)
+
+  const query = `UPDATE contract_bets AS c
+       SET data = data || v.update
+       FROM (VALUES ${values}) AS v(id, update)
+       WHERE c.bet_id = v.id`
+  return { query, updatedMakers }
+}
+
+export const updateMakers = async (
+  makersByTakerBetId: Record<string, maker[]>,
+  contract: MarketContract,
+  contractMetrics: ContractMetric[],
+  pgTrans: SupabaseTransaction
+) => {
+  const allFillsAsNewBets: MarginalBet[] = []
+  const allMakerIds: string[] = []
+  const allSpentByUser: Record<string, number> = {}
+  const allUpdates: Array<
+    {
+      bet: LimitBet
+    } & Pick<LimitBet, 'fills' | 'isFilled' | 'amount' | 'shares'>
+  > = []
+
+  for (const [takerBetId, makers] of Object.entries(makersByTakerBetId)) {
+    const makersByBet = groupBy(makers, (maker) => maker.bet.id)
+
+    for (const makers of Object.values(makersByBet)) {
+      const limitOrderBet = makers[0].bet
+      const newFills = makers.map((maker) => {
+        const { amount, shares, timestamp } = maker
+        return { amount, shares, matchedBetId: takerBetId, timestamp }
+      })
+      const fills = [...limitOrderBet.fills, ...newFills]
+      const totalShares = sumBy(fills, 'shares')
+      const totalAmount = sumBy(fills, 'amount')
+      const isFilled = floatingEqual(totalAmount, limitOrderBet.orderAmount)
+      allFillsAsNewBets.push({
+        ...limitOrderBet,
+        amount: sumBy(newFills, 'amount'),
+        shares: sumBy(newFills, 'shares'),
+        createdTime: orderBy(newFills, 'timestamp', 'desc')[0].timestamp,
+        loanAmount: 0,
+        isRedemption: false,
+      })
+      allUpdates.push({
+        bet: limitOrderBet,
+        fills,
+        isFilled,
+        amount: totalAmount,
+        shares: totalShares,
+      })
+    }
+
+    const spentByUser = mapValues(
+      groupBy(makers, (maker) => maker.bet.userId),
+      (makers) => sumBy(makers, (maker) => maker.amount)
+    )
+
+    for (const [userId, spent] of Object.entries(spentByUser)) {
+      allSpentByUser[userId] = (allSpentByUser[userId] || 0) + spent
+    }
+
+    allMakerIds.push(...Object.keys(spentByUser))
+  }
+
+  if (allUpdates.length === 0) {
+    return {
+      betsToInsert: [],
+      updatedMetrics: contractMetrics,
+      balanceUpdates: [],
+      bulkUpdateLimitOrdersQuery: 'select 1 where false',
+      updatedMakers: [],
+    }
+  }
+
+  const allUpdatedMetrics = await bulkUpdateUserMetricsWithNewBetsOnly(
+    pgTrans,
+    allFillsAsNewBets,
+    contractMetrics,
+    false
+  )
+
+  const bulkLimitOrderBalanceUpdates = Object.entries(allSpentByUser).map(
+    ([userId, spent]) => ({
+      id: userId,
+      balance: -spent,
+    })
+  )
+
+  const makerIds = uniq(allMakerIds)
+  log('Redeeming shares for makers', makerIds)
+  const {
+    betsToInsert: redemptionBets,
+    updatedMetrics: redemptionUpdatedMetrics,
+    balanceUpdates: redemptionBalanceUpdates,
+  } = await redeemShares(
+    pgTrans,
+    makerIds,
+    contract,
+    allFillsAsNewBets,
+    allUpdatedMetrics
+  )
+  const { query: bulkUpdateLimitOrdersQuery, updatedMakers } =
+    getBulkUpdateLimitOrdersQueryAndValues(allUpdates)
+  return {
+    betsToInsert: redemptionBets,
+    updatedMetrics: redemptionUpdatedMetrics,
+    balanceUpdates: redemptionBalanceUpdates.concat(
+      bulkLimitOrderBalanceUpdates
+    ),
+    bulkUpdateLimitOrdersQuery,
+    updatedMakers,
+  }
+}
+
+export const getRoundedLimitProb = (limitProb: number | undefined) => {
+  if (limitProb === undefined) return limitProb
+  const isRounded = floatingEqual(Math.round(limitProb * 100), limitProb * 100)
+  if (!isRounded)
+    throw new APIError(
+      400,
+      'limitProb must be in increments of 0.01 (i.e. whole percentage points)'
+    )
+
+  return Math.round(limitProb * 100) / 100
+}
+
+export const getMakerIdsFromBetResult = (result: NewBetResult) => {
+  const { makers = [], otherBetResults = [], ordersToCancel = [] } = result
+
+  const makerUserIds = [
+    ...makers,
+    ...otherBetResults.flatMap((r) => r.makers),
+  ].map((m) => m.bet.userId)
+
+  const cancelledUserIds = [
+    ...ordersToCancel,
+    ...otherBetResults.flatMap((r) => r.ordersToCancel),
+  ].map((o) => o.userId)
+
+  return uniq([...makerUserIds, ...cancelledUserIds])
+}
+
+export const getUniqueBettorBonusQuery = (
+  contract: MarketContract,
+  bettor: User,
+  bet: CandidateBet,
+  creator?: User // Optional: pass creator to check their bonus eligibility
+) => {
+  const { answerId, isRedemption, isApi } = bet
+
+  const isBot = bettor.isBot ?? false
+  const isUnlisted = contract.visibility === 'unlisted'
+
+  const answer =
+    answerId && 'answers' in contract
+      ? (contract.answers as Answer[]).find((a) => a.id == answerId)
+      : undefined
+  const answerCreatorId = answer?.userId
+  const creatorId = answerCreatorId ?? contract.creatorId
+  const isCreator = bettor.id == creatorId
+  const isUnfilledLimitOrder =
+    bet.limitProb !== undefined && (!bet.fills || bet.fills.length === 0)
+
+  const isPartner =
+    PARTNER_USER_IDS.includes(contract.creatorId) &&
+    // Require the contract creator to also be the answer creator for real-money bonus.
+    creatorId === contract.creatorId
+
+  if (
+    isCreator ||
+    isBot ||
+    isUnlisted ||
+    isRedemption ||
+    isUnfilledLimitOrder ||
+    isApi
+  )
+    return {
+      balanceUpdate: undefined,
+      txnQuery: 'select 1 where false',
+    }
+
+  // ian: removed the diminishing bonuses, but we could add them back via contract.uniqueBettorCount
+  const baseBonusAmount = getUniqueBettorBonusAmount(
+    contract.totalLiquidity,
+    'answers' in contract ? contract.answers.length : 0
+  )
+
+  // Scale by creator's effective tier. Unverified creators get a reduced
+  // amount (0.5x) instead of zero; verified and all subscribers get the
+  // full base amount. If creator wasn't passed in, assume verified for
+  // backwards compatibility.
+  const creatorTier = creator
+    ? resolveEffectiveTier({
+        entitlements: creator.entitlements,
+        bonusEligibility: creator.bonusEligibility,
+      })
+    : 'verified'
+  const uniqueTraderMultiplier = getEffectiveBonusMultiplier(
+    creatorTier,
+    'uniqueTrader'
+  )
+  const bonusAmount = roundTierBonus(baseBonusAmount * uniqueTraderMultiplier)
+
+  if (bonusAmount <= 0) {
+    return {
+      balanceUpdate: undefined,
+      txnQuery: 'select 1 where false',
+    }
+  }
+
+  const bonusTxnData = removeUndefinedProps({
+    contractId: contract.id,
+    uniqueNewBettorId: bettor.id,
+    answerId,
+    isPartner,
+    effectiveTier: creatorTier,
+    uniqueTraderMultiplier,
+  })
+
+  const bonusTxn: Omit<UniqueBettorBonusTxn, 'id' | 'createdTime'> = {
+    fromType: 'BANK',
+    fromId: 'BANK',
+    toId: creatorId,
+    toType: 'USER',
+    amount: bonusAmount,
+    token: 'M$',
+    category: 'UNIQUE_BETTOR_BONUS',
+    data: bonusTxnData,
+  } as const
+  const balanceUpdate = {
+    id: bonusTxn.toId,
+    balance: bonusAmount,
+    totalDeposits: bonusAmount,
+  }
+  const txnQuery = getInsertQuery('txns', txnToRow(bonusTxn))
+
+  log(`Bonus txn for user: ${contract.creatorId} constructed:`, bonusTxn)
+  return {
+    balanceUpdate,
+    txnQuery,
+  }
+}
