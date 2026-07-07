@@ -22,7 +22,8 @@
     "format-changed": "cd .. && git diff $(git merge-base --fork-point main) --name-only --diff-filter=d | xargs npx prettier -w",
     "verify": "(cd .. && yarn verify)",
     "verify:dir": "yarn lint && npx prettier --check . && tsc --pretty --project tsconfig.json --noEmit",
-    "test": "jest --config jest.config.js"
+    "test": "cross-env TS_JEST_DISABLE_VER_CHECKER=true jest --config jest.config.js",
+    "test:coverage": "cross-env TS_JEST_DISABLE_VER_CHECKER=true jest --config jest.config.js --coverage"
   },
   "dependencies": {
     "@amplitude/analytics-browser": "1.9.4",

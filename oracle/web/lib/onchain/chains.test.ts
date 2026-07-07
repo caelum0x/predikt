@@ -86,9 +86,103 @@ describe('resolveRpcHttp: env override vs public default', () => {
   })
 })
 
+describe('getChainConfig / getChainConfigById (edge cases)', () => {
+  it('resolves every declared chain by its own key', () => {
+    for (const key of CHAIN_ORDER) {
+      expect(getChainConfig(key).key).toBe(key)
+    }
+  })
+
+  it('round-trips key -> id -> config for every chain', () => {
+    for (const key of CHAIN_ORDER) {
+      const byKey = getChainConfig(key)
+      const byId = getChainConfigById(byKey.chainId)
+      expect(byId).toBeDefined()
+      expect(byId!.key).toBe(key)
+    }
+  })
+
+  it('returns undefined for boundary/negative/zero ids', () => {
+    expect(getChainConfigById(0)).toBeUndefined()
+    expect(getChainConfigById(-1)).toBeUndefined()
+    expect(getChainConfigById(Number.MAX_SAFE_INTEGER)).toBeUndefined()
+    // 138 is adjacent to Polygon's 137 but is not a registered chain.
+    expect(getChainConfigById(138)).toBeUndefined()
+  })
+
+  it('throws with the offending key for empty-string and non-chain keys', () => {
+    expect(() => getChainConfig('' as ChainKey)).toThrow('Unknown chain: ')
+    expect(() => getChainConfig('POLYGON' as ChainKey)).toThrow(
+      'Unknown chain: POLYGON'
+    )
+  })
+})
+
+describe('resolveRpcHttp: exhaustive per-chain env override handling', () => {
+  const ENV_KEYS = CHAIN_ORDER.map((k) => EVM_CHAINS[k].rpcEnvVar)
+  const saved: Record<string, string | undefined> = {}
+
+  beforeEach(() => {
+    for (const key of ENV_KEYS) {
+      saved[key] = process.env[key]
+      delete process.env[key]
+    }
+  })
+  afterEach(() => {
+    for (const key of ENV_KEYS) {
+      if (saved[key] === undefined) delete process.env[key]
+      else process.env[key] = saved[key]
+    }
+  })
+
+  it('falls back to the public endpoint for EVERY chain when unset', () => {
+    for (const key of CHAIN_ORDER) {
+      expect(resolveRpcHttp(key)).toBe(EVM_CHAINS[key].publicRpcHttp)
+    }
+  })
+
+  it('honors a distinct override for EVERY chain independently', () => {
+    for (const key of CHAIN_ORDER) {
+      const url = `https://override.example/${key}`
+      process.env[EVM_CHAINS[key].rpcEnvVar] = url
+      expect(resolveRpcHttp(key)).toBe(url)
+    }
+    // Overrides do not bleed across chains: each resolves to its own url.
+    for (const key of CHAIN_ORDER) {
+      expect(resolveRpcHttp(key)).toBe(`https://override.example/${key}`)
+    }
+  })
+
+  it('treats an empty-string override as unset (public fallback) per chain', () => {
+    for (const key of CHAIN_ORDER) {
+      process.env[EVM_CHAINS[key].rpcEnvVar] = ''
+      expect(resolveRpcHttp(key)).toBe(EVM_CHAINS[key].publicRpcHttp)
+    }
+  })
+
+  it('propagates the unknown-chain throw from getChainConfig', () => {
+    expect(() => resolveRpcHttp('litecoin' as ChainKey)).toThrow(
+      'Unknown chain: litecoin'
+    )
+  })
+})
+
 describe('usdcAddress', () => {
   it('returns the canonical native USDC per chain', () => {
     expect(usdcAddress('polygon')).toBe(EVM_CHAINS.polygon.usdc)
     expect(usdcAddress('ethereum')).toBe(EVM_CHAINS.ethereum.usdc)
+  })
+
+  it('returns a well-formed USDC address for EVERY chain', () => {
+    for (const key of CHAIN_ORDER) {
+      expect(usdcAddress(key)).toBe(EVM_CHAINS[key].usdc)
+      expect(usdcAddress(key)).toMatch(/^0x[0-9a-fA-F]{40}$/)
+    }
+  })
+
+  it('propagates the unknown-chain throw', () => {
+    expect(() => usdcAddress('solana' as ChainKey)).toThrow(
+      'Unknown chain: solana'
+    )
   })
 })
