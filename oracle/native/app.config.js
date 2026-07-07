@@ -106,6 +106,30 @@ export default ({ config }) => {
         associatedDomains: [`applinks:${DOMAIN}`, `webcredentials:${DOMAIN}`],
         buildNumber: '1.0.71',
         runtimeVersion: otaUpdateVersion,
+        privacyManifests: {
+          NSPrivacyTracking: false,
+          NSPrivacyTrackingDomains: [],
+          NSPrivacyAccessedAPITypes: [
+            { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults', NSPrivacyAccessedAPITypeReasons: ['CA92.1'] },
+            { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp', NSPrivacyAccessedAPITypeReasons: ['C617.1'] },
+            { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime', NSPrivacyAccessedAPITypeReasons: ['35F9.1'] },
+            { NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace', NSPrivacyAccessedAPITypeReasons: ['E174.1'] },
+          ],
+          NSPrivacyCollectedDataTypes: [
+            {
+              NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeCrashData',
+              NSPrivacyCollectedDataTypeLinked: false,
+              NSPrivacyCollectedDataTypeTracking: false,
+              NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+            },
+            {
+              NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePerformanceData',
+              NSPrivacyCollectedDataTypeLinked: false,
+              NSPrivacyCollectedDataTypeTracking: false,
+              NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+            },
+          ],
+        },
       },
       runtimeVersion: otaUpdateVersion,
       extra: {
