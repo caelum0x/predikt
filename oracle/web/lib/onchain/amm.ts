@@ -149,7 +149,7 @@ export async function exists(conditionId: ConditionId): Promise<boolean> {
  * pointing this at the factory's deploy block keeps discovery fast + reliable.
  * Defaults to `0n` (full history) when unset.
  */
-function getFromBlock(): bigint {
+export function getFromBlock(): bigint {
   const raw = process.env.NEXT_PUBLIC_ONCHAIN_FPMM_FROM_BLOCK
   if (!raw) return 0n
   try {
@@ -263,10 +263,24 @@ export async function marginalPrices(
   positionIds: readonly [bigint, bigint]
 ): Promise<readonly [number, number] | null> {
   const [yes, no] = await poolReserves(pool, positionIds)
-  const total = yes + no
+  return marginalPricesFromReserves(yes, no)
+}
+
+/**
+ * Pure constant-product marginal-price math (extracted from `marginalPrices` so
+ * it can be unit tested without an RPC read). For a binary CPMM the spot price
+ * of an outcome is the OTHER side's reserve over the total — the scarcer side is
+ * dearer. Returns null for an empty (or degenerate negative) pool, guarding the
+ * divide-by-zero. The two prices always sum to 1 and each sits in [0,1].
+ */
+export function marginalPricesFromReserves(
+  yesReserve: bigint,
+  noReserve: bigint
+): readonly [number, number] | null {
+  const total = yesReserve + noReserve
   if (total <= 0n) return null
   // priceYes = noReserve / (yesReserve + noReserve); priceNo = 1 - priceYes.
-  const priceYes = Number((no * ONE) / total) / Number(ONE)
+  const priceYes = Number((noReserve * ONE) / total) / Number(ONE)
   const priceNo = 1 - priceYes
   return [priceYes, priceNo]
 }
@@ -359,11 +373,17 @@ async function ensureCtfApproval(
 /** Slippage tolerance applied to on-chain min-out / max-in guards (1% default). */
 const DEFAULT_SLIPPAGE_BPS = 100n
 
-function applySlippageDown(amount: bigint, bps = DEFAULT_SLIPPAGE_BPS): bigint {
+export function applySlippageDown(
+  amount: bigint,
+  bps = DEFAULT_SLIPPAGE_BPS
+): bigint {
   return (amount * (10_000n - bps)) / 10_000n
 }
 
-function applySlippageUp(amount: bigint, bps = DEFAULT_SLIPPAGE_BPS): bigint {
+export function applySlippageUp(
+  amount: bigint,
+  bps = DEFAULT_SLIPPAGE_BPS
+): bigint {
   return (amount * (10_000n + bps)) / 10_000n
 }
 

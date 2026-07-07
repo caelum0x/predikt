@@ -307,14 +307,46 @@ export class ExchangeClient {
         if (Number(order.side) === OrderSide.BUY) {
             // BUY: maker supplies USDC (makerAsset = collateral, 6dp).
             const { balance, allowance } = await this.usdcBalanceAndAllowance(maker);
-            if (balance < makingAmount) return { ok: false, reason: "insufficient USDC balance" };
-            if (allowance < makingAmount) return { ok: false, reason: "insufficient USDC allowance" };
-            return { ok: true };
+            return evaluateBuyFunding(makingAmount, balance, allowance);
         }
         // SELL: maker supplies outcome tokens (makerAsset = tokenId, ERC1155).
         const { balance, approved } = await this.ctfBalanceAndApproval(maker, BigInt(order.tokenId));
-        if (!approved) return { ok: false, reason: "CTF not approved for exchange" };
-        if (balance < makingAmount) return { ok: false, reason: "insufficient CTF balance" };
-        return { ok: true };
+        return evaluateSellFunding(makingAmount, balance, approved);
     }
+}
+
+export interface FundCheck {
+    ok: boolean;
+    reason?: string;
+}
+
+/**
+ * Pure fund-check decision for a BUY order: the maker supplies USDC. Requires the
+ * USDC balance AND the exchange allowance to each cover the full making amount.
+ * Extracted from ExchangeClient.makerCanFund so the branching is unit-testable
+ * without an RPC client; makerCanFund calls this with on-chain reads.
+ */
+export function evaluateBuyFunding(
+    makingAmount: bigint,
+    balance: bigint,
+    allowance: bigint,
+): FundCheck {
+    if (balance < makingAmount) return { ok: false, reason: "insufficient USDC balance" };
+    if (allowance < makingAmount) return { ok: false, reason: "insufficient USDC allowance" };
+    return { ok: true };
+}
+
+/**
+ * Pure fund-check decision for a SELL order: the maker supplies outcome tokens
+ * (ERC1155). Requires exchange operator approval AND a token balance covering the
+ * full making amount. Approval is checked before balance to match makerCanFund.
+ */
+export function evaluateSellFunding(
+    makingAmount: bigint,
+    balance: bigint,
+    approved: boolean,
+): FundCheck {
+    if (!approved) return { ok: false, reason: "CTF not approved for exchange" };
+    if (balance < makingAmount) return { ok: false, reason: "insufficient CTF balance" };
+    return { ok: true };
 }

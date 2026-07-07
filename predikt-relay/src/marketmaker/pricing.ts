@@ -63,16 +63,26 @@ export function buildLadder(
     levels: number,
     orderSize: number,
 ): Level[] {
+    // Defensive boundary guards: a market maker driving this with a bad config
+    // (NaN oracle, negative spread, fractional/negative level count, non-positive
+    // size) must never emit garbage or zero/negative-size quotes. Clamp the mid
+    // to the trading band and bail out on any non-quotable parameter.
+    const safeMid = clampPrice(mid);
+    if (!Number.isFinite(spreadBps) || spreadBps <= 0) return [];
+    if (!Number.isFinite(orderSize) || orderSize <= 0) return [];
+    if (!Number.isFinite(levels) || levels <= 0) return [];
+    const levelCount = Math.floor(levels);
+
     const step = spreadBps / 10_000; // bps of probability → absolute prob delta
     const out: Level[] = [];
-    for (let i = 0; i < levels; i++) {
+    for (let i = 0; i < levelCount; i++) {
         const offset = step * (i + 0.5);
-        const buyPrice = clampPrice(mid - offset);
-        const sellPrice = clampPrice(mid + offset);
-        if (buyPrice > MIN_PRICE && buyPrice < mid) {
+        const buyPrice = clampPrice(safeMid - offset);
+        const sellPrice = clampPrice(safeMid + offset);
+        if (buyPrice > MIN_PRICE && buyPrice < safeMid) {
             out.push({ side: "BUY", price: buyPrice, size: orderSize });
         }
-        if (sellPrice < MAX_PRICE && sellPrice > mid) {
+        if (sellPrice < MAX_PRICE && sellPrice > safeMid) {
             out.push({ side: "SELL", price: sellPrice, size: orderSize });
         }
     }

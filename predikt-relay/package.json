@@ -15,6 +15,7 @@
     "dev": "node --watch --experimental-strip-types src/server.ts",
     "mm": "node --experimental-strip-types src/marketmaker/mm.ts",
     "mm:build": "node dist/marketmaker/mm.js",
+    "test": "node --experimental-strip-types --test test/unit/*.test.mjs",
     "e2e": "node test/e2e/run.mjs"
   },
   "dependencies": {

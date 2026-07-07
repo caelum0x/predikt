@@ -42,13 +42,13 @@ export type Venue = 'AMM' | 'CLOB' | 'none'
 const USDC_ONE = 10n ** BigInt(USDC_DECIMALS)
 
 /** Human units (a decimal number of USDC or shares) -> 6-dp base units. */
-function toBaseUnits(human: number): bigint {
+export function toBaseUnits(human: number): bigint {
   if (!Number.isFinite(human) || human <= 0) return 0n
   // Round to 6dp to avoid float dust, then to base units.
   return BigInt(Math.round(human * 1e6))
 }
 
-function fromBaseUnits(base: bigint): number {
+export function fromBaseUnits(base: bigint): number {
   return Number(base) / 1e6
 }
 
@@ -299,6 +299,27 @@ async function invertSell(
   idx: OutcomeIndex,
   sellShares: bigint
 ): Promise<bigint | null> {
+  return invertSellQuote(
+    (returnUsdc) => amm.calcSellAmount(pool, idx, returnUsdc),
+    sellShares
+  )
+}
+
+/**
+ * Pure binary-search inverter (extracted from `invertSell` so it can be unit
+ * tested against a real constant-product `calcSell` oracle without a live RPC).
+ *
+ * `calcSell(returnUsdc)` mirrors the FPMM view: given a desired USDC return it
+ * yields the outcome tokens that must be sold, or `null` when the pool can't pay
+ * that much. Since the view is MONOTONE (more USDC out needs more tokens in) we
+ * bisect [0, sellShares] for the largest USDC return whose token cost is still
+ * ≤ `sellShares`. Bounded at 40 iterations; converges to base-unit precision.
+ */
+export async function invertSellQuote(
+  calcSell: (returnUsdc: bigint) => Promise<bigint | null>,
+  sellShares: bigint
+): Promise<bigint | null> {
+  if (sellShares <= 0n) return null
   let lo = 0n
   let hi = sellShares // upper bound: each token pays out at most ~$1
   // Confirm the pool can price the max side at least a little; if the top of the
@@ -307,7 +328,7 @@ async function invertSell(
   for (let i = 0; i < 40 && lo <= hi; i++) {
     const mid = (lo + hi) / 2n
     if (mid === lo) break
-    const tokensNeeded = await amm.calcSellAmount(pool, idx, mid)
+    const tokensNeeded = await calcSell(mid)
     if (tokensNeeded == null) {
       // Return too large for the pool at `mid`; search lower.
       hi = mid - 1n
@@ -376,7 +397,7 @@ export async function routeBestExecution(
  * received. SELL: maximize USDC proceeds. Ties break to the AMM (deterministic,
  * single-tx, no relay round-trip). Nulls lose to any real quote.
  */
-function pickWinner(
+export function pickWinner(
   side: TradeSide,
   ammQuote: VenueQuote | null,
   clobQuote: VenueQuote | null
