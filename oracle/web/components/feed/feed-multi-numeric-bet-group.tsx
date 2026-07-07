@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { TbRobot } from 'react-icons/tb'
 import { Bet } from 'common/bet'
 import { CPMMNumericContract } from 'common/contract'
 import { memo } from 'react'
@@ -88,7 +89,11 @@ function BetGroupStatusText(props: {
           ? `at ${expectedValueBefore}`
           : `from ${expectedValueBefore} to ${expectedValueAfter}`}
       </>
-      {isApi && <InfoTooltip text="Placed via the API">🤖</InfoTooltip>}
+      {isApi && (
+        <InfoTooltip text="Placed via the API">
+          <TbRobot aria-label="Placed via the API" className="inline h-4 w-4" />
+        </InfoTooltip>
+      )}
       <RelativeTimestamp time={bet.createdTime} shortened={true} />
     </div>
   )

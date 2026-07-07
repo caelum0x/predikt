@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
+import { TbCheck, TbX } from 'react-icons/tb'
 import { dailyStatsClass } from 'web/components/home/daily-stats'
 import { track } from 'web/lib/service/analytics'
 import { Col } from '../layout/col'
@@ -106,9 +107,20 @@ export const DailyPredictleStat = (props: { className?: string }) => {
         <div className="whitespace-nowrap">
           {completed ? (
             won ? (
-              `✅ ${attempts}`
+              <span className="flex items-center gap-1">
+                <TbCheck
+                  role="img"
+                  aria-label="Solved"
+                  className="h-5 w-5 text-teal-600"
+                />
+                {attempts}
+              </span>
             ) : (
-              '❌'
+              <TbX
+                role="img"
+                aria-label="Failed"
+                className="text-scarlet-500 h-5 w-5"
+              />
             )
           ) : (
             <img

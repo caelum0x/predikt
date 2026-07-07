@@ -1,5 +1,13 @@
 import { XIcon } from '@heroicons/react/outline'
 import clsx from 'clsx'
+import {
+  TbAlertTriangle,
+  TbConfetti,
+  TbDeviceLaptop,
+  TbFlag,
+  TbGift,
+  TbTicket,
+} from 'react-icons/tb'
 
 import { IconButton } from '../buttons/button'
 import { Row } from '../layout/row'
@@ -95,7 +103,10 @@ export function ManifestBanner(props: { hideBanner: () => void }) {
           strokeWidth={1}
         />
         <div>
-          <span className="font-semibold">Get tickets to Manifest 2024 🥳</span>{' '}
+          <span className="inline-flex items-center gap-1 font-semibold">
+            Get tickets to Manifest 2024
+            <TbConfetti aria-hidden="true" className="h-4 w-4" />
+          </span>{' '}
           — our second forecasting festival, June 7-9 in Berkeley, CA
         </div>
       </Row>
@@ -135,7 +146,11 @@ export function DowntimeBanner() {
   if (!maintainanceBannerEnabled) return null
   return (
     <Banner className=" bg-primary-100 hover:bg-primary-200 dark:text-primary-800 text-primary-700  hover:text-primary-900 items-center py-2  transition-colors">
-      ⚠️ Predikt will be down at 9PM PT for about 2 hours, as we upgrade our
+      <TbAlertTriangle
+        aria-hidden="true"
+        className="mr-1 inline h-4 w-4 align-text-bottom"
+      />
+      Predikt will be down at 9PM PT for about 2 hours, as we upgrade our
       financial infrastructure.
     </Banner>
   )
@@ -147,7 +162,15 @@ export function WatchPartyBanner() {
       className="border-primary-300 from-primary-100 to-primary-200 my-2 border bg-gradient-to-b py-2"
       link="/tv"
     >
-      🇺🇸 Join the presidential debate watch party on Predikt TV! 🇺🇸
+      <TbFlag
+        aria-hidden="true"
+        className="mr-1 inline h-4 w-4 align-text-bottom text-blue-700"
+      />
+      Join the presidential debate watch party on Predikt TV!
+      <TbFlag
+        aria-hidden="true"
+        className="ml-1 inline h-4 w-4 align-text-bottom text-blue-700"
+      />
     </Banner>
   )
 }
@@ -159,12 +182,20 @@ export function StateOfTheUnionBanner() {
       link="https://oracle.markets/tv/86"
       target="_self"
     >
-      🇺🇸 Join our State of the Union watch party{' '}
+      <TbFlag
+        aria-hidden="true"
+        className="mr-1 inline h-4 w-4 align-text-bottom text-blue-700"
+      />
+      Join our State of the Union watch party{' '}
       {new Date('2024-03-05T21:00:00-05:00').toLocaleString(undefined, {
         weekday: 'long',
         hour: 'numeric',
       })}
-      ! 🇺🇸
+      !
+      <TbFlag
+        aria-hidden="true"
+        className="ml-1 inline h-4 w-4 align-text-bottom text-blue-700"
+      />
     </Banner>
   )
 }
@@ -180,7 +211,7 @@ export function StateOfTheUnion2026Banner() {
       setShowBanner={hideBanner}
     >
       <Row className="items-center gap-2">
-        <span className="text-lg">🇺🇸</span>
+        <TbFlag aria-hidden="true" className="h-5 w-5 text-blue-700" />
         <div>
           <span className="font-semibold">State of the Union watch party</span>{' '}
           on Predikt TV tonight at{' '}
@@ -280,7 +311,10 @@ export const CyberMondayBanner = () => {
       setShowBanner={hideBanner}
     >
       <Row className="items-center gap-2">
-        <span className="text-lg">💻</span>
+        <TbDeviceLaptop
+          aria-hidden="true"
+          className="h-5 w-5 text-cyan-400"
+        />
         <div className="font-medium text-white">
           <span className="font-bold text-cyan-400">Cyber Monday:</span> 25% off
           coins using code{' '}
@@ -305,7 +339,7 @@ export const CharityGiveawayBanner = () => {
       setShowBanner={hideBanner}
     >
       <Row className="items-center gap-2">
-        <span>🎟️</span>
+        <TbTicket aria-hidden="true" className="h-5 w-5" />
         <div>
           <span className="font-semibold">Charity is back!</span> Help your
           favorite charity win $1,000
@@ -327,7 +361,7 @@ export const ShopBanner = () => {
       setShowBanner={hideBanner}
     >
       <Row className="items-center gap-2">
-        <span>🎉</span>
+        <TbConfetti aria-hidden="true" className="h-5 w-5" />
         <div className="text-ink-700">
           <span className="font-semibold">Coins Shop is live!</span> Get
           membership perks, cosmetics & merch
@@ -349,7 +383,7 @@ export const PrizeDrawingBanner = () => {
       setShowBanner={hideBanner}
     >
       <Row className="items-center gap-2">
-        <span>🎁</span>
+        <TbGift aria-hidden="true" className="h-5 w-5" />
         <div className="text-ink-700">
           <span className="font-semibold">Prize Drawing!</span> Enter for a
           chance to win USDC prizes

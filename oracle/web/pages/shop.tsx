@@ -49,6 +49,17 @@ import { FaGem, FaGift, FaLock } from 'react-icons/fa6'
 import { LuCrown, LuGraduationCap } from 'react-icons/lu'
 import { GiTopHat, GiDunceCap } from 'react-icons/gi'
 import {
+  TbConfetti,
+  TbTarget,
+  TbDiamond,
+  TbSnowflake,
+  TbCoin,
+  TbTrendingUp,
+  TbSparkles,
+  TbTrophy,
+  TbClock,
+} from 'react-icons/tb'
+import {
   BlackHoleSvg,
   FireFlamesSvg,
   AngelWingSvg,
@@ -2587,7 +2598,7 @@ function SupporterModal(props: {
           colors={['#f59e0b', '#fbbf24', '#fcd34d', '#6366f1', '#8b5cf6']}
         />
         <Col className="bg-canvas-0 max-w-md rounded-xl p-8 text-center">
-          <div className="mb-4 text-5xl">🎉</div>
+          <TbConfetti className="mx-auto mb-4 h-12 w-12 text-primary-600" aria-hidden />
           <h2 className="mb-6 text-2xl font-bold">
             You're now a{' '}
             {purchasedTier && (
@@ -2615,7 +2626,7 @@ function SupporterModal(props: {
             {purchasedTier && (
               <>
                 <Row className="items-center gap-2">
-                  <span>🎯</span>
+                  <TbTarget className="text-ink-700 h-5 w-5 shrink-0" aria-hidden />
                   <span>
                     {SUPPORTER_BENEFITS[purchasedTier].questMultiplier}x quest
                     rewards
@@ -2623,7 +2634,7 @@ function SupporterModal(props: {
                 </Row>
                 {SUPPORTER_BENEFITS[purchasedTier].shopDiscount > 0 && (
                   <Row className="items-center gap-2">
-                    <span>💎</span>
+                    <TbDiamond className="h-5 w-5 shrink-0 text-cyan-500" aria-hidden />
                     <span>
                       {Math.round(
                         SUPPORTER_BENEFITS[purchasedTier].shopDiscount * 100
@@ -2634,7 +2645,7 @@ function SupporterModal(props: {
                 )}
                 {SUPPORTER_BENEFITS[purchasedTier].maxStreakFreezes > 1 && (
                   <Row className="items-center gap-2">
-                    <span>❄️</span>
+                    <TbSnowflake className="h-5 w-5 shrink-0 text-blue-400" aria-hidden />
                     <span>
                       {SUPPORTER_BENEFITS[purchasedTier].maxStreakFreezes} max
                       streak freezes
@@ -2643,7 +2654,7 @@ function SupporterModal(props: {
                 )}
                 {SUPPORTER_BENEFITS[purchasedTier].freeLoanRate > 0.01 && (
                   <Row className="items-center gap-2">
-                    <span>💰</span>
+                    <TbCoin className="h-5 w-5 shrink-0 text-amber-500" aria-hidden />
                     <span>
                       {Math.round(
                         SUPPORTER_BENEFITS[purchasedTier].freeLoanRate * 100
@@ -2654,7 +2665,7 @@ function SupporterModal(props: {
                 )}
                 {SUPPORTER_BENEFITS[purchasedTier].marginLoanAccess && (
                   <Row className="items-center gap-2">
-                    <span>📈</span>
+                    <TbTrendingUp className="h-5 w-5 shrink-0 text-green-500" aria-hidden />
                     <span>
                       {SUPPORTER_BENEFITS[purchasedTier]
                         .maxLoanNetWorthPercent + 1}
@@ -4502,7 +4513,7 @@ function StreakFreezePreview(props: {
       <Row className="flex-wrap items-center justify-center gap-x-2 gap-y-1">
         <span className="text-ink-600 text-xs sm:text-sm">Your freezes:</span>
         <Row className="items-center gap-1.5">
-          <span className="text-base sm:text-lg">❄️</span>
+          <TbSnowflake className="h-4 w-4 text-blue-400 sm:h-5 sm:w-5" aria-hidden />
           {isAtPurchaseMax ? (
             <span className="font-bold text-blue-500">
               {currentFreezes}/{maxPurchasable} owned (max)
@@ -5764,8 +5775,9 @@ function ShopItemCard(props: {
           )}
           {/* Unique items get a special badge */}
           {item.slot === 'unique' && (
-            <span className="w-fit rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-              ✨ Combines with everything
+            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+              <TbSparkles className="h-3 w-3" aria-hidden />
+              Combines with everything
             </span>
           )}
 
@@ -5789,8 +5801,9 @@ function ShopItemCard(props: {
           {/* Achievement requirement badge */}
           {item.requirement && (
             <div className="rounded-md bg-amber-50 px-2 py-1 dark:bg-amber-900/30">
-              <span className="text-xs text-amber-700 dark:text-amber-300">
-                🏆 Requires: {item.requirement.description}
+              <span className="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-300">
+                <TbTrophy className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Requires: {item.requirement.description}
               </span>
             </div>
           )}
@@ -5813,9 +5826,17 @@ function ShopItemCard(props: {
                     : 'text-ink-500'
                 )}
               >
-                {isSeasonalItemAvailable(item)
-                  ? '🎉 Available now!'
-                  : `⏰ ${getSeasonalAvailabilityText(item) ?? 'Limited time'}`}
+                {isSeasonalItemAvailable(item) ? (
+                  <span className="inline-flex items-center gap-1">
+                    <TbConfetti className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    Available now!
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1">
+                    <TbClock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {getSeasonalAvailabilityText(item) ?? 'Limited time'}
+                  </span>
+                )}
               </span>
             </div>
           )}

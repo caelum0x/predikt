@@ -25,6 +25,7 @@ import { useAPIGetter } from 'web/hooks/use-api-getter'
 import { EditInPlaceInput } from 'web/components/widgets/edit-in-place'
 import DropdownMenu from 'web/components/widgets/dropdown-menu'
 import DotsVerticalIcon from '@heroicons/react/outline/DotsVerticalIcon'
+import { TbConfetti, TbCircleFilled } from 'react-icons/tb'
 import { DAY_MS } from 'common/util/time'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
@@ -136,8 +137,9 @@ export default function TodoPage() {
         if (newCompleted) {
           // Play sound and show toast only on completion
           chachingSound?.play()
-          toast.success('Task completed! 🎉', {
+          toast.success('Task completed!', {
             duration: 2000,
+            icon: <TbConfetti className="h-5 w-5 text-primary-600" aria-hidden />,
           })
         }
         await updateTask({ id: taskId, completed: newCompleted })
@@ -346,7 +348,10 @@ export default function TodoPage() {
                               }
                               items={buildArray(
                                 {
-                                  name: '🔴 Set urgent',
+                                  name: 'Set urgent',
+                                  icon: (
+                                    <TbCircleFilled className="h-4 w-4 text-red-500" />
+                                  ),
                                   onClick: () =>
                                     updateTask({
                                       id: task.id,
@@ -354,7 +359,10 @@ export default function TodoPage() {
                                     }),
                                 },
                                 {
-                                  name: '🟠 Set high',
+                                  name: 'Set high',
+                                  icon: (
+                                    <TbCircleFilled className="h-4 w-4 text-orange-500" />
+                                  ),
                                   onClick: () =>
                                     updateTask({
                                       id: task.id,
@@ -362,7 +370,10 @@ export default function TodoPage() {
                                     }),
                                 },
                                 {
-                                  name: '🟡 Set medium',
+                                  name: 'Set medium',
+                                  icon: (
+                                    <TbCircleFilled className="h-4 w-4 text-yellow-500" />
+                                  ),
                                   onClick: () =>
                                     updateTask({
                                       id: task.id,
@@ -370,7 +381,10 @@ export default function TodoPage() {
                                     }),
                                 },
                                 {
-                                  name: '🔵 Set low',
+                                  name: 'Set low',
+                                  icon: (
+                                    <TbCircleFilled className="h-4 w-4 text-blue-500" />
+                                  ),
                                   onClick: () =>
                                     updateTask({
                                       id: task.id,
@@ -378,7 +392,10 @@ export default function TodoPage() {
                                     }),
                                 },
                                 {
-                                  name: '⚫️ Set None',
+                                  name: 'Set None',
+                                  icon: (
+                                    <TbCircleFilled className="text-ink-400 h-4 w-4" />
+                                  ),
                                   onClick: () =>
                                     updateTask({
                                       id: task.id,

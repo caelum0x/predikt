@@ -4,6 +4,7 @@ import { AvatarNotificationIcon } from './notification-helpers'
 import { NotificationUserLink } from './notification-helpers'
 import { PrimaryNotificationLink } from './notification-helpers'
 import { getSourceUrl } from 'common/notification'
+import { TbPencil } from 'react-icons/tb'
 
 export function NewPostFromFollowedUserNotification(props: {
   notification: Notification
@@ -28,7 +29,15 @@ export function NewPostFromFollowedUserNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'✍️'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbPencil
+              aria-hidden="true"
+              className="text-primary-500 h-5 w-5"
+            />
+          }
+        />
       }
       link={getSourceUrl(notification)}
       subtitle={sourceText}

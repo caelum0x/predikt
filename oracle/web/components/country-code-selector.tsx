@@ -3,6 +3,7 @@ import { getCodeList } from 'country-list'
 import { useState } from 'react'
 import { Row } from 'web/components/layout/row'
 import { XIcon } from '@heroicons/react/outline'
+import { TbCheck } from 'react-icons/tb'
 
 const countries = getCodeList()
 
@@ -69,7 +70,11 @@ export const CountryCodeSelector = (props: {
                           : 'text-blue-600 dark:text-blue-400'
                       }`}
                     >
-                      ✓
+                      <TbCheck
+                        role="img"
+                        aria-label="Selected"
+                        className="h-4 w-4"
+                      />
                     </span>
                   ) : null}
                 </>

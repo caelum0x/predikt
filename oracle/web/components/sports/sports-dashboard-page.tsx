@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { usePersistentLocalState } from 'web/hooks/use-persistent-local-state'
 import { JSONContent } from '@tiptap/core'
 import Head from 'next/head'
@@ -779,7 +779,7 @@ export function SportsDashboardPage({
 }: {
   sportsLeague: string
   title: string
-  emoji: string
+  emoji: ReactNode
   trackPageView: string
   communityDashboardSlug?: string
   competitionCode?: string

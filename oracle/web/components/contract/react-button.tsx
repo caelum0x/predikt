@@ -1,5 +1,6 @@
 import { HeartIcon } from '@heroicons/react/outline'
 import clsx from 'clsx'
+import { TbMoodUnamused } from 'react-icons/tb'
 import { DisplayUser } from 'common/api/user-types'
 import { Reaction, ReactionContentTypes, ReactionType } from 'common/reaction'
 import { User } from 'common/user'
@@ -156,7 +157,11 @@ export const ReactButton = memo(function ReactButton(props: {
     () => {
       if (!disabled) {
         if (isMe && reactionType === 'like') {
-          toast("Of course you'd like yourself", { icon: '🙄' })
+          toast("Of course you'd like yourself", {
+            icon: (
+              <TbMoodUnamused aria-hidden="true" className="h-5 w-5" />
+            ),
+          })
         } else {
           handleReacted(!reacted)
         }

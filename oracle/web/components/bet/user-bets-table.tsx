@@ -1,5 +1,6 @@
 'use client'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
+import { TbCheck } from 'react-icons/tb'
 import { CogIcon } from '@heroicons/react/outline'
 import {
   ArrowSmDownIcon,
@@ -690,7 +691,11 @@ function BetsTable(props: {
                     >
                       {column.label}
                       {isSelected && (
-                        <span className="text-primary-600 ml-2">✓</span>
+                        <TbCheck
+                          role="img"
+                          aria-label="Selected"
+                          className="text-primary-600 ml-2 inline h-4 w-4"
+                        />
                       )}
                     </button>
                   )

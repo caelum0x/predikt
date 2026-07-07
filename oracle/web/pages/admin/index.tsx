@@ -12,6 +12,25 @@ import { handleCreateSportsMarkets } from 'web/lib/admin/create-sports-markets'
 import { api } from 'web/lib/api/api'
 import { db } from 'web/lib/supabase/db'
 import { LabCard } from 'web/components/widgets/lab-card'
+import {
+  TbReceipt,
+  TbTicket,
+  TbUserPlus,
+  TbGift,
+  TbFish,
+  TbChartLine,
+  TbChartBar,
+  TbActivity,
+  TbDatabase,
+  TbBallFootball,
+  TbFlag,
+  TbShirt,
+  TbPalette,
+  TbMoon,
+  TbUser,
+  TbUsers,
+  TbCircleCheck,
+} from 'react-icons/tb'
 
 export default function AdminPage() {
   useRedirectIfSignedOut()
@@ -71,34 +90,86 @@ export default function AdminPage() {
           />
         </Row>
 
-        <LabCard title="🧾 sales" href="/admin/sales" />
-        <LabCard title="🎟️ manifest tickets" href="/admin/tickets" />
-        <LabCard title="🆕 new users" href="/admin/new-users" />
-        <LabCard title="🎁 prize payouts" href="/admin/prize" />
-        <LabCard title="🐋 whales" href="/admin/whales" />
-        <LabCard title="💹 stats" href="/stats" />
         <LabCard
-          title="🍚 umami"
-          href="https://analytics.eu.umami.is/websites/ee5d6afd-5009-405b-a69f-04e3e4e3a685"
+          title="sales"
+          href="/admin/sales"
+          icon={<TbReceipt className="h-5 w-5" aria-hidden />}
         />
         <LabCard
-          title="🍥 grafana"
+          title="manifest tickets"
+          href="/admin/tickets"
+          icon={<TbTicket className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="new users"
+          href="/admin/new-users"
+          icon={<TbUserPlus className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="prize payouts"
+          href="/admin/prize"
+          icon={<TbGift className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="whales"
+          href="/admin/whales"
+          icon={<TbFish className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="stats"
+          href="/stats"
+          icon={<TbChartLine className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="umami"
+          href="https://analytics.eu.umami.is/websites/ee5d6afd-5009-405b-a69f-04e3e4e3a685"
+          icon={<TbChartBar className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="grafana"
           description="db performance"
           href="https://oracle.grafana.net/d/TFZtEJh4k/supabase"
+          icon={<TbActivity className="h-5 w-5" aria-hidden />}
         />
         <LabCard
-          title="💤 postgres logs"
+          title="postgres logs"
           href="https://app.supabase.com/project/pxidrgkatumlvfqaxcll/logs/postgres-logs"
+          icon={<TbDatabase className="h-5 w-5" aria-hidden />}
         />
-        <LabCard title="⚽ sports markets" href="/admin/sports" />
-        <LabCard title="🤬 reports" href="/admin/reports" />
-        <LabCard title="👕 merch management" href="/admin/merch" />
-        <LabCard title="🎨 design system" href="/styles" />
-        <LabCard title="🌑 test new user" href="/admin/test-user" />
-        <LabCard title="👤 update user" href="/admin/update-user" />
         <LabCard
-          title="👤 user info & account management"
+          title="sports markets"
+          href="/admin/sports"
+          icon={<TbBallFootball className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="reports"
+          href="/admin/reports"
+          icon={<TbFlag className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="merch management"
+          href="/admin/merch"
+          icon={<TbShirt className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="design system"
+          href="/styles"
+          icon={<TbPalette className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="test new user"
+          href="/admin/test-user"
+          icon={<TbMoon className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="update user"
+          href="/admin/update-user"
+          icon={<TbUser className="h-5 w-5" aria-hidden />}
+        />
+        <LabCard
+          title="user info & account management"
           href="/admin/user-info"
+          icon={<TbUsers className="h-5 w-5" aria-hidden />}
         />
         <Row className="gap-2">
           <Button onClick={() => api('refresh-all-clients', {})}>
@@ -125,8 +196,9 @@ export default function AdminPage() {
             </p>
           </ConfirmationButton>
           {isFinished && (
-            <div className="mt-4 text-green-600">
-              ✅ Sports markets created successfully!
+            <div className="mt-4 inline-flex items-center gap-1 text-green-600">
+              <TbCircleCheck className="h-5 w-5 shrink-0" aria-hidden />
+              Sports markets created successfully!
             </div>
           )}
         </Row>

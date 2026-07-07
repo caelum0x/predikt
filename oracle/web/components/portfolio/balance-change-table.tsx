@@ -27,6 +27,19 @@ import {
   FaArrowTrendUp,
   FaBackward,
 } from 'react-icons/fa6'
+import {
+  TbBuildingBank,
+  TbConfetti,
+  TbDroplet,
+  TbGift,
+  TbHeart,
+  TbMoneybag,
+  TbRocket,
+  TbSend,
+  TbShoppingBag,
+  TbStar,
+  TbTicket,
+} from 'react-icons/tb'
 import { contractPathWithoutContract } from 'common/contract'
 import { linkClass } from 'web/components/widgets/site-link'
 import { ScaleIcon } from '@heroicons/react/outline'
@@ -483,7 +496,10 @@ const BetBalanceChangeRow = (props: {
           }
           symbol={
             type === 'loan_payment' ? (
-              '🏦'
+              <TbBuildingBank
+                aria-label="Loan payment"
+                className={'h-5 w-5 text-white'}
+              />
             ) : (
               <div>
                 {direction === 'up' ? (
@@ -619,15 +635,15 @@ const TxnBalanceChangeRow = (props: {
           }
           symbol={
             type === 'MANA_PAYMENT' ? (
-              '💸'
+              <TbSend aria-label="Payment" className={'h-5 w-5 text-white'} />
             ) : type === 'MARKET_BOOST_CREATE' ||
               type === 'CONTRACT_BOOST_PURCHASE' ? (
-              '🚀'
+              <TbRocket aria-label="Boost" className={'h-5 w-5 text-white'} />
             ) : type === 'ADD_SUBSIDY' ? (
-              '💧'
+              <TbDroplet aria-label="Subsidy" className={'h-5 w-5 text-white'} />
             ) : type === 'CONTRACT_RESOLUTION_PAYOUT' ||
               type === 'PRODUCE_SPICE' ? (
-              '🎉'
+              <TbConfetti aria-label="Payout" className={'h-5 w-5 text-white'} />
             ) : type === 'CONTRACT_UNDO_RESOLUTION_PAYOUT' ||
               type === 'CONTRACT_UNDO_PRODUCE_SPICE' ||
               type === 'UNDO_CONTRACT_RESOLUTION_FEE' ? (
@@ -640,24 +656,33 @@ const TxnBalanceChangeRow = (props: {
               type === 'CONVERT_CASH_DONE' ? (
               <FaArrowRightArrowLeft className={'h-4 w-4'} />
             ) : type === 'CHARITY_GIVEAWAY_TICKET' ? (
-              '🎟️'
+              <TbTicket aria-label="Ticket" className={'h-5 w-5 text-white'} />
             ) : type === 'SWEEPSTAKES_TICKET' ? (
-              '🎁'
+              <TbGift aria-label="Ticket" className={'h-5 w-5 text-white'} />
             ) : type === 'CHARITY' ||
               type === 'REFERRAL' ||
               type === 'ADMIN_REWARD' ? (
-              '❤️'
+              <TbHeart aria-label="Reward" className={'h-5 w-5 text-white'} />
             ) : type === 'LOAN' ||
               type === 'MARGIN_LOAN' ||
               type === 'CASH_OUT' ||
               type === 'CONTRACT_RESOLUTION_FEE' ? (
-              '🏦'
+              <TbBuildingBank
+                aria-label="Loan"
+                className={'h-5 w-5 text-white'}
+              />
             ) : type === 'MANA_PURCHASE' ? (
-              '🤑'
+              <TbMoneybag
+                aria-label="Purchase"
+                className={'h-5 w-5 text-white'}
+              />
             ) : type === 'MEMBERSHIP_PAYMENT' ? (
-              '⭐'
+              <TbStar aria-label="Membership" className={'h-5 w-5 text-white'} />
             ) : type === 'SHOP_PURCHASE' ? (
-              '🛍️'
+              <TbShoppingBag
+                aria-label="Shop purchase"
+                className={'h-5 w-5 text-white'}
+              />
             ) : [
                 'UNIQUE_BETTOR_BONUS',
                 'CASH_BONUS',
@@ -670,7 +695,7 @@ const TxnBalanceChangeRow = (props: {
                 'BOUNTY_AWARDED',
                 'PUSH_NOTIFICATION_BONUS',
               ].includes(type) ? (
-              '🎁'
+              <TbGift aria-label="Bonus" className={'h-5 w-5 text-white'} />
             ) : (
               ''
             )

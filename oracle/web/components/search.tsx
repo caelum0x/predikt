@@ -10,6 +10,7 @@ import { buildArray } from 'common/util/array'
 import { capitalize, groupBy, minBy, orderBy, sample, uniqBy } from 'lodash'
 import Link from 'next/link'
 import { ReactNode, useEffect, useRef, useState } from 'react'
+import { TbBallFootball } from 'react-icons/tb'
 import { Button } from 'web/components/buttons/button'
 import { AddContractToGroupButton } from 'web/components/topics/add-contract-to-group-modal'
 import { useDebouncedEffect } from 'web/hooks/use-debounced-effect'
@@ -65,7 +66,7 @@ export const SORTS = [
   { label: 'High %', value: 'prob-descending' },
   { label: 'Low %', value: 'prob-ascending' },
   { label: 'Mid %', value: 'prob-50' },
-  { label: '🎲 Random!', value: 'random' },
+  { label: 'Random!', value: 'random' },
 ] as const
 
 export const SORTS_MIXING_POSTS_AND_MARKETS = ['score', 'newest']
@@ -590,7 +591,10 @@ export function Search(props: SearchProps) {
                     'transition-all hover:brightness-110'
                   )}
                 >
-                  ⚽ World Cup
+                  <span className="flex items-center gap-1">
+                    <TbBallFootball aria-hidden="true" className="h-4 w-4" />
+                    World Cup
+                  </span>
                 </Link>
                 <Link
                   href="/election"
@@ -893,7 +897,7 @@ const NoResults = () => {
       'no questions found :(',
       'no questions found :(',
       'no questions found :(',
-      'that search is too bananas for me 🍌',
+      'that search is too bananas for me',
       'only nothingness',
     ])
   )

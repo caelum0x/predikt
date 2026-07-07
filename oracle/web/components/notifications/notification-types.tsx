@@ -28,10 +28,39 @@ import { removeUndefinedProps } from 'common/util/object'
 import { WeeklyPortfolioUpdate } from 'common/weekly-portfolio-update'
 import { sortBy } from 'lodash'
 import Link from 'next/link'
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 import toast from 'react-hot-toast'
 import { BsBank } from 'react-icons/bs'
 import { FaArrowTrendDown, FaArrowTrendUp } from 'react-icons/fa6'
+import {
+  TbAlertTriangle,
+  TbArrowDown,
+  TbArrowUp,
+  TbBan,
+  TbChecklist,
+  TbCoin,
+  TbConfetti,
+  TbDroplet,
+  TbExclamationMark,
+  TbEye,
+  TbHandStop,
+  TbHeart,
+  TbMessage,
+  TbPencil,
+  TbPlus,
+  TbRobot,
+  TbSparkles,
+  TbSquareCheck,
+  TbStar,
+  TbTag,
+  TbTrophy,
+  TbX,
+} from 'react-icons/tb'
+import { RankMedalIcon } from 'web/components/icons/rank-medal-icon'
+
+// Shared className for emoji-replacement vector icons rendered inside the
+// small notification symbol badge.
+const NOTIF_SYMBOL_ICON = 'h-5 w-5'
 import { Col } from 'web/components/layout/col'
 import { Row } from 'web/components/layout/row'
 import { MultiUserReactionModal } from 'web/components/multi-user-reaction-link'
@@ -640,7 +669,12 @@ function LimitOrderCancelledNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'🚫'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbBan aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-scarlet-600')} />
+          }
+        />
       }
       link={getSourceUrl(notification)}
     >
@@ -805,7 +839,9 @@ function LimitOrderExpiredNotification(props: {
               sourceUserAvatarUrl: MANIFOLD_AVATAR_URL,
             } as Notification
           }
-          symbol={'🚫'}
+          symbol={
+            <TbBan aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-scarlet-600')} />
+          }
         />
       }
       link={getSourceUrl(notification)}
@@ -910,7 +946,19 @@ function BetFillNotification(props: {
       icon={
         <AvatarNotificationIcon
           notification={notification}
-          symbol={creatorOutcome === 'NO' ? '👇' : '☝️'}
+          symbol={
+            creatorOutcome === 'NO' ? (
+              <TbArrowDown
+                aria-hidden="true"
+                className={clsx(NOTIF_SYMBOL_ICON, 'text-scarlet-600')}
+              />
+            ) : (
+              <TbArrowUp
+                aria-hidden="true"
+                className={clsx(NOTIF_SYMBOL_ICON, 'text-teal-600')}
+              />
+            )
+          }
         />
       }
       subtitle={subtitle}
@@ -954,7 +1002,9 @@ function SignupBonusNotification(props: {
       setHighlighted={setHighlighted}
       icon={
         <NotificationIcon
-          symbol={'✨'}
+          symbol={
+            <TbSparkles aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-yellow-500')} />
+          }
           symbolBackgroundClass={
             'bg-gradient-to-br from-primary-600 to-primary-300'
           }
@@ -1005,7 +1055,11 @@ export function MarketResolvedNotification(props: {
         Your {formatMoney(userInvestment, token)} won{' '}
         <span className="text-teal-600">+{formatMoney(profit, token)}</span> in
         profit
-        {comparison ? `, and ${comparison}` : ``} 🎉🎉🎉
+        {comparison ? `, and ${comparison}` : ``}{' '}
+        <TbConfetti
+          aria-hidden="true"
+          className="ml-0.5 inline h-4 w-4 text-teal-500"
+        />
       </>
     ) : userInvestment > 0 ? (
       <>
@@ -1150,7 +1204,24 @@ export function MarketResolvedNotification(props: {
                 ...notification,
                 sourceUserAvatarUrl: resolverAvatarUrl,
               }}
-              symbol={sourceText === 'CANCEL' ? '🚫' : profitable ? '💰' : '☑️'}
+              symbol={
+                sourceText === 'CANCEL' ? (
+                  <TbBan
+                    aria-hidden="true"
+                    className={clsx(NOTIF_SYMBOL_ICON, 'text-scarlet-600')}
+                  />
+                ) : profitable ? (
+                  <TbCoin
+                    aria-hidden="true"
+                    className={clsx(NOTIF_SYMBOL_ICON, 'text-yellow-500')}
+                  />
+                ) : (
+                  <TbSquareCheck
+                    aria-hidden="true"
+                    className={clsx(NOTIF_SYMBOL_ICON, 'text-ink-500')}
+                  />
+                )
+              }
             />
             {!!secondaryTitle && (
               <div
@@ -1230,7 +1301,9 @@ function MarketClosedNotification(props: {
       setHighlighted={setHighlighted}
       icon={
         <NotificationIcon
-          symbol={'❗'}
+          symbol={
+            <TbExclamationMark aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-scarlet-600')} />
+          }
           symbolBackgroundClass={
             'bg-gradient-to-br from-amber-400 to-amber-200'
           }
@@ -1284,7 +1357,15 @@ function NewMarketNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'🌟'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbStar
+              aria-hidden="true"
+              className={clsx(NOTIF_SYMBOL_ICON, 'text-yellow-500')}
+            />
+          }
+        />
       }
       link={getSourceUrl(notification)}
     >
@@ -1341,7 +1422,12 @@ function CommentNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'💬'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbMessage aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-primary-500')} />
+          }
+        />
       }
       subtitle={
         <div>
@@ -1392,7 +1478,12 @@ function BetReplyNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'💬'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbMessage aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-primary-500')} />
+          }
+        />
       }
       subtitle={commentText}
       link={getSourceUrl(notification)}
@@ -1443,7 +1534,12 @@ function AnswerNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'🙋'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbHandStop aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-primary-500')} />
+          }
+        />
       }
       subtitle={<div className="line-clamp-2">{sourceText}</div>}
       link={getSourceUrl(notification)}
@@ -1482,7 +1578,12 @@ function TaggedUserNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'🏷️'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbTag aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-primary-500')} />
+          }
+        />
       }
       link={getSourceUrl(notification)}
     >
@@ -1505,7 +1606,7 @@ function TaggedUserNotification(props: {
 
 export function MultipleAvatarIcons(props: {
   notification: Notification
-  symbol: string
+  symbol: string | ReactNode
   setOpen: (open: boolean) => void
 }) {
   const { notification, symbol, setOpen } = props
@@ -1595,7 +1696,9 @@ function UserLikeNotification(props: {
       icon={
         <MultipleAvatarIcons
           notification={notification}
-          symbol={'💖'}
+          symbol={
+            <TbHeart aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-pink-500')} />
+          }
           setOpen={setOpen}
         />
       }
@@ -1644,8 +1747,8 @@ function FollowNotification(props: {
         <AvatarNotificationIcon
           notification={notification}
           symbol={
-            <Col className="from-ink-400 to-ink-200 h-5 w-5 items-center rounded-lg bg-gradient-to-br text-sm">
-              ➕
+            <Col className="from-ink-400 to-ink-200 h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br text-sm">
+              <TbPlus aria-hidden="true" className="h-3.5 w-3.5 text-white" />
             </Col>
           }
         />
@@ -1683,8 +1786,8 @@ function FollowsOnYourMarketNotification(props: {
         <AvatarNotificationIcon
           notification={notification}
           symbol={
-            <Col className="from-ink-400 to-ink-200 h-5 w-5 items-center rounded-lg bg-gradient-to-br text-sm">
-              👀
+            <Col className="from-ink-400 to-ink-200 h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br text-sm">
+              <TbEye aria-hidden="true" className="h-3.5 w-3.5 text-white" />
             </Col>
           }
         />
@@ -1725,7 +1828,12 @@ function LiquidityNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'💧'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbDroplet aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-blue-400')} />
+          }
+        />
       }
       link={getSourceUrl(notification)}
     >
@@ -1818,8 +1926,8 @@ function FollowFromReferralNotification(props: {
         <AvatarNotificationIcon
           notification={notification}
           symbol={
-            <Col className="from-ink-400 to-ink-200 h-5 w-5 items-center rounded-lg bg-gradient-to-br text-sm">
-              ➕
+            <Col className="from-ink-400 to-ink-200 h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br text-sm">
+              <TbPlus aria-hidden="true" className="h-3.5 w-3.5 text-white" />
             </Col>
           }
         />
@@ -1859,8 +1967,8 @@ function FollowSuggestionNotification(props: {
         <AvatarNotificationIcon
           notification={notification}
           symbol={
-            <Col className="from-ink-400 to-ink-200 h-5 w-5 items-center rounded-lg bg-gradient-to-br text-sm">
-              ➕
+            <Col className="from-ink-400 to-ink-200 h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br text-sm">
+              <TbPlus aria-hidden="true" className="h-3.5 w-3.5 text-white" />
             </Col>
           }
         />
@@ -1900,7 +2008,9 @@ function WeeklyUpdateNotification(props: {
       link={getSourceUrl(notification)}
       icon={
         <NotificationIcon
-          symbol={'✨'}
+          symbol={
+            <TbSparkles aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-yellow-500')} />
+          }
           symbolBackgroundClass={
             'bg-gradient-to-br from-primary-600 to-primary-300'
           }
@@ -1935,7 +2045,12 @@ function BountyAwardedNotification(props: {
       setHighlighted={setHighlighted}
       link={getSourceUrl(notification)}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'💰'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbCoin aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-yellow-500')} />
+          }
+        />
       }
     >
       <>
@@ -1981,7 +2096,12 @@ function BountyAddedNotification(props: {
       setHighlighted={setHighlighted}
       link={getSourceUrl(notification)}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'💰'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbCoin aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-yellow-500')} />
+          }
+        />
       }
     >
       <>
@@ -2025,7 +2145,12 @@ function BountyCanceledNotification(props: {
       setHighlighted={setHighlighted}
       link={getSourceUrl(notification)}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'❌'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbX aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-scarlet-600')} />
+          }
+        />
       }
       subtitle={`with ${notification.sourceText} bounty left unpaid`}
     >
@@ -2062,7 +2187,12 @@ function VotedNotification(props: {
       setHighlighted={setHighlighted}
       link={getSourceUrl(notification)}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'🗳️'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbChecklist aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-primary-500')} />
+          }
+        />
       }
     >
       <span>
@@ -2100,7 +2230,12 @@ function ReviewNotification(props: {
       setHighlighted={setHighlighted}
       link={getSourceUrl(notification)}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'⭐️'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbStar aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-yellow-500')} />
+          }
+        />
       }
       subtitle={review}
     >
@@ -2149,7 +2284,9 @@ function PollClosedNotification(props: {
       link={getSourceUrl(notification)}
       icon={
         <NotificationIcon
-          symbol={'🗳️'}
+          symbol={
+            <TbChecklist aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-primary-500')} />
+          }
           symbolBackgroundClass="bg-gradient-to-br from-fuchsia-500 to-fuchsia-200"
         />
       }
@@ -2539,7 +2676,9 @@ function AIDescriptionUpdateNotification(props: {
       setHighlighted={setHighlighted}
       icon={
         <NotificationIcon
-          symbol={'🤖'}
+          symbol={
+            <TbRobot aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-ink-500')} />
+          }
           symbolBackgroundClass={
             isPending
               ? 'bg-gradient-to-br from-amber-500 to-amber-200'
@@ -2589,7 +2728,12 @@ function ReviewUpdatedNotification(props: {
       setHighlighted={setHighlighted}
       link={getSourceUrl(notification)}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'✏️'} />
+        <AvatarNotificationIcon
+          notification={notification}
+          symbol={
+            <TbPencil aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-primary-500')} />
+          }
+        />
       }
       subtitle={review}
     >
@@ -2654,7 +2798,19 @@ function MembershipSubscriptionNotification(props: {
       link="/shop"
       icon={
         <NotificationIcon
-          symbol={isRenewal ? '✨' : '⚠️'}
+          symbol={
+            isRenewal ? (
+              <TbSparkles
+                aria-hidden="true"
+                className={clsx(NOTIF_SYMBOL_ICON, 'text-yellow-500')}
+              />
+            ) : (
+              <TbAlertTriangle
+                aria-hidden="true"
+                className={clsx(NOTIF_SYMBOL_ICON, 'text-amber-500')}
+              />
+            )
+          }
           symbolBackgroundClass={
             isRenewal
               ? 'bg-gradient-to-br from-amber-400 to-amber-200'
@@ -2701,7 +2857,9 @@ function PrizeWinnerNotification(props: {
       link="/prize"
       icon={
         <NotificationIcon
-          symbol={'🎉'}
+          symbol={
+            <TbConfetti aria-hidden="true" className={clsx(NOTIF_SYMBOL_ICON, 'text-teal-500')} />
+          }
           symbolBackgroundClass="bg-gradient-to-br from-teal-400 to-cyan-400"
         />
       }

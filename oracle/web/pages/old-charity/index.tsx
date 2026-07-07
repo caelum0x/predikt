@@ -10,6 +10,7 @@ import { Page } from 'web/components/layout/page'
 import { Spacer } from 'web/components/layout/spacer'
 import { SEO } from 'web/components/SEO'
 import { Input } from 'web/components/widgets/input'
+import { TbMoodSad } from 'react-icons/tb'
 import { Title } from 'web/components/widgets/title'
 import {
   getDonationsByCharity,
@@ -160,8 +161,9 @@ export default function Charity(props: {
           ))}
         </div>
         {filterCharities.length === 0 && (
-          <div className="text-ink-500 text-center">
-            😢 We couldn't find that charity...
+          <div className="text-ink-500 flex flex-col items-center gap-2 text-center">
+            <TbMoodSad className="h-8 w-8" aria-hidden />
+            We couldn't find that charity...
           </div>
         )}
 

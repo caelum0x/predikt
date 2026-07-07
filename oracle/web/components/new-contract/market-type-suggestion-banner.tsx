@@ -1,6 +1,7 @@
 import { XIcon } from '@heroicons/react/solid'
 import { CreateableOutcomeType } from 'common/contract'
 import { useState } from 'react'
+import { TbBulb } from 'react-icons/tb'
 import { Row } from '../layout/row'
 import { ALL_CONTRACT_TYPES } from './create-contract-types'
 import { MarketTypeSuggestion } from './market-type-suggestions'
@@ -57,7 +58,10 @@ export function MarketTypeSuggestionBanner(props: {
       <Row className="items-start gap-2">
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2">
-            <span className="font-semibold">💡 Suggestion:</span>
+            <span className="flex items-center gap-1 font-semibold">
+              <TbBulb aria-hidden="true" className="h-4 w-4" />
+              Suggestion:
+            </span>
             {suggestion.confidence === 'high' && (
               <span className="rounded bg-amber-200 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900 dark:text-amber-200">
                 Strong match

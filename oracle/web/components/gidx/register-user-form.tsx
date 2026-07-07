@@ -38,6 +38,7 @@ import { DocumentUploadIcon } from 'web/public/custom-components/documentUploadI
 import { LocationBlockedIcon } from 'web/public/custom-components/locationBlockedIcon'
 import { RiUserForbidLine } from 'react-icons/ri'
 import { PiClockCountdown } from 'react-icons/pi'
+import { TbConfetti } from 'react-icons/tb'
 import { track } from 'web/lib/service/analytics'
 import {
   ageBlocked,
@@ -585,7 +586,10 @@ export const RegisterUserForm = (props: {
   } else if (fraudSession(user, privateUser)) {
     return (
       <>
-        <div className="mx-auto text-[130px] ">🎉</div>
+        <TbConfetti
+        aria-hidden="true"
+        className="text-primary-500 mx-auto h-32 w-32"
+      />
         <span className={'mx-auto text-2xl'}>
           Identity Verification Complete!
         </span>
@@ -627,7 +631,10 @@ export const RegisterUserForm = (props: {
 
   return (
     <>
-      <div className="mx-auto text-[130px] ">🎉</div>
+      <TbConfetti
+        aria-hidden="true"
+        className="text-primary-500 mx-auto h-32 w-32"
+      />
       <span className={'mx-auto text-2xl'}>
         Identity Verification Complete!
       </span>

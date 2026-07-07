@@ -25,6 +25,7 @@ import { useWebsocketUser, useWebsocketPrivateUser } from 'web/hooks/use-user'
 import { useEffectCheckEquality } from 'web/hooks/use-effect-check-equality'
 import { getPrivateUserSafe, getUserSafe } from 'web/lib/supabase/users'
 import toast from 'react-hot-toast'
+import { TbConfetti } from 'react-icons/tb'
 import { ensureDeviceToken } from 'web/lib/util/device-token'
 import { Row } from './layout/row'
 import { TokenNumber } from './widgets/token-number'
@@ -292,6 +293,9 @@ const showToast = (manaChange: number, cashChange: number) => {
         </Row>
       )}
     </Row>,
-    { duration: 5000, icon: '🎉' }
+    {
+      duration: 5000,
+      icon: <TbConfetti aria-hidden="true" className="h-5 w-5 text-teal-500" />,
+    }
   )
 }

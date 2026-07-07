@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/outline'
 import { usePersistentInMemoryState } from 'client-common/hooks/use-persistent-in-memory-state'
 import clsx from 'clsx'
+import { TbArrowRight } from 'react-icons/tb'
 import { NOTIFICATION_DESCRIPTIONS } from 'common/notification'
 import { PrivateUser } from 'common/user'
 import {
@@ -537,7 +538,11 @@ export const PushNotificationsBanner = (props: {
       <span className={''}>
         Mobile push notifications are disabled. To enable them, go to your
         phone's notification settings and turn them on for Predikt. Then tap
-        this button ➡️
+        this button
+        <TbArrowRight
+          aria-hidden="true"
+          className="ml-1 inline h-4 w-4 align-text-bottom"
+        />
       </span>
       <Button
         onClick={() => {

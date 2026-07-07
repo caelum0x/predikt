@@ -1,4 +1,5 @@
 import { XIcon } from '@heroicons/react/solid'
+import { TbCalendar } from 'react-icons/tb'
 import { Row } from 'web/components/layout/row'
 import { AmbiguousTemporalMatch } from 'web/lib/util/temporal-ambiguity'
 
@@ -13,7 +14,10 @@ export function TemporalAmbiguityBanner(props: {
     <div className="relative rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm dark:border-blue-800 dark:bg-blue-950">
       <Row className="items-start gap-2">
         <div className="flex-1">
-          <div className="mb-1 font-semibold">📅 Suggestion:</div>
+          <div className="mb-1 flex items-center gap-1 font-semibold">
+            <TbCalendar aria-hidden="true" className="h-4 w-4" />
+            Suggestion:
+          </div>
           <p className="mb-2">
             "{match.original}" could mean different things. Did you mean:{' '}
             {match.alternatives.map((alt, i) => (

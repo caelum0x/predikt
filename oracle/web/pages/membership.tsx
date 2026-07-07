@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { FaStar } from 'react-icons/fa'
 import {
+  TbCircleCheck,
   TbConfetti,
   TbDiamond,
   TbFileText,
@@ -766,13 +767,14 @@ function MonthlyValueBreakdown({
           Verify (free) or subscribe to unlock the full bonus pipeline
         </div>
       ) : comparatorTier === 'verified' ? (
-        <div className="mt-2 rounded bg-teal-100 px-2 py-1 text-center text-xs font-medium text-teal-700 dark:bg-teal-900/60 dark:text-teal-100 sm:text-sm">
-          ✓ Full free-tier earnings — Plus adds 50%, Pro doubles, Premium
-          triples
+        <div className="mt-2 inline-flex items-center justify-center gap-1 rounded bg-teal-100 px-2 py-1 text-center text-xs font-medium text-teal-700 dark:bg-teal-900/60 dark:text-teal-100 sm:text-sm">
+          <TbCircleCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          Full free-tier earnings — Plus adds 50%, Pro doubles, Premium triples
         </div>
       ) : netVsVerified >= 0 ? (
-        <div className="mt-2 rounded bg-teal-100 px-2 py-1 text-center text-xs font-medium text-teal-700 dark:bg-teal-900/60 dark:text-teal-100 sm:text-sm">
-          ✓ Pays for itself
+        <div className="mt-2 inline-flex items-center justify-center gap-1 rounded bg-teal-100 px-2 py-1 text-center text-xs font-medium text-teal-700 dark:bg-teal-900/60 dark:text-teal-100 sm:text-sm">
+          <TbCircleCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          Pays for itself
           {extraLeverageMultiple > 0 && ' — extra leverage is profit!'}
         </div>
       ) : extraLeverageMultiple > 0 ? (

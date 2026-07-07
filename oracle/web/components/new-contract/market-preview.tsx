@@ -8,6 +8,7 @@ import {
 import { JSONContent } from '@tiptap/core'
 import { Editor } from '@tiptap/react'
 import clsx from 'clsx'
+import { TbCalendar } from 'react-icons/tb'
 import { MAX_ANSWERS } from 'common/answer'
 import { Contract, CreateableOutcomeType } from 'common/contract'
 import { Group } from 'common/group'
@@ -520,7 +521,7 @@ export function MarketPreview(props: {
                       ? dayjs(closeDate).format('MMM D, YYYY')
                       : 'close date'}
                   </span>
-                  <span>📅</span>
+                  <TbCalendar aria-hidden="true" className="h-4 w-4" />
                 </button>
               </>
             ) : (
@@ -610,7 +611,10 @@ export function MarketPreview(props: {
             <div className="relative rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm dark:border-blue-800 dark:bg-blue-950">
               <Row className="items-start gap-2">
                 <div className="flex-1">
-                  <div className="mb-1 font-semibold">📅 Suggestion:</div>
+                  <div className="mb-1 flex items-center gap-1 font-semibold">
+                    <TbCalendar aria-hidden="true" className="h-4 w-4" />
+                    Suggestion:
+                  </div>
                   <p className="mb-2">
                     The date {firstMatch.original} is ambiguous. Change the
                     format to avoid confusion.
@@ -1829,7 +1833,10 @@ export function MarketPreview(props: {
                     <div className="bg-ink-100 border-ink-200 rounded-lg border p-2 sm:p-3">
                       <Row className="items-center justify-center gap-1 text-xs sm:justify-between sm:gap-2">
                         <span className="text-ink-600 min-w-0 shrink text-[10px] sm:text-xs">
-                          <span className="hidden sm:inline">📅 </span>
+                          <TbCalendar
+                            aria-hidden="true"
+                            className="mr-1 hidden h-3 w-3 sm:inline"
+                          />
                           {new Intl.DateTimeFormat('en-US', {
                             month: 'short',
                             year: 'numeric',
@@ -1850,7 +1857,10 @@ export function MarketPreview(props: {
                         </Col>
                         <span className="text-ink-400 shrink-0">→</span>
                         <span className="text-ink-600 min-w-0 shrink text-[10px] sm:text-xs">
-                          <span className="hidden sm:inline">📅 </span>
+                          <TbCalendar
+                            aria-hidden="true"
+                            className="mr-1 hidden h-3 w-3 sm:inline"
+                          />
                           {new Intl.DateTimeFormat('en-US', {
                             month: 'short',
                             year: 'numeric',
@@ -1867,12 +1877,18 @@ export function MarketPreview(props: {
                   <div className="bg-ink-100 border-ink-200 rounded-lg border p-2 sm:p-3">
                     <Row className="text-ink-600 justify-center gap-1 text-[10px] sm:justify-between sm:gap-2 sm:text-xs">
                       <span className="min-w-0 shrink">
-                        <span className="hidden sm:inline">📅 </span>
+                        <TbCalendar
+                          aria-hidden="true"
+                          className="mr-1 hidden h-3 w-3 sm:inline"
+                        />
                         {data.minString}
                       </span>
                       <span className="shrink-0">→</span>
                       <span className="min-w-0 shrink">
-                        <span className="hidden sm:inline">📅 </span>
+                        <TbCalendar
+                          aria-hidden="true"
+                          className="mr-1 hidden h-3 w-3 sm:inline"
+                        />
                         {data.maxString}
                       </span>
                     </Row>

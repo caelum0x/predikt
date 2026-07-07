@@ -54,7 +54,7 @@ const defaultGroups: LiteGroup[] = [
   {
     id: 'IlzY3moWwOcpsVZXCVej',
     slug: 'technology-default',
-    name: '🖥️ Technology',
+    name: 'Technology',
     totalMembers: 46584,
     privacyStatus: 'public',
     importanceScore: 0,
@@ -62,7 +62,7 @@ const defaultGroups: LiteGroup[] = [
   {
     id: 'UCnpxVUdLOZYgoMsDlHD',
     slug: 'politics-default',
-    name: '🗳️ Politics',
+    name: 'Politics',
     totalMembers: 21594,
     privacyStatus: 'public',
     importanceScore: 0,
@@ -70,7 +70,7 @@ const defaultGroups: LiteGroup[] = [
   {
     id: 'yEWvvwFFIqzf8JklMewp',
     slug: 'ai',
-    name: '🤖 AI',
+    name: 'AI',
     totalMembers: 26072,
     privacyStatus: 'public',
     importanceScore: 0,

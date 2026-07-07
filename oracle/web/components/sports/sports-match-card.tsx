@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
+import { TbCheck } from 'react-icons/tb'
 import { Col } from 'web/components/layout/col'
 import { Row } from 'web/components/layout/row'
 import { useApiSubscription } from 'client-common/hooks/use-api-subscription'
@@ -199,7 +200,13 @@ function OutcomeRow({
           style={isWinner && winnerColor ? { color: winnerColor } : undefined}
         >
           {name}
-          {isWinner && <span className="ml-1.5 text-xs">✓</span>}
+          {isWinner && (
+            <TbCheck
+              role="img"
+              aria-label="Winner"
+              className="ml-1.5 inline h-3.5 w-3.5"
+            />
+          )}
         </span>
 
         {resolved ? (
@@ -646,7 +653,13 @@ export function PastMatchCard({ match }: { match: SportsMatch }) {
           {match.teamA.name} vs {match.teamB.name}
         </span>
         <span className="text-ink-500 text-[11px]">
-          {match.closeDateLabel} · ✓ {winnerName}
+          {match.closeDateLabel} ·{' '}
+          <TbCheck
+            role="img"
+            aria-label="Winner"
+            className="inline h-3 w-3 align-text-bottom"
+          />{' '}
+          {winnerName}
         </span>
       </Col>
       <span className="text-ink-500 text-[11px]">View →</span>

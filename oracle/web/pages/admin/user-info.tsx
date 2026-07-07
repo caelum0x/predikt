@@ -1,4 +1,5 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline'
+import { TbAlertTriangle } from 'react-icons/tb'
 import { FullUser } from 'common/api/user-types'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
@@ -587,7 +588,11 @@ export default function AdminUserInfoPage() {
                     {!userInfo.oldEmail && (
                       <div className="mt-3 rounded border border-orange-200 bg-orange-50 p-3">
                         <p className="text-sm text-orange-800">
-                          <strong>⚠️ No old_e_mail found.</strong> You must
+                          <strong className="inline-flex items-center gap-1">
+                            <TbAlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                            No old_e_mail found.
+                          </strong>{' '}
+                          You must
                           manually enter an email address below. Use the
                           Firebase Auth email shown above or verify the correct
                           email in the Firebase console.
@@ -916,7 +921,11 @@ export default function AdminUserInfoPage() {
             title="Delete User Account"
             description={
               <>
-                <strong>⚠️ WARNING:</strong> Are you sure you want to DELETE the
+                <strong className="inline-flex items-center gap-1">
+                  <TbAlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                  WARNING:
+                </strong>{' '}
+                Are you sure you want to DELETE the
                 account for{' '}
                 <strong>
                   {selectedUser.name} (@{selectedUser.username})
@@ -952,7 +961,11 @@ export default function AdminUserInfoPage() {
             title="Anonymize User"
             description={
               <>
-                <strong>⚠️ WARNING:</strong> Are you sure you want to ANONYMIZE{' '}
+                <strong className="inline-flex items-center gap-1">
+                  <TbAlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                  WARNING:
+                </strong>{' '}
+                Are you sure you want to ANONYMIZE{' '}
                 <strong>
                   {selectedUser.name} (@{selectedUser.username})
                 </strong>

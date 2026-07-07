@@ -29,7 +29,7 @@ import { Col } from 'web/components/layout/col'
 import { Page } from 'web/components/layout/page'
 import { Row } from 'web/components/layout/row'
 import { QueryUncontrolledTabs } from 'web/components/layout/tabs'
-import { TbTrophy } from 'react-icons/tb'
+import { TbTrophy, TbStarFilled } from 'react-icons/tb'
 import { DivisionMedalIcon } from 'web/components/icons/rank-medal-icon'
 import { CohortTable } from 'web/components/leagues/cohort-table'
 import { LeagueFeed } from 'web/components/leagues/league-feed'
@@ -353,7 +353,18 @@ export default function Leagues(props: LeaguesProps) {
                 onChange={onSetCohort}
                 options={(divisionToCohorts[division] ?? []).map((c) => ({
                   value: c,
-                  label: `${c === userCohort ? '★ ' : ''}${toLabel(c)}`,
+                  label:
+                    c === userCohort ? (
+                      <span className="inline-flex items-center gap-1">
+                        <TbStarFilled
+                          className="h-3.5 w-3.5 text-amber-500"
+                          aria-label="your group"
+                        />
+                        {toLabel(c)}
+                      </span>
+                    ) : (
+                      toLabel(c)
+                    ),
                 }))}
               />
             </Row>

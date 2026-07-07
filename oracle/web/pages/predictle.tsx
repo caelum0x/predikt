@@ -17,6 +17,13 @@ import { useUser } from 'web/hooks/use-user'
 import { useSaveReferral } from 'web/hooks/use-save-referral'
 import { api } from 'web/lib/api/api'
 import { track } from 'web/lib/service/analytics'
+import {
+  TbCircleCheck,
+  TbCircleX,
+  TbConfetti,
+  TbMoodConfuzed,
+  TbClipboard,
+} from 'react-icons/tb'
 
 type Market = {
   id: string
@@ -39,6 +46,17 @@ type Feedback = 'correct' | 'incorrect'
 
 function getFeedbackEmoji(feedback: Feedback): string {
   return feedback === 'correct' ? '✅' : '❌'
+}
+
+function FeedbackIcon({ feedback }: { feedback: Feedback }) {
+  return feedback === 'correct' ? (
+    <TbCircleCheck
+      className="h-5 w-5 text-emerald-500"
+      aria-label="correct"
+    />
+  ) : (
+    <TbCircleX className="h-5 w-5 text-rose-500" aria-label="incorrect" />
+  )
 }
 
 function PredicteGame(props: {
@@ -437,8 +455,9 @@ function PredicteGame(props: {
 
         {/* Score indicator */}
         {attemptNumber > 0 && !gameState.completed && (
-          <div className="rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 dark:ring-1 dark:ring-emerald-500/30">
-            ✓ {correctCount}/5 correct
+          <div className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 dark:ring-1 dark:ring-emerald-500/30">
+            <TbCircleCheck className="h-4 w-4" aria-hidden />
+            {correctCount}/5 correct
           </div>
         )}
       </Col>
@@ -548,7 +567,13 @@ function PredicteGame(props: {
                 : 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-200 dark:from-amber-600 dark:to-orange-600 dark:shadow-amber-500/30'
             )}
           >
-            <div className="mb-2 text-4xl">{gameState.won ? '🎉' : '😅'}</div>
+            <div className="mb-2 flex justify-center">
+              {gameState.won ? (
+                <TbConfetti className="h-10 w-10" aria-hidden />
+              ) : (
+                <TbMoodConfuzed className="h-10 w-10" aria-hidden />
+              )}
+            </div>
             <div className="text-xl font-bold">
               {gameState.won
                 ? attemptNumber === 1
@@ -687,7 +712,7 @@ function MarketCard(props: {
           {feedback.length > 0 && (
             <Row className="gap-1 text-xl">
               {feedback.map((f, i) => (
-                <span key={i}>{getFeedbackEmoji(f)}</span>
+                <FeedbackIcon key={i} feedback={f} />
               ))}
             </Row>
           )}
@@ -741,7 +766,19 @@ Play at ${url}`
           : 'border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:bg-primary-100 dark:border-primary-500/50 dark:bg-primary-500/20 dark:text-primary-400 dark:hover:border-primary-400 dark:hover:bg-primary-500/30'
       )}
     >
-      {copied ? '✓ Copied to clipboard!' : '📋 Share results'}
+      <span className="inline-flex items-center justify-center gap-2">
+        {copied ? (
+          <>
+            <TbCircleCheck className="h-5 w-5" aria-hidden />
+            Copied to clipboard!
+          </>
+        ) : (
+          <>
+            <TbClipboard className="h-5 w-5" aria-hidden />
+            Share results
+          </>
+        )}
+      </span>
     </button>
   )
 }

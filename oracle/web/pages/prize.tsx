@@ -29,6 +29,23 @@ import toast from 'react-hot-toast'
 import clsx from 'clsx'
 import { track } from 'web/lib/service/analytics'
 import { FaClock, FaCircleExclamation, FaGift } from 'react-icons/fa6'
+import {
+  TbTicket,
+  TbHourglass,
+  TbCircleCheck,
+  TbCircleX,
+  TbStarFilled,
+  TbGift,
+  TbChartBar,
+  TbTrophy,
+  TbScale,
+  TbConfetti,
+  TbMedal,
+  TbX,
+  TbAlertTriangle,
+  TbLink,
+  TbWallet,
+} from 'react-icons/tb'
 import { useAccount, useConnect, useConnectors, useDisconnect } from 'wagmi'
 import { isAddress } from 'viem'
 import {
@@ -755,7 +772,8 @@ export default function SweepstakesPage() {
                 loading={isSelectingWinners}
                 disabled={isSelectingWinners}
               >
-                🎟️ Draw Winners
+                <TbTicket className="mr-2 inline h-5 w-5" aria-hidden />
+                Draw Winners
               </Button>
             </Col>
           </div>
@@ -764,7 +782,7 @@ export default function SweepstakesPage() {
         {/* Waiting for winners (non-admin view) */}
         {isClosed && !hasWinners && !isAdmin && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-800 dark:bg-amber-950/30">
-            <div className="mb-2 text-2xl">⏳</div>
+            <TbHourglass className="text-ink-700 mx-auto mb-2 h-7 w-7" aria-hidden />
             <h3 className="text-ink-900 font-semibold">Drawing Closed</h3>
             <p className="text-ink-600 mt-1 text-sm">
               The winners will be drawn soon. Check back!
@@ -880,7 +898,7 @@ function AnnouncePrizeDrawingSection(props: {
 
       {sent ? (
         <div className="text-ink-600 flex items-center gap-2 text-sm">
-          <span className="text-green-600">✓</span>
+          <TbCircleCheck className="h-4 w-4 text-green-600" aria-hidden />
           Announcement already sent for Drawing #{sweepstakes.sweepstakesNum}
         </div>
       ) : confirming ? (
@@ -985,9 +1003,10 @@ function PastDrawingLabel(props: {
       >
         {userStatus && <UserStatusIcon status={userStatus} />}
         {tier === 'jackpot' && !userStatus && (
-          <span aria-hidden className="text-amber-500 dark:text-amber-300">
-            ✦
-          </span>
+          <TbStarFilled
+            aria-hidden
+            className="h-4 w-4 text-amber-500 dark:text-amber-300"
+          />
         )}
         Drawing #{sweepstakesNum}
       </span>
@@ -1281,27 +1300,27 @@ function PrizeDetailsModal(props: {
   const getPlaceStyle = (index: number) => {
     if (index === 0)
       return {
-        icon: '🥇',
+        icon: <TbTrophy className="mx-auto h-7 w-7 text-amber-500" aria-hidden />,
         bg: 'bg-gradient-to-br from-amber-100 to-yellow-200 dark:from-amber-900/40 dark:to-yellow-900/40',
         border: 'ring-2 ring-amber-400',
         text: 'text-amber-700 dark:text-amber-300',
       }
     if (index === 1)
       return {
-        icon: '🥈',
+        icon: <TbMedal className="mx-auto h-7 w-7 text-slate-400" aria-hidden />,
         bg: 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700/40 dark:to-slate-600/40',
         border: 'ring-2 ring-slate-400',
         text: 'text-slate-600 dark:text-slate-300',
       }
     if (index === 2)
       return {
-        icon: '🥉',
+        icon: <TbMedal className="mx-auto h-7 w-7 text-orange-500" aria-hidden />,
         bg: 'bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-900/40 dark:to-amber-900/40',
         border: 'ring-2 ring-orange-400',
         text: 'text-orange-700 dark:text-orange-300',
       }
     return {
-      icon: '🎁',
+      icon: <TbGift className="text-ink-500 mx-auto h-7 w-7" aria-hidden />,
       bg: 'bg-canvas-50',
       border: '',
       text: 'text-ink-600',
@@ -1332,7 +1351,7 @@ function PrizeDetailsModal(props: {
                   style.border
                 )}
               >
-                <div className="text-2xl">{style.icon}</div>
+                <div>{style.icon}</div>
                 <div className={clsx('mt-1 text-sm font-semibold', style.text)}>
                   {prize.label}
                 </div>
@@ -1392,8 +1411,9 @@ function PurchaseForm(props: {
           <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
             <Row className="items-center justify-between gap-4">
               <Col className="gap-1">
-                <span className="text-ink-900 font-medium">
-                  🎁 Free Entry Available!
+                <span className="text-ink-900 inline-flex items-center gap-1 font-medium">
+                  <TbGift className="h-4 w-4" aria-hidden />
+                  Free Entry Available!
                 </span>
                 <span className="text-ink-600 text-sm">
                   Claim your free entry to join the drawing
@@ -1413,8 +1433,9 @@ function PurchaseForm(props: {
 
         {hasClaimedFreeTicket && (
           <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950/30">
-            <span className="text-sm text-green-700 dark:text-green-300">
-              ✓ You've claimed your free entry!
+            <span className="inline-flex items-center gap-1 text-sm text-green-700 dark:text-green-300">
+              <TbCircleCheck className="h-4 w-4 shrink-0" aria-hidden />
+              You've claimed your free entry!
             </span>
           </div>
         )}
@@ -1538,7 +1559,7 @@ function UserDistributionChart(props: {
   if (userStats.length === 0) {
     return (
       <div className="bg-canvas-0 border-canvas-50 flex flex-col items-center justify-center rounded-xl border p-12 shadow-sm">
-        <div className="text-ink-200 mb-3 text-5xl">📊</div>
+        <TbChartBar className="text-ink-200 mb-3 h-12 w-12" aria-hidden />
         <p className="text-ink-900 font-medium">No entries yet</p>
         <p className="text-ink-500 mt-1 text-sm">
           Be the first to participate!
@@ -1771,7 +1792,7 @@ function WinnersDisplay(props: {
   return (
     <div className="overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 p-6 shadow-lg dark:border-amber-800 dark:from-amber-950/30 dark:via-yellow-950/30 dark:to-orange-950/30">
       <Col className="items-center gap-6">
-        <div className="text-5xl">🏆</div>
+        <TbTrophy className="h-12 w-12 text-amber-500" aria-hidden />
         <h2 className="text-ink-900 text-2xl font-bold">Winners!</h2>
 
         <Col className="w-full max-w-lg gap-3">
@@ -1978,7 +1999,7 @@ function ProvablyFairBanner(props: {
           onClick={() => setIsModalOpen(true)}
           className="dark:from-primary-400/15 dark:via-purple-400/15 dark:to-pink-400/15 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-500/10 via-purple-500/10 to-pink-500/10 px-4 py-2 ring-1 ring-primary-500/20 transition-all hover:ring-primary-500/40 dark:ring-primary-400/25 dark:hover:ring-primary-400/40"
         >
-          <span className="text-base">⚖️</span>
+          <TbScale className="h-4 w-4 text-primary-600 dark:text-primary-400" aria-hidden />
           <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600 bg-clip-text text-sm font-semibold text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-pink-400">
             Provably fair
           </span>
@@ -1988,7 +2009,7 @@ function ProvablyFairBanner(props: {
       <Modal open={isModalOpen} setOpen={setIsModalOpen} size="md">
         <Col className={clsx(MODAL_CLASS, 'gap-4')}>
           <Row className="items-center gap-3">
-            <span className="text-2xl">⚖️</span>
+            <TbScale className="text-ink-700 h-7 w-7" aria-hidden />
             <h2 className="text-ink-900 text-xl font-bold">Provably Fair</h2>
           </Row>
 
@@ -2033,13 +2054,15 @@ function ProvablyFairBanner(props: {
           )}
 
           {hasWinners && blockHash ? (
-            <p className="text-sm text-green-700 dark:text-green-400">
-              ✓ Winners selected using the block hash above.
+            <p className="inline-flex items-center gap-1 text-sm text-green-700 dark:text-green-400">
+              <TbCircleCheck className="h-4 w-4 shrink-0" aria-hidden />
+              Winners selected using the block hash above.
             </p>
           ) : isClosed && !hasWinners ? (
             <Col className="gap-2">
-              <p className="text-sm text-amber-700 dark:text-amber-400">
-                ⏳ Drawing closed. Awaiting winner selection.
+              <p className="inline-flex items-center gap-1 text-sm text-amber-700 dark:text-amber-400">
+                <TbHourglass className="h-4 w-4 shrink-0" aria-hidden />
+                Drawing closed. Awaiting winner selection.
               </p>
               {!displayHash && (
                 <Button
@@ -2054,8 +2077,9 @@ function ProvablyFairBanner(props: {
               )}
             </Col>
           ) : (
-            <p className="text-sm text-amber-700 dark:text-amber-400">
-              ⏳ Awaiting close time to determine block.
+            <p className="inline-flex items-center gap-1 text-sm text-amber-700 dark:text-amber-400">
+              <TbHourglass className="h-4 w-4 shrink-0" aria-hidden />
+              Awaiting close time to determine block.
             </p>
           )}
         </Col>
@@ -2090,8 +2114,9 @@ function WinnerClaimSection(props: { sweepstakesNum: number; userId: string }) {
     return (
       <div className="bg-canvas-0 border-canvas-50 overflow-hidden rounded-xl border shadow-sm">
         <div className="border-canvas-50 border-b bg-gradient-to-r from-teal-50 to-cyan-50 px-5 py-4 dark:from-teal-950/30 dark:to-cyan-950/30">
-          <h3 className="text-ink-900 font-semibold">
-            🎉 Congratulations! You won {getOrdinal(winnerInfo.rank)} place!
+          <h3 className="text-ink-900 inline-flex items-center gap-2 font-semibold">
+            <TbConfetti className="h-5 w-5 shrink-0 text-primary-600" aria-hidden />
+            Congratulations! You won {getOrdinal(winnerInfo.rank)} place!
           </h3>
           <p className="text-ink-600 mt-0.5 text-sm">
             Prize: ${winnerInfo.prizeAmountUsdc} USDC
@@ -2101,7 +2126,7 @@ function WinnerClaimSection(props: { sweepstakesNum: number; userId: string }) {
           {claim.walletAddress && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
               <Row className="items-center gap-2">
-                <span className="text-lg">✓</span>
+                <TbCircleCheck className="h-5 w-5 shrink-0 text-green-600" aria-hidden />
                 <Col className="gap-1">
                   <span className="font-medium text-green-800 dark:text-green-300">
                     Claim Submitted
@@ -2130,9 +2155,24 @@ function WinnerClaimSection(props: { sweepstakesNum: number; userId: string }) {
                   'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
               )}
             >
-              {claim.paymentStatus === 'awaiting' && '⏳ Awaiting Payment'}
-              {claim.paymentStatus === 'sent' && '✓ Payment Sent'}
-              {claim.paymentStatus === 'rejected' && '✗ Rejected'}
+              {claim.paymentStatus === 'awaiting' && (
+                <span className="inline-flex items-center gap-1">
+                  <TbHourglass className="h-3.5 w-3.5" aria-hidden />
+                  Awaiting Payment
+                </span>
+              )}
+              {claim.paymentStatus === 'sent' && (
+                <span className="inline-flex items-center gap-1">
+                  <TbCircleCheck className="h-3.5 w-3.5" aria-hidden />
+                  Payment Sent
+                </span>
+              )}
+              {claim.paymentStatus === 'rejected' && (
+                <span className="inline-flex items-center gap-1">
+                  <TbX className="h-3.5 w-3.5" aria-hidden />
+                  Rejected
+                </span>
+              )}
               {claim.paymentStatus === 'opted_out' && 'Opted out'}
             </span>
           </Row>
@@ -2159,8 +2199,9 @@ function WinnerClaimSection(props: { sweepstakesNum: number; userId: string }) {
   return (
     <div className="bg-canvas-0 border-canvas-50 overflow-hidden rounded-xl border shadow-sm">
       <div className="border-canvas-50 border-b bg-gradient-to-r from-teal-50 to-cyan-50 px-5 py-4 dark:from-teal-950/30 dark:to-cyan-950/30">
-        <h3 className="text-ink-900 font-semibold">
-          🎉 Congratulations! You won {getOrdinal(winnerInfo.rank)} place!
+        <h3 className="text-ink-900 inline-flex items-center gap-2 font-semibold">
+          <TbConfetti className="h-5 w-5 shrink-0 text-primary-600" aria-hidden />
+          Congratulations! You won {getOrdinal(winnerInfo.rank)} place!
         </h3>
         <p className="text-ink-600 mt-0.5 text-sm">
           Prize: ${winnerInfo.prizeAmountUsdc} USDC
@@ -2313,7 +2354,8 @@ function WalletClaimFormInner(props: {
               className="w-full"
               onClick={() => setShowWalletModal(true)}
             >
-              🔗 Connect Wallet
+              <TbLink className="mr-2 inline h-5 w-5" aria-hidden />
+              Connect Wallet
             </Button>
             {friendlyConnectError && (
               <div className="border-scarlet-200 bg-scarlet-50 dark:border-scarlet-800 dark:bg-scarlet-950/30 w-full rounded-lg border p-3">
@@ -2353,7 +2395,7 @@ function WalletClaimFormInner(props: {
           <Col className={clsx(MODAL_CLASS, 'gap-6')}>
             <Col className="items-center gap-2">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500">
-                <span className="text-2xl">🔗</span>
+                <TbLink className="h-7 w-7 text-white" aria-hidden />
               </div>
               <h3 className="text-ink-900 text-xl font-semibold">
                 Connect Wallet
@@ -2427,7 +2469,7 @@ function WalletClaimFormInner(props: {
         <Row className="items-center justify-between">
           <Row className="items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-400 to-emerald-500">
-              <span className="text-lg">✓</span>
+              <TbCircleCheck className="h-5 w-5 text-white" aria-hidden />
             </div>
             <Col className="gap-0.5">
               <span className="text-ink-500 text-xs font-medium">
@@ -2452,7 +2494,8 @@ function WalletClaimFormInner(props: {
         loading={isSubmitting}
         disabled={isSubmitting}
       >
-        🎁 Claim Prize
+        <TbGift className="mr-2 inline h-5 w-5" aria-hidden />
+        Claim Prize
       </Button>
     </Col>
   )
@@ -2469,17 +2512,17 @@ function validateEthAddress(input: string): AddressValidation {
   if (!/^0x[a-fA-F0-9]*$/.test(input)) {
     return {
       kind: 'invalid',
-      message: '❌ This is not an Ethereum wallet address',
+      message: 'This is not an Ethereum wallet address',
     }
   }
   if (input.length < 42) {
     return {
       kind: 'incomplete',
-      message: '⚠️ This wallet address is incomplete',
+      message: 'This wallet address is incomplete',
     }
   }
   if (input.length > 42) {
-    return { kind: 'invalid', message: '❌ This wallet address is too long' }
+    return { kind: 'invalid', message: 'This wallet address is too long' }
   }
   // viem's default isAddress requires either all-lowercase, all-uppercase, or
   // a valid EIP-55 checksum — catches typos in mixed-case pastes.
@@ -2487,12 +2530,12 @@ function validateEthAddress(input: string): AddressValidation {
     return {
       kind: 'invalid',
       message:
-        '❌ This address has a checksum error — likely a typo. Double-check every character.',
+        'This address has a checksum error — likely a typo. Double-check every character.',
     }
   }
   return {
     kind: 'valid',
-    message: '✓ This is a valid Ethereum wallet address',
+    message: 'This is a valid Ethereum wallet address',
   }
 }
 
@@ -2545,8 +2588,9 @@ function ManualWalletEntry(props: {
   return (
     <Col className="gap-4">
       <div className="border-scarlet-200 bg-scarlet-50 dark:border-scarlet-800 dark:bg-scarlet-950/30 rounded-lg border p-3">
-        <p className="text-scarlet-700 dark:text-scarlet-300 text-sm font-semibold">
-          ⚠️ Not recommended
+        <p className="text-scarlet-700 dark:text-scarlet-300 inline-flex items-center gap-1 text-sm font-semibold">
+          <TbAlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+          Not recommended
         </p>
         <p className="text-scarlet-600 dark:text-scarlet-400 mt-1 text-xs">
           Manually entering a wallet address is risky. If the address is wrong
@@ -2591,7 +2635,7 @@ function ManualWalletEntry(props: {
         {validation.kind !== 'empty' && (
           <p
             className={clsx(
-              'text-xs',
+              'inline-flex items-center gap-1 text-xs',
               validation.kind === 'valid' &&
                 'text-green-700 dark:text-green-400',
               validation.kind === 'incomplete' &&
@@ -2600,6 +2644,15 @@ function ManualWalletEntry(props: {
                 'text-scarlet-700 dark:text-scarlet-300'
             )}
           >
+            {validation.kind === 'valid' && (
+              <TbCircleCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            )}
+            {validation.kind === 'incomplete' && (
+              <TbAlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            )}
+            {validation.kind === 'invalid' && (
+              <TbCircleX className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            )}
             {validation.message}
           </p>
         )}
@@ -2637,7 +2690,8 @@ function ManualWalletEntry(props: {
           loading={isSubmitting}
           disabled={!canSubmit}
         >
-          🎁 Claim Prize
+          <TbGift className="mr-2 inline h-5 w-5" aria-hidden />
+          Claim Prize
         </Button>
       </Row>
     </Col>
@@ -2667,7 +2721,7 @@ function NoWalletDetectedBanner() {
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
       <Col className="gap-2">
         <Row className="items-center gap-2">
-          <span className="text-lg">🦊</span>
+          <TbWallet className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
           <span className="font-semibold text-amber-900 dark:text-amber-200">
             You'll need a crypto wallet to claim
           </span>

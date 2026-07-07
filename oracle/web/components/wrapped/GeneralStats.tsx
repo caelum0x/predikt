@@ -2,6 +2,18 @@ import clsx from 'clsx'
 import { User } from 'common/user'
 import { formatMoney } from 'common/util/format'
 import { useEffect, useState } from 'react'
+import {
+  TbChristmasTree,
+  TbConfetti,
+  TbDeer,
+  TbGift,
+  TbHome,
+  TbMountain,
+  TbSnowflake,
+  TbSnowman,
+  TbSparkles,
+  TbStar,
+} from 'react-icons/tb'
 import { useTotalProfit } from 'web/hooks/use-wrapped-2025'
 import { Col } from '../layout/col'
 import { NavButtons } from './NavButtons'
@@ -43,16 +55,16 @@ export function IntroSlide(props: { goToNextPage: () => void; user: User }) {
     <Col className="relative mx-auto my-auto items-center justify-center gap-8 px-6 text-center">
       {/* Decorative ornaments */}
       <div
-        className="absolute -top-20 left-10 animate-bounce text-6xl opacity-20"
+        className="absolute -top-20 left-10 animate-bounce opacity-20"
         style={{ animationDuration: '3s' }}
       >
-        🎄
+        <TbChristmasTree aria-hidden="true" className="h-16 w-16" />
       </div>
       <div
-        className="absolute -top-16 right-10 animate-bounce text-5xl opacity-20"
+        className="absolute -top-16 right-10 animate-bounce opacity-20"
         style={{ animationDuration: '2.5s', animationDelay: '0.5s' }}
       >
-        ⭐
+        <TbStar aria-hidden="true" className="h-12 w-12" />
       </div>
 
       <div
@@ -68,9 +80,12 @@ export function IntroSlide(props: { goToNextPage: () => void; user: User }) {
           Wrapped
         </h1>
         <div className="mt-4 flex items-center justify-center gap-3 text-4xl font-bold text-white/90 sm:text-5xl">
-          <span className="text-red-400">🎁</span>
+          <TbGift aria-hidden="true" className="h-10 w-10 text-red-400" />
           2025
-          <span className="text-green-400">🎄</span>
+          <TbChristmasTree
+            aria-hidden="true"
+            className="h-10 w-10 text-green-400"
+          />
         </div>
       </div>
 
@@ -86,8 +101,9 @@ export function IntroSlide(props: { goToNextPage: () => void; user: User }) {
           Welcome back,{' '}
           <span className="font-semibold text-green-300">{user.name}</span>!
         </p>
-        <p className="mt-2 text-lg text-white/60">
-          Let's unwrap your prediction journey this year 🎅
+        <p className="mt-2 flex items-center justify-center gap-2 text-lg text-white/60">
+          Let's unwrap your prediction journey this year
+          <TbGift aria-hidden="true" className="h-5 w-5" />
         </p>
       </div>
 
@@ -103,7 +119,11 @@ export function IntroSlide(props: { goToNextPage: () => void; user: User }) {
             : 'translate-y-8 opacity-0'
         )}
       >
-        ✨ Unwrap My Year ✨
+        <span className="flex items-center justify-center gap-2">
+          <TbSparkles aria-hidden="true" className="h-5 w-5" />
+          Unwrap My Year
+          <TbSparkles aria-hidden="true" className="h-5 w-5" />
+        </span>
       </button>
     </Col>
   )
@@ -142,7 +162,11 @@ export function TotalProfitSlide(props: {
   }
 
   const isProfit = (totalProfit ?? 0) >= 0
-  const emoji = isProfit ? '🎁' : '🪨'
+  const resultIcon = isProfit ? (
+    <TbGift aria-hidden="true" className="h-16 w-16 text-green-400" />
+  ) : (
+    <TbMountain aria-hidden="true" className="text-ink-400 h-16 w-16" />
+  )
   const message = isProfit
     ? "Santa's been good to you!"
     : 'Coal in your stocking this year...'
@@ -159,7 +183,7 @@ export function TotalProfitSlide(props: {
             : 'scale-95 opacity-0'
         )}
       >
-        <div className="mb-4 text-6xl">{emoji}</div>
+        <div className="mb-4 flex justify-center">{resultIcon}</div>
         <p className="text-xl text-white/70">Your total profit in 2025</p>
         <div
           className={clsx(
@@ -172,8 +196,22 @@ export function TotalProfitSlide(props: {
         <p className="mt-4 text-2xl text-white/80">{message}</p>
 
         {/* Decorative elements */}
-        <div className="mt-6 flex gap-4 text-4xl">
-          {isProfit ? <>🎄✨🎅✨🎄</> : <>❄️💨🥶💨❄️</>}
+        <div className="mt-6 flex gap-4" aria-hidden="true">
+          {isProfit ? (
+            <>
+              <TbChristmasTree className="h-9 w-9 text-green-400" />
+              <TbSparkles className="h-9 w-9 text-yellow-300" />
+              <TbGift className="h-9 w-9 text-red-400" />
+              <TbSparkles className="h-9 w-9 text-yellow-300" />
+              <TbChristmasTree className="h-9 w-9 text-green-400" />
+            </>
+          ) : (
+            <>
+              <TbSnowflake className="h-9 w-9 text-cyan-300" />
+              <TbSnowman className="h-9 w-9 text-white/80" />
+              <TbSnowflake className="h-9 w-9 text-cyan-300" />
+            </>
+          )}
         </div>
       </Col>
       <NavButtons goToPrevPage={goToPrevPage} goToNextPage={onGoToNext} />
@@ -198,7 +236,12 @@ export function OutroSlide(props: { goToPrevPage: () => void; user: User }) {
           animateIn ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         )}
       >
-        <div className="mb-4 text-8xl">🎄</div>
+        <div className="mb-4 flex justify-center">
+          <TbChristmasTree
+            aria-hidden="true"
+            className="h-24 w-24 text-green-400"
+          />
+        </div>
         <h2 className="text-4xl font-bold text-white sm:text-5xl">
           Happy Holidays,
         </h2>
@@ -210,7 +253,13 @@ export function OutroSlide(props: { goToPrevPage: () => void; user: User }) {
           forecasting, trading, and being right (sometimes)!
         </p>
 
-        <div className="mt-8 flex gap-3 text-5xl">🎁🎅❄️⭐🦌</div>
+        <div className="mt-8 flex gap-3" aria-hidden="true">
+          <TbGift className="h-12 w-12 text-red-400" />
+          <TbConfetti className="h-12 w-12 text-rose-300" />
+          <TbSnowflake className="h-12 w-12 text-cyan-300" />
+          <TbStar className="h-12 w-12 text-yellow-300" />
+          <TbDeer className="h-12 w-12 text-amber-500" />
+        </div>
 
         <a
           href="/home"
@@ -220,7 +269,10 @@ export function OutroSlide(props: { goToPrevPage: () => void; user: User }) {
             'text-white shadow-lg hover:scale-105 hover:shadow-xl'
           )}
         >
-          🏠 Back to Predikt
+          <span className="flex items-center justify-center gap-2">
+            <TbHome aria-hidden="true" className="h-5 w-5" />
+            Back to Predikt
+          </span>
         </a>
       </Col>
       <NavButtons

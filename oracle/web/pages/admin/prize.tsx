@@ -13,6 +13,7 @@ import { api } from 'web/lib/api/api'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 import { ConfirmationButton } from 'web/components/buttons/confirmation-button'
+import { TbCheck, TbX } from 'react-icons/tb'
 
 type PaymentStatus = 'awaiting' | 'sent' | 'rejected' | 'opted_out'
 
@@ -448,7 +449,7 @@ function MarkSentPrompt(props: {
         title="Mark as sent"
         className="flex h-6 w-6 items-center justify-center rounded-full border border-green-200 bg-green-50 text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
       >
-        ✓
+        <TbCheck className="h-4 w-4" aria-hidden />
       </button>
       <button
         onClick={onDismiss}
@@ -456,7 +457,7 @@ function MarkSentPrompt(props: {
         title="Dismiss"
         className="flex h-6 w-6 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
       >
-        ✕
+        <TbX className="h-4 w-4" aria-hidden />
       </button>
     </Row>
   )

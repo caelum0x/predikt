@@ -16,6 +16,19 @@ import {
 import { formatMoney, maybePluralize } from 'common/util/format'
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
+import {
+  TbAlarm,
+  TbBuildingBank,
+  TbCompass,
+  TbFlame,
+  TbGift,
+  TbHandStop,
+  TbSend,
+  TbSnowflake,
+  TbSparkles,
+  TbTrophy,
+} from 'react-icons/tb'
+import { RankMedalIcon } from 'web/components/icons/rank-medal-icon'
 
 import { STREAK_MILESTONES } from 'common/store-review'
 import { DAY_MS } from 'common/util/time'
@@ -158,7 +171,7 @@ export function UniqueBettorBonusIncomeNotification(props: {
       icon={
         <MultipleAvatarIcons
           notification={notification}
-          symbol={'🎁'}
+          symbol={<TbGift aria-hidden="true" className="h-5 w-5 text-red-400" />}
           setOpen={setOpen}
         />
       }
@@ -257,7 +270,7 @@ export function UniqueBettorNotification(props: {
       icon={
         <MultipleAvatarIcons
           notification={notification}
-          symbol={'🆕'}
+          symbol={<TbSparkles aria-hidden="true" className="h-5 w-5 text-primary-500" />}
           setOpen={setOpen}
         />
       }
@@ -306,7 +319,7 @@ export function PushNotificationBonusNotification(props: {
       setHighlighted={setHighlighted}
       isChildOfGroup={true}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'🎁'} />
+        <AvatarNotificationIcon notification={notification} symbol={<TbGift aria-hidden="true" className="h-5 w-5 text-red-400" />} />
       }
     >
       <span className="line-clamp-3">
@@ -377,7 +390,7 @@ export function QuestIncomeNotification(props: {
       }
       icon={
         <NotificationIcon
-          symbol={'🧭'}
+          symbol={<TbCompass aria-hidden="true" className="h-5 w-5 text-primary-500" />}
           symbolBackgroundClass={
             'bg-gradient-to-br from-primary-500 to-primary-300'
           }
@@ -490,7 +503,7 @@ export function BettingStreakBonusIncomeNotification(props: {
       }
       icon={
         <NotificationIcon
-          symbol={'🔥'}
+          symbol={<TbFlame aria-hidden="true" className="h-5 w-5 text-orange-500" />}
           symbolBackgroundClass={
             'bg-gradient-to-br from-primary-600 to-primary-300'
           }
@@ -500,7 +513,7 @@ export function BettingStreakBonusIncomeNotification(props: {
     >
       {noBonus ? (
         <span className="line-clamp-3">
-          Congrats on your {sourceText && <span>🔥 {streakInDays} day</span>}{' '}
+          Congrats on your {sourceText && <span><TbFlame aria-hidden="true" className="mr-0.5 inline h-4 w-4 text-orange-500" />{streakInDays} day</span>}{' '}
           <PrimaryNotificationLink text="Prediction Streak" />
         </span>
       ) : (
@@ -514,7 +527,7 @@ export function BettingStreakBonusIncomeNotification(props: {
             />
           )}{' '}
           {bonusAmount && bonusAmount >= maxBonus && <span>(max) </span>}
-          Bonus for your {sourceText && <span>🔥 {streakInDays} day</span>}{' '}
+          Bonus for your {sourceText && <span><TbFlame aria-hidden="true" className="mr-0.5 inline h-4 w-4 text-orange-500" />{streakInDays} day</span>}{' '}
           <PrimaryNotificationLink text="Prediction Streak" />
         </span>
       )}
@@ -544,7 +557,7 @@ export function BettingStreakExpiringNotification(props: {
       isChildOfGroup={true}
       icon={
         <NotificationIcon
-          symbol={'⏰'}
+          symbol={<TbAlarm aria-hidden="true" className="h-5 w-5 text-amber-500" />}
           symbolBackgroundClass={
             'bg-gradient-to-br from-yellow-600 to-orange-300'
           }
@@ -554,7 +567,7 @@ export function BettingStreakExpiringNotification(props: {
       subtitle={'Place a prediction in the next 3 hours to keep it.'}
     >
       <span className="line-clamp-3">
-        Don't let your <span>🔥 {streakInDays} day</span>{' '}
+        Don't let your <span><TbFlame aria-hidden="true" className="mr-0.5 inline h-4 w-4 text-orange-500" />{streakInDays} day</span>{' '}
         <PrimaryNotificationLink text="Prediction Streak" /> expire!
       </span>
       <BettingStreakModal isOpen={open} setOpen={setOpen} currentUser={user} />
@@ -581,7 +594,7 @@ export function BettingStreakFreezeUsedNotification(props: {
       isChildOfGroup={true}
       icon={
         <NotificationIcon
-          symbol={'🧊'}
+          symbol={<TbSnowflake aria-hidden="true" className="h-5 w-5 text-cyan-500" />}
           symbolBackgroundClass={'bg-gradient-to-br from-blue-400 to-cyan-300'}
         />
       }
@@ -596,7 +609,7 @@ export function BettingStreakFreezeUsedNotification(props: {
     >
       <span className="line-clamp-3">
         A <PrimaryNotificationLink text="Streak Freeze" /> was used to save your{' '}
-        <span>🔥 {streak} day</span> prediction streak!
+        <span><TbFlame aria-hidden="true" className="mr-0.5 inline h-4 w-4 text-orange-500" />{streak} day</span> prediction streak!
       </span>
       <BettingStreakModal isOpen={open} setOpen={setOpen} currentUser={user} />
     </NotificationFrame>
@@ -619,7 +632,7 @@ export function LoanIncomeNotification(props: {
       isChildOfGroup={true}
       icon={
         <NotificationIcon
-          symbol={'🏦'}
+          symbol={<TbBuildingBank aria-hidden="true" className="h-5 w-5 text-amber-600" />}
           symbolBackgroundClass={
             'bg-gradient-to-br from-green-600 to-green-300'
           }
@@ -654,7 +667,7 @@ export function ManaPaymentReceivedNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'💸'} />
+        <AvatarNotificationIcon notification={notification} symbol={<TbSend aria-hidden="true" className="h-5 w-5 text-teal-500" />} />
       }
       subtitle={<Linkify text={data?.message ?? ''} />}
       link={`/${sourceUserUsername}`}
@@ -686,7 +699,7 @@ export function CharityChampionDethronedNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'🏆'} />
+        <AvatarNotificationIcon notification={notification} symbol={<TbTrophy aria-hidden="true" className="h-5 w-5 text-yellow-500" />} />
       }
       link="/charity"
     >
@@ -718,7 +731,7 @@ export function CharityChampionEligibleNotification(props: {
       setHighlighted={setHighlighted}
       icon={
         <NotificationIcon
-          symbol={'🏆'}
+          symbol={<TbTrophy aria-hidden="true" className="h-5 w-5 text-yellow-500" />}
           symbolBackgroundClass="bg-gradient-to-br from-amber-500 to-yellow-300"
         />
       }
@@ -774,7 +787,7 @@ export function ReferralNotification(props: {
       highlighted={highlighted}
       setHighlighted={setHighlighted}
       icon={
-        <AvatarNotificationIcon notification={notification} symbol={'👋'} />
+        <AvatarNotificationIcon notification={notification} symbol={<TbHandStop aria-hidden="true" className="h-5 w-5 text-primary-500" />} />
       }
       link={getSourceUrl(notification)}
     >
@@ -822,7 +835,13 @@ export function LeagueChangedNotification(props: {
       setHighlighted={setHighlighted}
       icon={
         <NotificationIcon
-          symbol={newlyAdded ? '🏆' : promoted ? '🥇' : '🥈'}
+          symbol={
+            newlyAdded ? (
+              <TbTrophy aria-hidden="true" className="h-5 w-5 text-yellow-500" />
+            ) : (
+              <RankMedalIcon rank={promoted ? 1 : 2} className="h-5 w-5" />
+            )
+          }
           symbolBackgroundClass={
             'bg-gradient-to-br from-primary-600 to-primary-300'
           }

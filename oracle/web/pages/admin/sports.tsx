@@ -1,4 +1,11 @@
 import { ChevronDownIcon } from '@heroicons/react/solid'
+import {
+  TbChevronUp,
+  TbChevronDown,
+  TbCircleCheck,
+  TbAlertTriangle,
+  TbSparkles,
+} from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { Page } from 'web/components/layout/page'
 import { Col } from 'web/components/layout/col'
@@ -76,7 +83,13 @@ function Section(props: {
         className="bg-ink-50 hover:bg-ink-100 flex w-full items-center justify-between rounded-t-lg px-4 py-3 text-left"
       >
         <span className="text-ink-800 font-semibold">{props.title}</span>
-        <span className="text-ink-400 text-sm">{open ? '▲' : '▼'}</span>
+        <span className="text-ink-400 text-sm">
+          {open ? (
+            <TbChevronUp className="h-4 w-4" aria-hidden />
+          ) : (
+            <TbChevronDown className="h-4 w-4" aria-hidden />
+          )}
+        </span>
       </button>
       {open && <div className="p-4">{props.children}</div>}
     </div>
@@ -618,11 +631,24 @@ export default function SportsAdminPage() {
                       : 'text-yellow-600'
                   )}
                 >
-                  {groupStatus.created
-                    ? `✅ Group created (${groupStatus.id}) — admin-restricted`
-                    : groupStatus.restricted
-                    ? `✅ Group exists and restricted (${groupStatus.id})`
-                    : `⚠️ Group exists but will be restricted on next run`}
+                  <span className="inline-flex items-center gap-1">
+                    {groupStatus.created ? (
+                      <>
+                        <TbCircleCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        Group created ({groupStatus.id}) — admin-restricted
+                      </>
+                    ) : groupStatus.restricted ? (
+                      <>
+                        <TbCircleCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        Group exists and restricted ({groupStatus.id})
+                      </>
+                    ) : (
+                      <>
+                        <TbAlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        Group exists but will be restricted on next run
+                      </>
+                    )}
+                  </span>
                 </span>
               )}
             </Col>
@@ -725,7 +751,14 @@ export default function SportsAdminPage() {
                   onClick={suggestTags}
                   disabled={suggesting || extraTags.length >= maxExtraTags}
                 >
-                  {suggesting ? 'Suggesting…' : '✨ Suggest with AI'}
+                  {suggesting ? (
+                    'Suggesting…'
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <TbSparkles className="h-4 w-4" aria-hidden />
+                      Suggest with AI
+                    </span>
+                  )}
                 </Button>
               </Row>
               {extraTags.length > 0 && (
@@ -1120,8 +1153,9 @@ export default function SportsAdminPage() {
                             {m.question}
                           </a>
                           {m.needsAttention && (
-                            <span className="ml-2 text-xs font-medium text-red-600">
-                              ⚠ overdue
+                            <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-red-600">
+                              <TbAlertTriangle className="h-3.5 w-3.5" aria-hidden />
+                              overdue
                             </span>
                           )}
                         </td>
@@ -1240,7 +1274,10 @@ export default function SportsAdminPage() {
           <Col className="gap-3">
             {alertMarkets.filter((m) => !handledAlerts.has(m.id)).length ===
             0 ? (
-              <p className="text-sm text-green-600">✅ No active alerts.</p>
+              <p className="inline-flex items-center gap-1 text-sm text-green-600">
+                <TbCircleCheck className="h-4 w-4" aria-hidden />
+                No active alerts.
+              </p>
             ) : (
               alertMarkets
                 .filter((m) => !handledAlerts.has(m.id))
@@ -1250,8 +1287,9 @@ export default function SportsAdminPage() {
                     className="items-start justify-between rounded border border-red-200 bg-red-50 p-3"
                   >
                     <Col className="gap-1">
-                      <span className="text-sm font-medium text-red-700">
-                        ⚠ Unresolved past close time
+                      <span className="inline-flex items-center gap-1 text-sm font-medium text-red-700">
+                        <TbAlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        Unresolved past close time
                       </span>
                       <a
                         href={m.url}
@@ -1328,8 +1366,8 @@ export default function SportsAdminPage() {
                     : 'Set up community group + dashboard'}
                 </Button>
                 {communityInitStatus && (
-                  <span className="text-xs text-green-600">
-                    ✅{' '}
+                  <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                    <TbCircleCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
                     {communityInitStatus.groupCreated
                       ? 'Group created'
                       : 'Group already existed'}{' '}

@@ -32,6 +32,16 @@ import toast from 'react-hot-toast'
 import clsx from 'clsx'
 import { track } from 'web/lib/service/analytics'
 import { FaHeart } from 'react-icons/fa6'
+import {
+  TbTicket,
+  TbShieldHalfFilled,
+  TbRotateClockwise,
+  TbHourglass,
+  TbChartBar,
+  TbTrophy,
+  TbScale,
+  TbCircleCheck,
+} from 'react-icons/tb'
 
 import {
   calculateTicketsFromMana,
@@ -379,7 +389,7 @@ export default function CharityGiveawayPage(props: { giveawayNum?: number }) {
           url="/charity"
         />
         <Col className="mx-auto w-full max-w-3xl items-center justify-center gap-6 px-4 py-20">
-          <div className="text-ink-300 text-6xl">🎟️</div>
+          <TbTicket className="text-ink-300 h-16 w-16" aria-hidden />
           <h1 className="text-ink-900 text-2xl font-semibold">
             No Active Giveaway
           </h1>
@@ -552,7 +562,7 @@ export default function CharityGiveawayPage(props: { giveawayNum?: number }) {
 
         {!isClosed && user && isAdmin && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-center dark:border-amber-800 dark:bg-amber-950/30">
-            <div className="mb-1 text-2xl">🛡️</div>
+            <TbShieldHalfFilled className="text-ink-700 mx-auto mb-1 h-7 w-7" aria-hidden />
             <h3 className="text-ink-900 font-semibold">
               Admins can't participate
             </h3>
@@ -601,7 +611,7 @@ export default function CharityGiveawayPage(props: { giveawayNum?: number }) {
         {isClosed && !hasWinner && isAdmin && (
           <div className="bg-canvas-0 border-canvas-50 overflow-hidden rounded-xl border p-6 shadow-sm">
             <Col className="items-center gap-4">
-              <div className="text-4xl">🎰</div>
+              <TbRotateClockwise className="text-ink-700 h-10 w-10" aria-hidden />
               <h3 className="text-ink-900 text-lg font-semibold">
                 Ready to Draw Winner
               </h3>
@@ -616,7 +626,8 @@ export default function CharityGiveawayPage(props: { giveawayNum?: number }) {
                 loading={isSelectingWinner}
                 disabled={isSelectingWinner}
               >
-                🎟️ Draw Winning Entry
+                <TbTicket className="mr-2 inline h-5 w-5" aria-hidden />
+                Draw Winning Entry
               </Button>
             </Col>
           </div>
@@ -625,7 +636,7 @@ export default function CharityGiveawayPage(props: { giveawayNum?: number }) {
         {/* Waiting for winner (non-admin view) */}
         {isClosed && !hasWinner && !isAdmin && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-800 dark:bg-amber-950/30">
-            <div className="mb-2 text-2xl">⏳</div>
+            <TbHourglass className="text-ink-700 mx-auto mb-2 h-7 w-7" aria-hidden />
             <h3 className="text-ink-900 font-semibold">Giveaway Closed</h3>
             <p className="text-ink-600 mt-1 text-sm">
               The winning entry will be drawn soon. Check back!
@@ -1010,7 +1021,7 @@ function SignInPrompt(props: { previewCharityId: string }) {
             </Col>
           </Row>
         ) : (
-          <div className="text-ink-300 text-4xl">🎟️</div>
+          <TbTicket className="text-ink-300 h-10 w-10" aria-hidden />
         )}
         <p className="text-ink-600 text-center text-sm">
           Sign in to get entries and support your favorite charity
@@ -1047,7 +1058,7 @@ function GiveawayPieChart(props: {
   if (charityStats.length === 0) {
     return (
       <div className="bg-canvas-0 border-canvas-50 flex flex-col items-center justify-center rounded-xl border p-12 shadow-sm">
-        <div className="text-ink-200 mb-3 text-5xl">📊</div>
+        <TbChartBar className="text-ink-200 mb-3 h-12 w-12" aria-hidden />
         <p className="text-ink-900 font-medium">No entries yet</p>
         <p className="text-ink-500 mt-1 text-sm">
           Be the first to participate!
@@ -1390,7 +1401,7 @@ function WinnerCard(props: {
   return (
     <div className="overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 p-6 shadow-lg dark:border-amber-800 dark:from-amber-950/30 dark:via-yellow-950/30 dark:to-orange-950/30">
       <Col className="items-center gap-4">
-        <div className="text-5xl">🏆</div>
+        <TbTrophy className="h-12 w-12 text-amber-500" aria-hidden />
         <h2 className="text-ink-900 text-2xl font-bold">Winner!</h2>
 
         {charity && (
@@ -1443,7 +1454,8 @@ function WinnerCard(props: {
           onClick={onReplay}
           className="text-ink-500 hover:text-ink-700 mt-2 text-sm underline transition-colors"
         >
-          🎡 Watch the spin again
+          <TbRotateClockwise className="mr-1 inline h-4 w-4" aria-hidden />
+          Watch the spin again
         </button>
       </Col>
     </div>
@@ -1493,7 +1505,7 @@ function ProvablyFairBanner(props: {
           onClick={() => setIsModalOpen(true)}
           className="dark:from-primary-400/15 dark:via-purple-400/15 dark:to-pink-400/15 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-500/10 via-purple-500/10 to-pink-500/10 px-4 py-2 ring-1 ring-primary-500/20 transition-all hover:ring-primary-500/40 dark:ring-primary-400/25 dark:hover:ring-primary-400/40"
         >
-          <span className="text-base">⚖️</span>
+          <TbScale className="h-4 w-4 text-primary-600 dark:text-primary-400" aria-hidden />
           <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600 bg-clip-text text-sm font-semibold text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-pink-400">
             Provably fair
           </span>
@@ -1503,7 +1515,7 @@ function ProvablyFairBanner(props: {
       <Modal open={isModalOpen} setOpen={setIsModalOpen} size="md">
         <Col className={clsx(MODAL_CLASS, 'gap-4')}>
           <Row className="items-center gap-3">
-            <span className="text-2xl">⚖️</span>
+            <TbScale className="text-ink-700 h-7 w-7" aria-hidden />
             <h2 className="text-ink-900 text-xl font-bold">Provably Fair</h2>
           </Row>
 
@@ -1524,8 +1536,9 @@ function ProvablyFairBanner(props: {
                 </Col>
               )}
               {hasWinner && (
-                <p className="text-sm text-green-700 dark:text-green-400">
-                  ✓ Winner selected using the original method.
+                <p className="inline-flex items-center gap-1 text-sm text-green-700 dark:text-green-400">
+                  <TbCircleCheck className="h-4 w-4 shrink-0" aria-hidden />
+                  Winner selected using the original method.
                 </p>
               )}
             </>
@@ -1572,13 +1585,15 @@ function ProvablyFairBanner(props: {
               )}
 
               {hasWinner && blockHash ? (
-                <p className="text-sm text-green-700 dark:text-green-400">
-                  ✓ Winner selected using the block hash above.
+                <p className="inline-flex items-center gap-1 text-sm text-green-700 dark:text-green-400">
+                  <TbCircleCheck className="h-4 w-4 shrink-0" aria-hidden />
+                  Winner selected using the block hash above.
                 </p>
               ) : isClosed && !hasWinner ? (
                 <Col className="gap-2">
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
-                    ⏳ Giveaway closed. Awaiting winner selection.
+                  <p className="inline-flex items-center gap-1 text-sm text-amber-700 dark:text-amber-400">
+                    <TbHourglass className="h-4 w-4 shrink-0" aria-hidden />
+                    Giveaway closed. Awaiting winner selection.
                   </p>
                   {!displayHash && (
                     <Button
@@ -1593,8 +1608,9 @@ function ProvablyFairBanner(props: {
                   )}
                 </Col>
               ) : (
-                <p className="text-sm text-amber-700 dark:text-amber-400">
-                  ⏳ Awaiting close time to determine block.
+                <p className="inline-flex items-center gap-1 text-sm text-amber-700 dark:text-amber-400">
+                  <TbHourglass className="h-4 w-4 shrink-0" aria-hidden />
+                  Awaiting close time to determine block.
                 </p>
               )}
             </>

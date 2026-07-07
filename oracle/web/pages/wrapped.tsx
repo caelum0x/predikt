@@ -11,6 +11,13 @@ import {
 import { MonthlyBets } from 'web/components/wrapped/MonthlyBets'
 import { MaxMinProfit } from 'web/components/wrapped/MaxMinProfit'
 import { LoadingIndicator } from 'web/components/widgets/loading-indicator'
+import {
+  TbSnowflake,
+  TbChristmasTree,
+  TbStarFilled,
+  TbGift,
+  TbDeer,
+} from 'react-icons/tb'
 
 // Snowflake component for the background
 function Snowfall() {
@@ -73,7 +80,7 @@ function Snowfall() {
             animationDelay: `${flake.delay}s`,
           }}
         >
-          ❄
+          <TbSnowflake aria-hidden />
         </div>
       ))}
     </div>
@@ -138,7 +145,7 @@ export default function WrappedPage() {
   return (
     <>
       <Head>
-        <title>Predikt Wrapped 2025 🎄</title>
+        <title>Predikt Wrapped 2025</title>
         <meta
           name="description"
           content="Your year in predictions - Predikt Wrapped 2025"
@@ -290,10 +297,22 @@ export default function WrappedPage() {
         </div>
 
         {/* Decorative corners */}
-        <div className="absolute left-4 top-4 text-4xl opacity-30">🎄</div>
-        <div className="absolute right-4 top-4 text-4xl opacity-30">⭐</div>
-        <div className="absolute bottom-4 left-4 text-3xl opacity-30">🎁</div>
-        <div className="absolute bottom-4 right-4 text-3xl opacity-30">🦌</div>
+        <TbChristmasTree
+          className="absolute left-4 top-4 h-10 w-10 opacity-30"
+          aria-hidden
+        />
+        <TbStarFilled
+          className="absolute right-4 top-4 h-10 w-10 opacity-30"
+          aria-hidden
+        />
+        <TbGift
+          className="absolute bottom-4 left-4 h-8 w-8 opacity-30"
+          aria-hidden
+        />
+        <TbDeer
+          className="absolute bottom-4 right-4 h-8 w-8 opacity-30"
+          aria-hidden
+        />
       </div>
     </>
   )

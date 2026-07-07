@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { XCircleIcon } from '@heroicons/react/solid'
 import { FaSearch } from 'react-icons/fa'
+import { TbCheck } from 'react-icons/tb'
 import { MultiContract } from 'common/contract'
 import { Col } from '../layout/col'
 import { APIError, api } from 'web/lib/api/api'
@@ -736,8 +737,9 @@ export const IndependentAnswersResolvePanel = (props: {
                       </div>
 
                       {isCompleted && (
-                        <div className="ml-2 text-sm font-medium text-green-500">
-                          ✓ Completed
+                        <div className="ml-2 flex items-center gap-1 text-sm font-medium text-green-500">
+                          <TbCheck aria-hidden="true" className="h-4 w-4" />
+                          Completed
                         </div>
                       )}
 
@@ -970,8 +972,9 @@ export const IndependentAnswersUnresolvePanel = (props: {
                       UNRESOLVE
                     </div>
                     {isCompleted && (
-                      <div className="ml-2 text-sm font-medium text-green-500">
-                        ✓ Completed
+                      <div className="ml-2 flex items-center gap-1 text-sm font-medium text-green-500">
+                        <TbCheck aria-hidden="true" className="h-4 w-4" />
+                        Completed
                       </div>
                     )}
                     {isCurrentlyProcessing && (

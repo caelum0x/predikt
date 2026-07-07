@@ -10,6 +10,7 @@ import { Title } from 'web/components/widgets/title'
 import { Page } from 'web/components/layout/page'
 import { SEO } from 'web/components/SEO'
 import { SizedContainer } from 'web/components/sized-container'
+import { TbChartBar } from 'react-icons/tb'
 import { getFullUserByUsername } from 'web/lib/supabase/users'
 import { useAPIGetter } from 'web/hooks/use-api-getter'
 import {
@@ -289,7 +290,7 @@ function UserCalibrationContent({ user }: { user: User }) {
             </>
           ) : (
             <div className="text-ink-500 py-12 text-center">
-              <div className="mb-3 text-4xl">📊</div>
+              <TbChartBar className="mx-auto mb-3 h-10 w-10" aria-hidden />
               Not enough resolved {TRADE_TERM}s to calculate calibration
             </div>
           )}

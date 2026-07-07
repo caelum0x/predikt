@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { User } from 'common/user'
 import { formatMoney } from 'common/util/format'
+import { TbGift, TbMountain, TbSnowman } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { ProfitType, useMaxAndMinProfit } from 'web/hooks/use-wrapped-2025'
 import { Col } from '../layout/col'
@@ -53,7 +54,10 @@ export function MaxMinProfit(props: {
     return (
       <>
         <Col className="mx-auto my-auto items-center gap-4 text-center">
-          <div className="text-6xl">🎅</div>
+          <TbSnowman
+            aria-hidden="true"
+            className="h-16 w-16 text-white/80"
+          />
           <div className="text-2xl text-white">
             You don't have any resolved bets this year!
           </div>
@@ -96,7 +100,7 @@ export function MaxMinProfit(props: {
               className={clsx('transition-all duration-700', 'animate-fade-in')}
             >
               <Row className="mb-2 items-center gap-3">
-                <span className="text-4xl">🎁</span>
+                <TbGift aria-hidden="true" className="h-10 w-10 text-green-400" />
                 <span className="text-3xl font-bold text-green-400">
                   {formatMoney(maxProfit?.profit ?? 0)}
                 </span>
@@ -126,7 +130,7 @@ export function MaxMinProfit(props: {
               )}
             >
               <Row className="mb-2 items-center gap-3">
-                <span className="text-4xl">🪨</span>
+                <TbMountain aria-hidden="true" className="text-ink-400 h-10 w-10" />
                 <span className="text-3xl font-bold text-red-400">
                   {formatMoney(minProfit?.profit ?? 0)}
                 </span>

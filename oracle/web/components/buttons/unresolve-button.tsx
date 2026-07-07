@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { TbAlertTriangle } from 'react-icons/tb'
 import { Modal } from '../layout/modal'
 import { Button } from './button'
 import { api } from 'web/lib/api/api'
@@ -23,8 +24,9 @@ export function UnresolveButton(props: { contractId: string }) {
         open={open}
         setOpen={setOpen}
       >
-        <h1 className="dark:text-warning mb-4 block text-2xl font-normal">
-          ⚠️ Unresolve
+        <h1 className="dark:text-warning mb-4 flex items-center gap-2 text-2xl font-normal">
+          <TbAlertTriangle aria-hidden="true" className="h-6 w-6" />
+          Unresolve
         </h1>
         <div className="text-ink-700 mb-3">
           Unresolving will undo the resolution of this market. This will claw

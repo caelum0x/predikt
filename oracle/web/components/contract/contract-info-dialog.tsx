@@ -32,6 +32,14 @@ import { useSweepstakes } from '../sweepstakes-provider'
 import { InfoBox } from '../widgets/info-box'
 import { InfoTooltip } from '../widgets/info-tooltip'
 import ShortToggle from '../widgets/short-toggle'
+import {
+  TbBan,
+  TbCheck,
+  TbClock,
+  TbSearch,
+  TbTrophy,
+  TbX,
+} from 'react-icons/tb'
 import { linkClass } from '../widgets/site-link'
 import { Table } from '../widgets/table'
 import { ContractHistoryButton } from './contract-edit-history-button'
@@ -394,7 +402,8 @@ export const Stats = (props: {
         {!hideAdvanced && (
           <tr className={clsx(isMod && 'bg-purple-500/30')}>
             <td>
-              🔎 Publicly listed{' '}
+              <TbSearch aria-hidden="true" className="mr-1 inline h-4 w-4" />
+              Publicly listed{' '}
               <InfoTooltip
                 text={
                   isPublic
@@ -422,7 +431,8 @@ export const Stats = (props: {
         {!hideAdvanced && isBettingContract && (
           <tr className={clsx(isMod && 'bg-purple-500/30')}>
             <td>
-              🏆 Ranked{' '}
+              <TbTrophy aria-hidden="true" className="mr-1 inline h-4 w-4" />
+              Ranked{' '}
               <InfoTooltip
                 text={'Profit from this market count towards leagues'}
               />
@@ -460,7 +470,8 @@ export const Stats = (props: {
         {!hideAdvanced && isBettingContract && (
           <tr className={clsx(isMod && 'bg-purple-500/30')}>
             <td>
-              🚫 Disable creator betting{' '}
+              <TbBan aria-hidden="true" className="mr-1 inline h-4 w-4" />
+              Disable creator betting{' '}
               <InfoTooltip
                 text={
                   'Prevent the creator from placing bets on this market. This cannot be undone except by a moderator or admin.'
@@ -500,7 +511,8 @@ export const Stats = (props: {
         {!hideAdvanced && contract.outcomeType === 'DATE' && (
           <tr className={clsx(isMod && 'bg-purple-500/30')}>
             <td>
-              🕒 Clock mode{' '}
+              <TbClock aria-hidden="true" className="mr-1 inline h-4 w-4" />
+              Clock mode{' '}
               <InfoTooltip
                 text={'Display date as a clock instead of the default view'}
               />
@@ -767,9 +779,17 @@ export const CheckOrSwitch = (props: {
       setOn={setOn}
     />
   ) : on ? (
-    <>✅</>
+    <TbCheck
+      role="img"
+      aria-label="Enabled"
+      className="inline h-5 w-5 text-teal-600"
+    />
   ) : (
-    <>❌</>
+    <TbX
+      role="img"
+      aria-label="Disabled"
+      className="text-scarlet-500 inline h-5 w-5"
+    />
   )
 }
 

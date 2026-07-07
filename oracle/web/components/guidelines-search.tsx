@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { SearchIcon } from '@heroicons/react/outline'
+import { TbX } from 'react-icons/tb'
 
 type SearchEntry = {
   page: string
@@ -449,8 +450,9 @@ export function GuidelinesSearch() {
               setOpen(false)
             }}
             className="text-ink-400 hover:text-ink-600"
+            aria-label="Clear search"
           >
-            ✕
+            <TbX aria-hidden="true" className="h-4 w-4" />
           </button>
         )}
       </div>

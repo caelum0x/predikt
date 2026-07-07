@@ -2,6 +2,7 @@ import { Col } from './layout/col'
 import { ExpandSection } from './explainer-panel'
 import { track } from 'web/lib/service/analytics'
 import { TRADE_TERM } from 'common/envs/constants'
+import { TbChartBar, TbMoneybag, TbPlant2 } from 'react-icons/tb'
 
 export const TrustPanel = (props: { className?: string }) => {
   const { className } = props
@@ -26,7 +27,12 @@ export const ManipulationAndHype = ({
 }) => (
   <ExpandSection
     onClick={() => onClick('Are markets resistant to manipulation and hype?')}
-    title="🤑 Are markets resistant to manipulation and hype?"
+    title={
+      <>
+        <TbMoneybag aria-hidden="true" className="mr-2" /> Are markets resistant
+        to manipulation and hype?
+      </>
+    }
   >
     <div>
       As the market prices moves further from the true probability, the odd's
@@ -72,7 +78,12 @@ export const LowTraders = ({
     onClick={() =>
       onClick('Do markets with few traders and low liquidity work?')
     }
-    title="🌱 Do markets with few traders and low liquidity work?"
+    title={
+      <>
+        <TbPlant2 aria-hidden="true" className="mr-2" /> Do markets with few
+        traders and low liquidity work?
+      </>
+    }
   >
     <div className="pb-2">
       Yes! And very reliably! The paper{' '}
@@ -116,7 +127,12 @@ export const WhyNotAlternatives = ({
 }) => (
   <ExpandSection
     onClick={() => onClick('Why are markets better than polls or experts?')}
-    title="📊 Why are markets better than polls or experts?"
+    title={
+      <>
+        <TbChartBar aria-hidden="true" className="mr-2" /> Why are markets better
+        than polls or experts?
+      </>
+    }
   >
     <div className="pb-2">
       One paper about {''}

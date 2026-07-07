@@ -21,6 +21,7 @@ import toast from 'react-hot-toast'
 import { BiRepost } from 'react-icons/bi'
 import { PiPushPinBold } from 'react-icons/pi'
 import { TiPin } from 'react-icons/ti'
+import { TbRobot } from 'react-icons/tb'
 import { useAdminOrMod } from 'web/hooks/use-admin'
 import { useIsMobile } from 'web/hooks/use-is-mobile'
 import { usePrivateUser, useUser } from 'web/hooks/use-user'
@@ -181,7 +182,9 @@ export function FeedCommentHeader(props: {
             />
           )}
           {!inTimeline && isApi && (
-            <InfoTooltip text="Placed via API">🤖</InfoTooltip>
+            <InfoTooltip text="Placed via API">
+              <TbRobot aria-label="Placed via API" className="inline h-4 w-4" />
+            </InfoTooltip>
           )}
         </span>
         <Row className="gap-1">

@@ -49,6 +49,7 @@ import {
 import { floatingEqual } from 'common/util/math'
 import { removeUndefinedProps } from 'common/util/object'
 import { LuShare } from 'react-icons/lu'
+import { TbClock } from 'react-icons/tb'
 import { useFocus } from 'web/hooks/use-focus'
 import { useIsMobile } from 'web/hooks/use-is-mobile'
 import { useIsPageVisible } from 'web/hooks/use-page-visible'
@@ -439,7 +440,9 @@ export const BuyPanelBody = (
     setPrefillLimitOrder({ ...fillParams, timestamp: Date.now() })
     setOutcome(fillParams.outcome)
     setBetTypeSetting('Limit')
-    toast('Expiration set to immediate', { icon: '⏱️' })
+    toast('Expiration set to immediate', {
+      icon: <TbClock aria-hidden="true" className="h-5 w-5" />,
+    })
   })
 
   useEffect(() => {

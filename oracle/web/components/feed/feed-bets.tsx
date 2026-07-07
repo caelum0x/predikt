@@ -21,6 +21,7 @@ import dayjs from 'dayjs'
 import { sumBy, uniq } from 'lodash'
 import { memo, useEffect, useState } from 'react'
 import { LuLineChart, LuReply, LuShare2 } from 'react-icons/lu'
+import { TbRobot } from 'react-icons/tb'
 import { RepostButton } from 'web/components/comments/repost-modal'
 import { Col } from 'web/components/layout/col'
 import { Modal, MODAL_CLASS } from 'web/components/layout/modal'
@@ -357,7 +358,7 @@ function BetDetailsText(props: { bet: Bet; contract: Contract }) {
       )}
       {isApi && (
         <InfoTooltip text="Placed via the API" className="ml-1">
-          🤖
+          <TbRobot aria-label="Placed via the API" className="inline h-4 w-4" />
         </InfoTooltip>
       )}
     </span>
@@ -796,7 +797,11 @@ export function BetStatusText(props: {
             : `from ${fromProb} to ${toProb}`}
         </>
       )}{' '}
-      {isApi && <InfoTooltip text="Placed via the API">🤖</InfoTooltip>}
+      {isApi && (
+        <InfoTooltip text="Placed via the API">
+          <TbRobot aria-label="Placed via the API" className="inline h-4 w-4" />
+        </InfoTooltip>
+      )}
       {!inTimeline && <RelativeTimestamp time={createdTime} shortened={true} />}
     </div>
   )

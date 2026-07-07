@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
+import { TbChristmasTree, TbGift, TbStar } from 'react-icons/tb'
 import { MonthlyBetsType } from 'web/hooks/use-wrapped-2025'
 import { LoadingIndicator } from '../widgets/loading-indicator'
 import { numberWithCommas } from 'common/util/formatNumber'
@@ -98,7 +99,11 @@ export function MonthlyBets(props: {
           <span className="font-bold text-green-300">
             {numberWithCommas(totalBetsThisYear)}
           </span>{' '}
-          times this year! 🎄
+          times this year!
+          <TbChristmasTree
+            aria-hidden="true"
+            className="ml-1 inline h-6 w-6 text-green-400"
+          />
         </div>
         <Spacer h={4} />
         <div
@@ -116,7 +121,11 @@ export function MonthlyBets(props: {
           <span className="font-bold text-green-300">
             {numberWithCommas(monthWithMaxBets.bet_count)}
           </span>{' '}
-          trades! 🎁
+          trades!
+          <TbGift
+            aria-hidden="true"
+            className="ml-1 inline h-6 w-6 text-red-400"
+          />
         </div>
       </div>
       <NavButtons goToPrevPage={goToPrevPage} goToNextPage={onGoToNext} />
@@ -202,15 +211,14 @@ export const CircleGraph = (props: {
       })}
 
       {/* Center decoration */}
-      <text
-        x={svgCenter + radius}
-        y={svgCenter + radius}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="40"
-      >
-        ⭐
-      </text>
+      <TbStar
+        x={svgCenter + radius - 20}
+        y={svgCenter + radius - 20}
+        width={40}
+        height={40}
+        className="text-yellow-400"
+        aria-hidden="true"
+      />
     </svg>
   )
 }

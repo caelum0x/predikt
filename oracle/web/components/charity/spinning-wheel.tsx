@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { charities } from 'common/charity'
 import { sortBy } from 'lodash'
 import clsx from 'clsx'
+import { TbConfetti, TbTicket } from 'react-icons/tb'
 import { Col } from 'web/components/layout/col'
 import { Row } from 'web/components/layout/row'
 import { Avatar } from 'web/components/widgets/avatar'
@@ -220,17 +221,14 @@ export function SpinningWheel(props: SpinningWheelProps) {
               strokeWidth="3"
               className="dark:fill-ink-800 dark:stroke-ink-700"
             />
-            <text
-              x={cx}
-              y={cy}
-              fill="currentColor"
-              fontSize="20"
-              textAnchor="middle"
-              dominantBaseline="middle"
+            <TbTicket
+              x={cx - 11}
+              y={cy - 11}
+              width={22}
+              height={22}
               className="text-ink-600"
-            >
-              🎟️
-            </text>
+              aria-hidden="true"
+            />
           </svg>
         </div>
 
@@ -304,8 +302,10 @@ export function SpinningWheel(props: SpinningWheelProps) {
         {hasCompleted && winningSegment && (
           <Col className="items-center gap-4">
             <div className="space-y-2 text-center">
-              <p className="text-ink-900 text-xl font-bold">
-                🎉 {winningSegment.label} wins! 🎉
+              <p className="text-ink-900 flex items-center justify-center gap-2 text-xl font-bold">
+                <TbConfetti aria-hidden="true" className="h-5 w-5" />
+                {winningSegment.label} wins!
+                <TbConfetti aria-hidden="true" className="h-5 w-5" />
               </p>
               <p className="text-ink-500 text-sm">
                 {winningSegment.percentage.toFixed(1)}% of entries
