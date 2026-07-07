@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatUnits, type Address } from 'viem'
 import { USDC_DECIMALS } from 'web/lib/onchain/addresses'
 import { readUsdcBalance } from 'web/lib/onchain/market'
@@ -35,13 +35,23 @@ export function useOnchainWallet(): OnchainWalletState {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Guard against setState-after-unmount: the initial refresh + every balance
+  // read is an async RPC call, so the component can unmount before they settle.
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
   const loadBalance = useCallback(async (addr: Address) => {
     try {
       const bal = await readUsdcBalance(addr)
-      setUsdc(bal)
+      if (mountedRef.current) setUsdc(bal)
     } catch (e) {
       // Balance read is non-fatal; keep the address usable.
-      setUsdc(null)
+      if (mountedRef.current) setUsdc(null)
     }
   }, [])
 
@@ -54,6 +64,7 @@ export function useOnchainWallet(): OnchainWalletState {
       return
     }
     const addr = await getAddress()
+    if (!mountedRef.current) return
     setAddress(addr)
     setReady(true)
     if (addr) await loadBalance(addr)
@@ -68,12 +79,14 @@ export function useOnchainWallet(): OnchainWalletState {
     setError(null)
     try {
       const addr = await createWallet()
+      if (!mountedRef.current) return
       setAddress(addr)
       await loadBalance(addr)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not create wallet.')
+      if (mountedRef.current)
+        setError(e instanceof Error ? e.message : 'Could not create wallet.')
     } finally {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
     }
   }, [loadBalance])
 
@@ -83,13 +96,16 @@ export function useOnchainWallet(): OnchainWalletState {
       setError(null)
       try {
         const addr = await importWallet(phrase)
-        setAddress(addr)
-        await loadBalance(addr)
+        if (mountedRef.current) {
+          setAddress(addr)
+          await loadBalance(addr)
+        }
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not import wallet.')
+        if (mountedRef.current)
+          setError(e instanceof Error ? e.message : 'Could not import wallet.')
         throw e
       } finally {
-        setLoading(false)
+        if (mountedRef.current) setLoading(false)
       }
     },
     [loadBalance]

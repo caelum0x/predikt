@@ -5,7 +5,7 @@ import {
   ShieldCheckIcon,
 } from '@heroicons/react/solid'
 import clsx from 'clsx'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Col } from 'web/components/layout/col'
 import { Row } from 'web/components/layout/row'
 import type { ConditionId } from 'web/lib/onchain/market'
@@ -34,20 +34,27 @@ export function ResolutionStatusPanel(props: {
   const { conditionId, questionId, className } = props
   const [status, setStatus] = useState<ResolutionStatus | null>(null)
 
-  const load = useCallback(async () => {
-    try {
-      setStatus(await readResolutionStatus(conditionId, questionId ?? null))
-    } catch {
-      setStatus(null)
-    }
-  }, [conditionId, questionId])
-
   useEffect(() => {
+    // Guard the interval-driven async read against setState-after-unmount:
+    // clearInterval stops future ticks, but a read already in flight at
+    // unmount would otherwise resolve and set state on a dead component.
+    let active = true
+    const load = async () => {
+      try {
+        const next = await readResolutionStatus(conditionId, questionId ?? null)
+        if (active) setStatus(next)
+      } catch {
+        if (active) setStatus(null)
+      }
+    }
     load()
     // Refresh while a dispute window may be counting down.
     const timer = setInterval(load, 60_000)
-    return () => clearInterval(timer)
-  }, [load])
+    return () => {
+      active = false
+      clearInterval(timer)
+    }
+  }, [conditionId, questionId])
 
   if (!status || status.phase === 'NotOnchain' || status.phase === 'Unknown') {
     return null
