@@ -16,6 +16,7 @@ import {
   ONCHAIN_GROUP_SLUGS,
   type SettlementReadable,
 } from './settlement'
+import { registerOnchainMarket } from './registry'
 
 const A = '0x1111111111111111111111111111111111111111'
 const VALID_CONDITION_ID =
@@ -103,6 +104,53 @@ describe('settlementOf: with the deployment configured', () => {
   })
 })
 
+describe('settlementOf: local registry deployment lookup', () => {
+  // Exercises the `getOnchainDeployment(contract.id)` branch by SEEDING the real
+  // registry (localStorage-backed) — no market tag / group, so on-chain status
+  // is decided purely by the registry entry. Registry is cleared in afterEach.
+  beforeEach(enableOnchain)
+
+  it('treats a market with a registry deployment as on-chain', () => {
+    registerOnchainMarket('m-reg', {
+      conditionId: VALID_CONDITION_ID as `0x${string}`,
+      questionId: VALID_QUESTION_ID as `0x${string}`,
+    })
+    // No onchainConditionId tag, no group — only the registry drives this.
+    const m: SettlementReadable = { id: 'm-reg' }
+    expect(settlementOf(m)).toBe('onchain')
+    expect(isOnchainMarket(m)).toBe(true)
+  })
+
+  it('is offchain when the id has no registry entry', () => {
+    registerOnchainMarket('other-market', {
+      conditionId: VALID_CONDITION_ID as `0x${string}`,
+      questionId: VALID_QUESTION_ID as `0x${string}`,
+    })
+    expect(settlementOf({ id: 'm-missing' })).toBe('offchain')
+  })
+
+  it('an explicit offchain flag still overrides a registry deployment', () => {
+    registerOnchainMarket('m-reg2', {
+      conditionId: VALID_CONDITION_ID as `0x${string}`,
+      questionId: VALID_QUESTION_ID as `0x${string}`,
+    })
+    expect(settlementOf({ id: 'm-reg2', settlement: 'offchain' })).toBe(
+      'offchain'
+    )
+  })
+
+  it('stays offchain via the registry branch when the deployment is disabled', () => {
+    // Even with a seeded registry entry, a misconfigured (disabled) deployment
+    // short-circuits to offchain before the registry is consulted.
+    disableOnchain()
+    registerOnchainMarket('m-reg3', {
+      conditionId: VALID_CONDITION_ID as `0x${string}`,
+      questionId: VALID_QUESTION_ID as `0x${string}`,
+    })
+    expect(settlementOf({ id: 'm-reg3' })).toBe('offchain')
+  })
+})
+
 describe('conditionIdOf / questionIdOf', () => {
   it('returns the conditionId when the tag is a valid bytes32', () => {
     expect(conditionIdOf({ onchainConditionId: VALID_CONDITION_ID })).toBe(
@@ -115,11 +163,42 @@ describe('conditionIdOf / questionIdOf', () => {
     expect(conditionIdOf({ onchainConditionId: '0xshort' })).toBeNull()
   })
 
+  it('falls back to the registry conditionId when there is no tag', () => {
+    registerOnchainMarket('m-fallback', {
+      conditionId: VALID_CONDITION_ID as `0x${string}`,
+      questionId: VALID_QUESTION_ID as `0x${string}`,
+    })
+    // No onchainConditionId tag: the registry supplies the handle.
+    expect(conditionIdOf({ id: 'm-fallback' })).toBe(VALID_CONDITION_ID)
+    // Unknown id -> still null.
+    expect(conditionIdOf({ id: 'nope' })).toBeNull()
+  })
+
+  it('prefers a valid tag over the registry entry', () => {
+    const tagId = ('0x' + 'ef'.repeat(32)) as `0x${string}`
+    registerOnchainMarket('m-both', {
+      conditionId: VALID_CONDITION_ID as `0x${string}`,
+      questionId: VALID_QUESTION_ID as `0x${string}`,
+    })
+    expect(
+      conditionIdOf({ id: 'm-both', onchainConditionId: tagId })
+    ).toBe(tagId)
+  })
+
   it('returns the questionId only for a valid 64-hex-char value', () => {
     expect(questionIdOf({ onchainQuestionId: VALID_QUESTION_ID })).toBe(
       VALID_QUESTION_ID
     )
     expect(questionIdOf({ onchainQuestionId: '0x123' })).toBeNull()
     expect(questionIdOf({})).toBeNull()
+  })
+
+  it('falls back to the registry questionId when there is no tag', () => {
+    registerOnchainMarket('m-q', {
+      conditionId: VALID_CONDITION_ID as `0x${string}`,
+      questionId: VALID_QUESTION_ID as `0x${string}`,
+    })
+    expect(questionIdOf({ id: 'm-q' })).toBe(VALID_QUESTION_ID)
+    expect(questionIdOf({ id: 'unknown' })).toBeNull()
   })
 })

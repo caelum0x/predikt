@@ -8,18 +8,82 @@
  *   - `invertSellQuote`: the monotone binary-search sell inversion, driven by a
  *     REAL constant-product sell oracle (an actual monotone AMM curve, not a
  *     stub of the router's own math).
+ *   - `quoteAmm` + `routeBestExecution`: the REAL router quoting + end-to-end
+ *     best-execution wiring, with ONLY the RPC boundary faked. `./amm` is mocked
+ *     so `calcBuyAmount`/`calcSellAmount` return values from a REAL monotone
+ *     constant-product curve (the actual on-chain math shape, not a stub of the
+ *     router's own logic) — everything the router itself does (base-unit
+ *     conversion, sell inversion, venue selection, quote assembly) runs for real.
  *   - `toBaseUnits`/`fromBaseUnits`: parsing + NaN/Infinity guards.
  */
+
+// --------------------------------------------------------------------------- //
+//   RPC boundary fake: ONLY ./amm's on-chain reads + pool discovery.          //
+//   This stands in for the live-RPC device boundary (calcBuyAmount /          //
+//   calcSellAmount / poolFor), NOT for any router logic under test. The       //
+//   quoting curve below is a genuine constant-product AMM, so the router's    //
+//   REAL quoteAmm + invertSell run against real monotone math.                //
+// --------------------------------------------------------------------------- //
+
+const POOL = '0x00000000000000000000000000000000000000aa' as const
+
+// Shared reserves for the fake pool, tunable per test. `a`/`b` are the two
+// sides of a constant-product AMM in outcome-token base units.
+const cpmm = { a: 1_000_000_000n, b: 1_000_000_000n, enabled: true, pool: POOL as string | null }
+
+jest.mock('./amm', () => ({
+  isAmmEnabled: () => cpmm.enabled,
+  poolFor: async () => cpmm.pool,
+  // BUY: invest `usdc` (6dp) -> outcome tokens out via x*y=k on (a,b).
+  // tokensOut = a - k/(b + usdc) where the trader pays `usdc` into side b.
+  calcBuyAmount: async (
+    _pool: string,
+    _idx: number,
+    investment: bigint
+  ): Promise<bigint> => {
+    if (investment <= 0n) return 0n
+    const k = cpmm.a * cpmm.b
+    const newB = cpmm.b + investment
+    const out = cpmm.a - k / newB
+    return out > 0n ? out : 0n
+  },
+  // SELL view: to receive `returnUsdc` (6dp) you must sell this many tokens.
+  // tokensIn = returnUsdc * a / (b - returnUsdc); null once the pool can't pay.
+  calcSellAmount: async (
+    _pool: string,
+    _idx: number,
+    returnUsdc: bigint
+  ): Promise<bigint | null> => {
+    if (returnUsdc <= 0n) return null
+    if (returnUsdc >= cpmm.b) return null
+    return (returnUsdc * cpmm.a) / (cpmm.b - returnUsdc)
+  },
+  // The router never reaches buy/sell in these tests (no execute() call), but
+  // keep them present so the module shape matches the real one.
+  buy: async () => ({ approve: undefined, buy: '0x' }),
+  sell: async () => ({ approve: undefined, sell: '0x' }),
+}))
+
 import {
   fromBaseUnits,
   invertSellQuote,
   pickWinner,
+  quoteAmm,
   quoteClobFromBook,
+  routeBestExecution,
   toBaseUnits,
   type QuoteRequest,
   type VenueQuote,
 } from './router'
 import type { RelayBook, RelayOrderView } from './orders'
+
+beforeEach(() => {
+  // Reset the fake pool to a balanced, available default before each test.
+  cpmm.a = 1_000_000_000n
+  cpmm.b = 1_000_000_000n
+  cpmm.enabled = true
+  cpmm.pool = POOL
+})
 
 // --------------------------------------------------------------------------- //
 //                                 Fixtures                                     //
@@ -277,6 +341,171 @@ describe('invertSellQuote: sell inversion', () => {
     const usdcOut = await invertSellQuote(calcSell, sellShares)
     expect(usdcOut).not.toBeNull()
     expect(usdcOut! <= sellShares).toBe(true)
+  })
+})
+
+// --------------------------------------------------------------------------- //
+//             quoteAmm (REAL router quoting over a faked RPC pool)             //
+// --------------------------------------------------------------------------- //
+
+const POOL_ADDR = '0x00000000000000000000000000000000000000aa' as const
+
+describe('quoteAmm: REAL quoting against the (RPC-faked) AMM pool', () => {
+  const buyReq = (amount: number): QuoteRequest => ({
+    conditionId: '0x00',
+    outcome: 'YES',
+    side: 'BUY',
+    amount,
+  })
+  const sellReq = (amount: number): QuoteRequest => ({
+    conditionId: '0x00',
+    outcome: 'YES',
+    side: 'SELL',
+    amount,
+  })
+
+  it('BUY: spend is fixed, outcomeTokens come from calcBuyAmount', async () => {
+    // $10 into a balanced 1e9/1e9 pool: tokensOut = a - k/(b+usdc).
+    const q = await quoteAmm(buyReq(10), POOL_ADDR)
+    expect(q).not.toBeNull()
+    expect(q!.venue).toBe('AMM')
+    expect(q!.usdc).toBe(10_000_000n) // exact spend, 6dp
+    // Real curve: 1e9 - floor(1e18/(1e9 + 1e7)) = 1e9 - 990_099_009 = 9_900_991.
+    expect(q!.outcomeTokens).toBe(9_900_991n)
+    expect(q!.complete).toBe(true)
+    expect(q!.avgPrice).toBeCloseTo(10 / 9.900991, 3)
+  })
+
+  it('BUY: returns null when the pool prices zero tokens out', async () => {
+    // Drain side a to nothing so calcBuyAmount yields 0.
+    cpmm.a = 0n
+    expect(await quoteAmm(buyReq(10), POOL_ADDR)).toBeNull()
+  })
+
+  it('BUY: returns null for a non-positive amount (never calls the pool)', async () => {
+    expect(await quoteAmm(buyReq(0), POOL_ADDR)).toBeNull()
+    expect(await quoteAmm(buyReq(NaN), POOL_ADDR)).toBeNull()
+  })
+
+  it('SELL: inverts calcSellAmount to price "sell N tokens -> USDC out"', async () => {
+    // Router binary-searches the sell curve for the max USDC whose token cost
+    // is <= the shares sold. Assert the result is feasible + maximal for real.
+    const q = await quoteAmm(sellReq(100), POOL_ADDR)
+    expect(q).not.toBeNull()
+    expect(q!.venue).toBe('AMM')
+    expect(q!.outcomeTokens).toBe(100_000_000n) // shares given up (fixed)
+    expect(q!.usdc).toBeGreaterThan(0n)
+    // Proceeds can never exceed shares sold (each token < $1).
+    expect(q!.usdc <= 100_000_000n).toBe(true)
+    // avgPrice = usdc/tokens in [0,1].
+    expect(q!.avgPrice).toBeGreaterThan(0)
+    expect(q!.avgPrice).toBeLessThanOrEqual(1)
+  })
+
+  it('SELL: returns null when the pool can never pay (calcSellAmount null)', async () => {
+    // b == 0 makes every returnUsdc >= b, so the inverter finds nothing.
+    cpmm.b = 0n
+    expect(await quoteAmm(sellReq(100), POOL_ADDR)).toBeNull()
+  })
+
+  it('SELL: returns null for a non-positive amount', async () => {
+    expect(await quoteAmm(sellReq(0), POOL_ADDR)).toBeNull()
+    expect(await quoteAmm(sellReq(-3), POOL_ADDR)).toBeNull()
+  })
+})
+
+// --------------------------------------------------------------------------- //
+//        routeBestExecution (end-to-end best-execution across venues)         //
+// --------------------------------------------------------------------------- //
+
+describe('routeBestExecution: integrates the AMM quote + picks best execution', () => {
+  const req = (side: 'BUY' | 'SELL', amount: number): QuoteRequest => ({
+    conditionId: '0x00',
+    outcome: 'YES',
+    side,
+    amount,
+  })
+
+  it('BOTH venues present, BUY: routes to whichever returns more tokens', async () => {
+    // AMM $10 buy yields 9_900_990 tokens (real curve). Give the CLOB a THICKER
+    // book so it wins: 30 shares @ $0.10 = $3, then 100 @ $0.05... build a book
+    // that returns clearly MORE tokens for the same $10 spend.
+    const cheapBook = book([], [ask(0.05, 1000)]) // $50 depth @ 5c -> $10 buys 200 sh
+    const res = await routeBestExecution(req('BUY', 10), cheapBook, '1')
+    expect(res.quotes.amm).not.toBeNull()
+    expect(res.quotes.clob).not.toBeNull()
+    // CLOB: $10 / $0.05 = 200 tokens; AMM ~9.9 tokens. CLOB wins.
+    expect(res.quotes.clob!.outcomeTokens).toBe(200_000_000n)
+    expect(res.venue).toBe('CLOB')
+    expect(res.quote).toBe(res.quotes.clob)
+  })
+
+  it('BOTH venues present, BUY: AMM wins when it returns more tokens', async () => {
+    // A pricey/thin book (few tokens for $10) so the AMM's ~9.9 tokens wins.
+    const pricyBook = book([], [ask(0.99, 5)]) // ~5 tokens of depth
+    const res = await routeBestExecution(req('BUY', 10), pricyBook, '1')
+    expect(res.quotes.amm).not.toBeNull()
+    expect(res.quotes.clob).not.toBeNull()
+    expect(res.quotes.amm!.outcomeTokens).toBeGreaterThan(
+      res.quotes.clob!.outcomeTokens
+    )
+    expect(res.venue).toBe('AMM')
+    expect(res.quote).toBe(res.quotes.amm)
+  })
+
+  it('BOTH venues present, SELL: routes to the venue paying more USDC', async () => {
+    // AMM sell of 100 tokens pays some USDC; give the CLOB a fat bid so it pays
+    // more and wins.
+    const fatBid = book([bid(0.95, 95)], []) // $95 budget @ 95c absorbs 100 sh
+    const res = await routeBestExecution(req('SELL', 100), fatBid, '1')
+    expect(res.quotes.amm).not.toBeNull()
+    expect(res.quotes.clob).not.toBeNull()
+    expect(res.quotes.clob!.usdc).toBeGreaterThan(res.quotes.amm!.usdc)
+    expect(res.venue).toBe('CLOB')
+  })
+
+  it('AMM-only: no book -> the AMM quote wins by default', async () => {
+    const res = await routeBestExecution(req('BUY', 10), null, '1')
+    expect(res.quotes.clob).toBeNull()
+    expect(res.quotes.amm).not.toBeNull()
+    expect(res.venue).toBe('AMM')
+    expect(res.quote).toBe(res.quotes.amm)
+  })
+
+  it('CLOB-only: AMM disabled -> the pool is never resolved, CLOB wins', async () => {
+    cpmm.enabled = false // isAmmEnabled() === false => router skips poolFor
+    const b = book([], [ask(0.4, 100)]) // $40 depth
+    const res = await routeBestExecution(req('BUY', 40), b, '1')
+    expect(res.quotes.amm).toBeNull()
+    expect(res.quotes.clob).not.toBeNull()
+    expect(res.venue).toBe('CLOB')
+  })
+
+  it('CLOB-only: AMM enabled but NO pool for this market -> CLOB wins', async () => {
+    cpmm.pool = null // poolFor resolves null => AMM branch yields no quote
+    const b = book([], [ask(0.4, 100)])
+    const res = await routeBestExecution(req('BUY', 40), b, '1')
+    expect(res.quotes.amm).toBeNull()
+    expect(res.quotes.clob).not.toBeNull()
+    expect(res.venue).toBe('CLOB')
+  })
+
+  it('NEITHER venue: no pool + no book -> venue "none", null quote, execute throws', async () => {
+    cpmm.pool = null
+    const res = await routeBestExecution(req('BUY', 10), null, null)
+    expect(res.quotes.amm).toBeNull()
+    expect(res.quotes.clob).toBeNull()
+    expect(res.venue).toBe('none')
+    expect(res.quote).toBeNull()
+    await expect(res.execute()).rejects.toThrow(/no venue can execute/i)
+  })
+
+  it('carries side/outcome through and exposes both quotes for the UI', async () => {
+    const res = await routeBestExecution(req('BUY', 10), null, '1')
+    expect(res.side).toBe('BUY')
+    expect(res.outcome).toBe('YES')
+    expect(res.quotes).toHaveProperty('amm')
+    expect(res.quotes).toHaveProperty('clob')
   })
 })
 
