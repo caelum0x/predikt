@@ -680,7 +680,7 @@ function AchievementsSection(props: { userId: string }) {
     {
       id: 'unprofitableMarketsCount',
       title: 'Ineffective Altruism',
-      desc: 'Number of markets you lost mana on.',
+      desc: 'Number of markets you lost coins on.',
       fmt: () => formatWithCommas(data.unprofitableMarketsCount),
     },
     {

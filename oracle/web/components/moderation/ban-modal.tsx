@@ -516,7 +516,7 @@ export function BanModal({
 
               <BanTypeToggle
                 label="Purchase Ban"
-                description="No buying mana"
+                description="No buying coins"
                 checked={banTypes.purchase}
                 onChange={(checked) =>
                   setBanTypes({ ...banTypes, purchase: checked })

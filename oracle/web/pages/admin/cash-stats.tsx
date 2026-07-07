@@ -186,7 +186,7 @@ export function CustomCashAnalytics(props: { stats: Row<'daily_stats'>[] }) {
 
       <Title>Sweepcash issued</Title>
       <p className="text-ink-500">
-        Sweepcash bonus issued from mana sales
+        Sweepcash bonus issued from coins sales
         <br />
       </p>
       <Spacer h={4} />

@@ -198,7 +198,7 @@ export default function CommunityGuidelinesCreatorGuidePage() {
           </h2>
           <p className="text-ink-700 mt-3">
             Once your criteria are met, resolve. Sitting on a resolved market
-            locks up traders' mana and erodes trust. If you're not sure about
+            locks up traders' coins and erodes trust. If you're not sure about
             the outcome, see the{' '}
             <Link
               href="/community-guidelines/resolving-markets"
@@ -222,7 +222,7 @@ export default function CommunityGuidelinesCreatorGuidePage() {
             bonuses.
           </p>
           <p className="text-ink-700 mt-3">
-            Every time a new unique trader bets on your market, you earn a mana
+            Every time a new unique trader bets on your market, you earn a coins
             bonus. The amount scales with your market's liquidity — more
             liquidity in the pool means more earned per trader. These bonuses
             count toward your{' '}

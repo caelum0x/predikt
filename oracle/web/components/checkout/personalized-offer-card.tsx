@@ -86,7 +86,7 @@ export function PersonalizedOfferCard(props: {
           className="flex w-full flex-col items-center gap-0.5 bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-white transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white/40 disabled:cursor-not-allowed disabled:opacity-70 sm:flex-row sm:justify-between sm:gap-2"
         >
           <Row className="items-center gap-1.5 text-sm font-bold uppercase tracking-wide sm:gap-2 sm:text-base sm:tracking-wider">
-            <span>Up to {cryptoSavingsPct}% off mana</span>
+            <span>Up to {cryptoSavingsPct}% off coins</span>
           </Row>
           <Row className="items-center gap-1.5 text-sm font-bold uppercase tracking-wide sm:gap-2 sm:text-base sm:tracking-wider">
             {activeCount > 1 && (
@@ -104,7 +104,7 @@ export function PersonalizedOfferCard(props: {
       ) : (
         <div className="flex flex-col items-center gap-0.5 bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-white sm:flex-row sm:justify-between sm:gap-2">
           <Row className="items-center gap-1.5 text-sm font-bold uppercase tracking-wide sm:gap-2 sm:text-base sm:tracking-wider">
-            <span>Up to {cryptoSavingsPct}% off mana</span>
+            <span>Up to {cryptoSavingsPct}% off coins</span>
           </Row>
           <Row className="items-center gap-1.5 text-sm font-bold uppercase tracking-wide sm:gap-2 sm:text-base sm:tracking-wider">
             {activeCount > 1 && (
@@ -128,7 +128,7 @@ export function PersonalizedOfferCard(props: {
         <div className="flex justify-center">
           <Image
             src="/buy-mana-graphics/100k.png"
-            alt="Mana coins"
+            alt="Coins"
             width={120}
             height={120}
             className="object-contain"
@@ -139,7 +139,7 @@ export function PersonalizedOfferCard(props: {
             <span className="text-3xl font-extrabold text-orange-700 dark:text-amber-300 sm:text-4xl">
               {formatMoney(manaAmount)}
             </span>
-            <span className="text-ink-500 text-sm">mana</span>
+            <span className="text-ink-500 text-sm">coins</span>
           </Row>
         </Col>
 
@@ -220,7 +220,7 @@ export function PersonalizedOfferCard(props: {
         </Col>
 
         <p className="text-ink-500 mt-1 text-center text-xs">
-          This mana offer is personal to you, and will expire when time runs
+          This coins offer is personal to you, and will expire when time runs
           out.
         </p>
         {onDismiss && (

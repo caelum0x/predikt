@@ -49,7 +49,7 @@ export default function Payments() {
     <Page trackPageView={'managrams page'}>
       <SEO
         title="Managrams"
-        description="See all mana transfers (managrams!) between users."
+        description="See all coins transfers (managrams!) between users."
         url="/payments"
       />
       <Col>
@@ -173,7 +173,7 @@ const EmptyPaymentsState = () => (
     </div>
     <span className="text-ink-700 font-medium">No payments yet</span>
     <span className="text-ink-500 mt-1 text-sm">
-      Send mana to another user to get started
+      Send coins to another user to get started
     </span>
   </Col>
 )
@@ -373,9 +373,9 @@ export const PaymentsModal = (props: {
         {/* Header */}
         <div className="from-primary-600 to-primary-500 bg-gradient-to-r px-6 py-5">
           <div>
-            <h2 className="text-lg font-semibold text-white">Send Mana</h2>
+            <h2 className="text-lg font-semibold text-white">Send Coins</h2>
             <p className="text-sm text-white/70">
-              Transfer mana to another user
+              Transfer coins to another user
             </p>
           </div>
         </div>
@@ -441,14 +441,14 @@ export const PaymentsModal = (props: {
               inputClassName="w-full !text-lg"
               onBlur={() => {
                 if (amount && amount < 10 && !isAdmin) {
-                  setError('Minimum amount is 10 mana')
+                  setError('Minimum amount is 10 coins')
                 } else {
                   setError('')
                 }
               }}
             />
             {!isAdmin && (
-              <p className="text-ink-500 text-xs">Minimum: 10 mana</p>
+              <p className="text-ink-500 text-xs">Minimum: 10 coins</p>
             )}
           </Col>
 
@@ -543,9 +543,9 @@ export const QRModal = (props: {
       <Col className="bg-canvas-0 overflow-hidden rounded-xl shadow-xl">
         {/* Header */}
         <div className="from-primary-600 to-primary-500 bg-gradient-to-r px-6 py-5">
-          <h2 className="text-lg font-semibold text-white">Receive Mana</h2>
+          <h2 className="text-lg font-semibold text-white">Receive Coins</h2>
           <p className="text-sm text-white/70">
-            Share this QR code to receive mana from {user.name}
+            Share this QR code to receive coins from {user.name}
           </p>
         </div>
 

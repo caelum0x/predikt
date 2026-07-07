@@ -93,7 +93,7 @@ export default function CommunityGuidelinesPrizeDrawingsPage() {
               participants at no cost
             </li>
             <li>
-              <strong>Earned entries</strong> — accumulated through Mana earned
+              <strong>Earned entries</strong> — accumulated through Coins earned
               via predictions and bonuses
             </li>
           </ul>

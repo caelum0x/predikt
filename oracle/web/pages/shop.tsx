@@ -752,7 +752,7 @@ export default function ShopPage() {
     <Page trackPageView="shop page" className="!col-span-7">
       <SEO
         title="Shop"
-        description="Spend your mana in the Predikt shop"
+        description="Spend your coins in the Predikt shop"
         url="/shop"
       />
       {/* Confetti on purchase */}
@@ -766,7 +766,7 @@ export default function ShopPage() {
       <Col className="mx-auto w-full max-w-3xl p-4">
         <Row className="mb-2 items-center gap-2 text-2xl font-semibold">
           <FaGem className="h-6 w-6 text-primary-500" />
-          Mana Shop
+          Coins Shop
         </Row>
         {user ? (
           <Row className="text-ink-700 mb-6 items-center gap-4 text-sm">
@@ -780,7 +780,7 @@ export default function ShopPage() {
               href="/checkout"
               className="text-primary-600 hover:text-primary-700 font-medium"
             >
-              Buy mana →
+              Buy coins →
             </Link>
           </Row>
         ) : (
@@ -1605,7 +1605,7 @@ function MerchItemCard(props: {
                 )}
               </div>
               <span className="text-ink-500 text-xs">
-                + shipping (paid in mana)
+                + shipping (paid in coins)
               </span>
               {item.limit === 'one-time' && (
                 <Row className="text-ink-500 mt-0.5 items-center gap-1 text-xs">
@@ -1628,7 +1628,7 @@ function MerchItemCard(props: {
             ) : !canPurchase && user ? (
               <Link href="/checkout" className="w-full">
                 <Button size="sm" color="gradient-pink" className="w-full">
-                  Buy mana
+                  Buy coins
                 </Button>
               </Link>
             ) : (
@@ -1667,7 +1667,7 @@ function MerchItemCard(props: {
             <span className="text-ink-500 text-sm"> + shipping</span>
           </p>
           <p className="text-ink-500 text-sm">
-            All costs (item + shipping) are paid in mana.
+            All costs (item + shipping) are paid in coins.
           </p>
 
           {/* Size Guide (only for multi-size items like t-shirts) */}
@@ -1913,7 +1913,7 @@ function MerchItemCard(props: {
                 <div className="text-sm font-medium">
                   Select shipping option:
                 </div>
-                <span className="text-ink-500 text-xs">Prices in mana</span>
+                <span className="text-ink-500 text-xs">Prices in coins</span>
               </Row>
               {shippingRates.map((rate) => {
                 const shippingMana = Math.round(parseFloat(rate.rate) * 100)
@@ -2065,7 +2065,7 @@ function MerchItemCard(props: {
               </Row>
             )}
             <Row className="justify-between text-base font-semibold">
-              <span>Total (mana):</span>
+              <span>Total (coins):</span>
               <span className="text-teal-600">
                 {formatMoney(
                   discountedPrice +
@@ -2087,7 +2087,7 @@ function MerchItemCard(props: {
             <span className="text-amber-700 dark:text-amber-300">
               I understand that orders are final once confirmed with our
               fulfillment partner. Refunds may be issued at admin discretion
-              before an order ships. Mana spent on merch is non-refundable after
+              before an order ships. Coins spent on merch is non-refundable after
               shipment.
             </span>
           </label>
@@ -2130,7 +2130,7 @@ function AdminTestingTools(props: {
     if (!user) return
     if (
       !confirm(
-        'This will delete all your non-subscription cosmetics and refund the mana. Supporter tiers will NOT be affected. Continue?'
+        'This will delete all your non-subscription cosmetics and refund the coins. Supporter tiers will NOT be affected. Continue?'
       )
     )
       return
@@ -2138,7 +2138,7 @@ function AdminTestingTools(props: {
     setResetting(true)
     try {
       await api('shop-reset-all', {})
-      toast.success('All cosmetics returned and mana refunded!')
+      toast.success('All cosmetics returned and coins refunded!')
       window.location.reload()
     } catch (e: any) {
       toast.error(e.message || 'Failed to reset cosmetics')
@@ -2158,7 +2158,7 @@ function AdminTestingTools(props: {
         loading={resetting}
         onClick={handleResetCosmetics}
       >
-        Return All Cosmetics (Refund Mana)
+        Return All Cosmetics (Refund Coins)
       </Button>
       <div className="text-ink-400 mt-1 text-xs">
         Refunds all non-subscription purchases. Supporter tiers are preserved.
@@ -5877,7 +5877,7 @@ function ShopItemCard(props: {
                   {!canPurchase && user ? (
                     <Link href="/checkout">
                       <Button size="xs" color="gradient-pink">
-                        Buy mana
+                        Buy coins
                       </Button>
                     </Link>
                   ) : (
@@ -5951,7 +5951,7 @@ function ShopItemCard(props: {
                     ) : !canPurchase && user ? (
                       <Link href="/checkout">
                         <Button size="sm" color="gradient-pink">
-                          Buy mana
+                          Buy coins
                         </Button>
                       </Link>
                     ) : (
@@ -5984,7 +5984,7 @@ function ShopItemCard(props: {
                         color="gradient-pink"
                         className="w-full"
                       >
-                        Buy mana
+                        Buy coins
                       </Button>
                     </Link>
                   ) : (

@@ -98,7 +98,7 @@ export function SweepsCoinsPage() {
         <ManaCoin className="absolute -left-[var(--coin-offset)] top-[var(--coin-top-offset)] min-h-[1em] min-w-[1em]" />
         <span className="text-primary-700 mr-1.5 font-semibold">
           {' '}
-          Mana ({ENV_CONFIG.moneyMoniker})
+          Coins ({ENV_CONFIG.moneyMoniker})
         </span>
         is play money
       </span>

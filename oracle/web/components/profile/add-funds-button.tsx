@@ -35,7 +35,7 @@ export function AddFundsButton(props: {
         color="gradient-pink"
         className={className}
       >
-        Get mana <ManaCoin className="ml-1" />
+        Get coins <ManaCoin className="ml-1" />
       </Button>
       <AddFundsOfferBadge
         pendingCount={pendingCount}

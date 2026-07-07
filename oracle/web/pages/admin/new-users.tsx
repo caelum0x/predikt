@@ -113,7 +113,7 @@ function NewUsersTable() {
               Referred By
             </th>
             <th className="text-ink-600 px-4 py-3 text-left text-sm font-medium">
-              Purchased Mana
+              Purchased Coins
             </th>
             <th className="text-ink-600 px-4 py-3 text-left text-sm font-medium">
               IP Address

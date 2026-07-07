@@ -362,7 +362,7 @@ function OrderStats(props: {
             value={overall.orderCount.toLocaleString()}
           />
           <StatBlock
-            label="Total mana"
+            label="Total coins"
             value={formatMoney(overall.totalMana)}
           />
           <StatBlock
@@ -378,8 +378,8 @@ function OrderStats(props: {
                 <tr className="border-ink-200 border-b text-left">
                   <th className="px-3 py-2">Item</th>
                   <th className="px-3 py-2 text-right">Orders</th>
-                  <th className="px-3 py-2 text-right">Total mana</th>
-                  <th className="px-3 py-2 text-right">Average mana</th>
+                  <th className="px-3 py-2 text-right">Total coins</th>
+                  <th className="px-3 py-2 text-right">Average coins</th>
                 </tr>
               </thead>
               <tbody>

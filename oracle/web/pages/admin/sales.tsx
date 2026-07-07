@@ -29,7 +29,7 @@ export default function AdminSalesPage() {
   return (
     <Page trackPageView="admin-sales">
       <Col className="gap-6">
-        <Title>Mana Sales</Title>
+        <Title>Coins Sales</Title>
         <SalesTable />
       </Col>
     </Page>
@@ -82,7 +82,7 @@ function SalesTable() {
                 User
               </th>
               <th className="text-ink-600 px-4 py-3 text-left text-sm font-medium">
-                Mana
+                Coins
               </th>
               <th className="text-ink-600 px-4 py-3 text-left text-sm font-medium">
                 Paid

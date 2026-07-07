@@ -199,7 +199,7 @@ export default function CommunityGuidelinesLeaguesPage() {
             <li>
               Receiving a prize requires identity verification (KYC). Bots in
               the Silicon division are exempt but must have earned at least 100
-              mana to qualify.
+              coins to qualify.
             </li>
             <li>Each user receives at most one prize per season.</li>
           </ul>

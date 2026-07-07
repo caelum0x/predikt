@@ -40,10 +40,10 @@ export default function CommunityGuidelinesPlatformConductPage() {
             id="mana-and-money"
             className="text-ink-1000 text-xl font-semibold"
           >
-            Mana & money
+            Coins & money
           </h2>
           <ul className="text-ink-700 mt-3 list-disc space-y-2 pl-5">
-            <li>Selling mana to another user for real money is not allowed.</li>
+            <li>Selling coins to another user for real money is not allowed.</li>
           </ul>
         </div>
 

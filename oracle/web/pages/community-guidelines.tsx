@@ -28,7 +28,7 @@ const SECTIONS = [
   {
     title: 'Platform Conduct',
     description:
-      'Mana sales, DM spam, review conduct, and other platform-wide rules.',
+      'Coins sales, DM spam, review conduct, and other platform-wide rules.',
     icon: UsersIcon,
     href: '/community-guidelines/platform-conduct',
   },

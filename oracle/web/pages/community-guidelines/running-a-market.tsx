@@ -107,7 +107,7 @@ export default function CommunityGuidelinesRunningAMarketPage() {
           </h2>
           <p className="text-ink-700 mt-3">
             Once your criteria are met, resolve. Don't sit on it — unresolved
-            markets lock up traders' mana and erode trust in the platform. If
+            markets lock up traders' coins and erode trust in the platform. If
             you're unsure about the outcome, check with Mods before resolving,
             not after. See the{' '}
             <Link

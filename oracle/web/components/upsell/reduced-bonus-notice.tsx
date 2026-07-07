@@ -164,7 +164,7 @@ export function ReducedBonusNotice(props: {
             track('reduced bonus notice: buy mana clicked', { kind })
           }
         >
-          buy mana
+          buy coins
         </Link>
         , or{' '}
         <Link

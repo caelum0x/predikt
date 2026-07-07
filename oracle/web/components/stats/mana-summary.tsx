@@ -16,8 +16,8 @@ type DateAndCategoriesToTotals = { date: string } & {
 }
 
 const categoryToLabel = {
-  total_value: 'total mana (-loans)',
-  balance: 'mana balance',
+  total_value: 'total coins (-loans)',
+  balance: 'coins balance',
   spice_balance: 'spice balance',
   investment_value: 'invested',
   loan_total: 'loans',
@@ -55,7 +55,7 @@ export const ManaSupplySummary = (props: {
 
   return (
     <>
-      <Title>Mana supply over time</Title>
+      <Title>Coins supply over time</Title>
       <StackedChart data={manaData} />
     </>
   )

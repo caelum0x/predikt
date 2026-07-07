@@ -131,7 +131,7 @@ export default function CommunityGuidelinesBotsPage() {
           </h2>
           <p className="text-ink-700 mt-3">
             Bot accounts don't need to complete identity verification. If your
-            bot wins a Silicon league prize or earns mana you'd like to use,
+            bot wins a Silicon league prize or earns coins you'd like to use,
             send it to your{' '}
             <a
               href="#verification-and-prizes"
@@ -155,7 +155,7 @@ export default function CommunityGuidelinesBotsPage() {
             id="transferring-mana"
             className="text-ink-1000 text-xl font-semibold"
           >
-            Transferring mana to/from bot accounts
+            Transferring coins to/from bot accounts
           </h2>
           <p className="text-ink-700 mt-3">
             You can send profit/balance to/from your main account, but you
@@ -172,7 +172,7 @@ export default function CommunityGuidelinesBotsPage() {
             </Link>
             . The rule against funneling targets bonus harvesting (signup
             bonuses, daily streaks, unique trader bonuses), not transferring a
-            bot's legitimately-earned mana for trading, prize drawings, or
+            bot's legitimately-earned coins for trading, prize drawings, or
             charity giveaways.
           </p>
         </div>

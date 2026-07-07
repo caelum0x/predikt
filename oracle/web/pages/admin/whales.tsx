@@ -31,7 +31,7 @@ export default function AdminWhalesPage() {
   return (
     <Page trackPageView="admin-whales">
       <Col className="gap-6">
-        <Title>Top Mana Purchasers (Whales)</Title>
+        <Title>Top Coins Purchasers (Whales)</Title>
         <WhalesTable />
       </Col>
     </Page>
@@ -78,7 +78,7 @@ function WhalesTable() {
                 Total Paid
               </th>
               <th className="text-ink-600 px-4 py-3 text-right text-sm font-medium">
-                Total Mana
+                Total Coins
               </th>
               <th className="text-ink-600 px-4 py-3 text-right text-sm font-medium">
                 Purchases
@@ -181,7 +181,7 @@ function BreakdownPopup(props: {
           <tr className="text-ink-500">
             <th className="pb-2 text-left font-medium">Type</th>
             <th className="pb-2 text-right font-medium">Paid</th>
-            <th className="pb-2 text-right font-medium">Mana</th>
+            <th className="pb-2 text-right font-medium">Coins</th>
             <th className="pb-2 text-right font-medium">#</th>
           </tr>
         </thead>

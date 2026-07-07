@@ -120,7 +120,7 @@ export const GUIDELINES_SEARCH_INDEX: SearchEntry[] = [
   // Platform Conduct
   {
     page: 'Platform Conduct',
-    section: 'Mana & money',
+    section: 'Coins & money',
     text: 'selling mana real money not allowed',
     href: '/community-guidelines/platform-conduct#mana-and-money',
   },

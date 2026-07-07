@@ -754,7 +754,7 @@ export default function SportsAdminPage() {
             {/* Liquidity tiers per stage */}
             <Col className="gap-2">
               <label className="text-ink-700 text-sm font-medium">
-                Liquidity tiers (mana)
+                Liquidity tiers (coins)
               </label>
               <p className="text-ink-400 text-xs">
                 Valid Predikt tiers: 100 · 1,000 · 10,000 · 100,000

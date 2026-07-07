@@ -412,7 +412,7 @@ function VerifyToCommentPrompt(props: {
               className="text-primary-700 font-semibold hover:underline"
               onClick={() => track('comment gate: buy mana clicked')}
             >
-              buy any amount of mana
+              buy any amount of coins
             </Link>
             , or{' '}
             <Link

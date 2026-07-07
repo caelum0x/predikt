@@ -2253,7 +2253,7 @@ function ExtraPurchasedManaNotification(props: {
       icon={<GiftIcon className="text-primary-500 h-8 w-8" />}
       subtitle={<></>}
     >
-      Thank you for buying mana in 2024! You just received{' '}
+      Thank you for buying coins in 2024! You just received{' '}
       <span className="font-semibold">{formatMoney(amount)}</span>, which is 9
       times what you purchased, as a gift from Predikt!
     </NotificationFrame>
@@ -2393,7 +2393,7 @@ function PersonalizedManaOfferNotification(props: {
       link="/checkout?showOffer=1"
       subtitle={
         <span className="text-ink-600 text-xs">
-          Limited-time discount on a mana bundle — tap to view.
+          Limited-time discount on a coins bundle — tap to view.
         </span>
       }
     >

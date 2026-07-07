@@ -283,7 +283,7 @@ export const CyberMondayBanner = () => {
         <span className="text-lg">💻</span>
         <div className="font-medium text-white">
           <span className="font-bold text-cyan-400">Cyber Monday:</span> 25% off
-          mana using code{' '}
+          coins using code{' '}
           <span className="rounded bg-cyan-400 px-2 py-0.5 font-mono font-bold text-ink-900">
             CYBMON
           </span>
@@ -329,7 +329,7 @@ export const ShopBanner = () => {
       <Row className="items-center gap-2">
         <span>🎉</span>
         <div className="text-ink-700">
-          <span className="font-semibold">Mana Shop is live!</span> Get
+          <span className="font-semibold">Coins Shop is live!</span> Get
           membership perks, cosmetics & merch
         </div>
         <ArrowRightIcon className="text-ink-600 ml-1 h-4 w-4" />

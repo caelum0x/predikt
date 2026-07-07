@@ -79,7 +79,7 @@ export function AddFundsOfferBadge(props: {
   return (
     <span
       className={positionClasses}
-      title={`${activeCount} mana sale offer${
+      title={`${activeCount} coins sale offer${
         activeCount === 1 ? '' : 's'
       } available`}
     >

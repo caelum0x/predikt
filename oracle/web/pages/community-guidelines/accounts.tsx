@@ -116,7 +116,7 @@ export default function CommunityGuidelinesAccountsPage() {
           <ul className="text-ink-700 mt-2 list-disc space-y-2 pl-5">
             <li>Using multiple accounts to abuse the unique trader bonus.</li>
             <li>
-              Funneling mana to your main account via alts, referral or signup
+              Funneling coins to your main account via alts, referral or signup
               bonuses, or daily streaks.
             </li>
             <li>Using alts as fake identities to deceive other users.</li>

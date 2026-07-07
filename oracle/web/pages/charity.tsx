@@ -419,7 +419,7 @@ export default function CharityGiveawayPage(props: { giveawayNum?: number }) {
             ? `Predikt Charity Giveaway #${giveaway.giveawayNum}`
             : 'Predikt Charity Giveaway'
         }
-        description={`Help your favorite charity win $${giveaway.prizeAmountUsd.toLocaleString()} from Predikt. Convert mana into entries to boost their odds.`}
+        description={`Help your favorite charity win $${giveaway.prizeAmountUsd.toLocaleString()} from Predikt. Convert coins into entries to boost their odds.`}
         url={giveawayNum ? `/charity/${giveaway.giveawayNum}` : '/charity'}
       />
 
@@ -480,7 +480,7 @@ export default function CharityGiveawayPage(props: { giveawayNum?: number }) {
           </div>
           <p className="text-ink-600 text-lg leading-relaxed">
             Predikt is giving ${giveaway.prizeAmountUsd.toLocaleString()} to
-            charity—you decide which one. Convert mana into entries to boost a
+            charity—you decide which one. Convert coins into entries to boost a
             charity's odds, and when the giveaway ends, we'll draw one lucky
             entry to determine the winning charity.
           </p>
@@ -516,7 +516,7 @@ export default function CharityGiveawayPage(props: { giveawayNum?: number }) {
             color="indigo"
           />
           <StatCard
-            label="Mana Spent"
+            label="Coins Spent"
             value={formatMoney(totalManaSpent)}
             color="violet"
           />
@@ -914,7 +914,7 @@ function PurchaseForm(props: {
                 <InfoTooltip
                   text={`Current rate: ${formatMoneyWithDecimals(
                     currentPrice
-                  )} per entry. Entries follow a bonding curve — earlier entries cost less mana.`}
+                  )} per entry. Entries follow a bonding curve — earlier entries cost less coins.`}
                   size="sm"
                 />
               </Row>

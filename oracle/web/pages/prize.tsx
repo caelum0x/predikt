@@ -636,7 +636,7 @@ export default function SweepstakesPage() {
             color="indigo"
           />
           <StatCard
-            label="Mana Spent"
+            label="Coins Spent"
             value={formatMoney(totalManaSpent)}
             color="violet"
           />
@@ -1428,8 +1428,8 @@ function PurchaseForm(props: {
             <InfoTooltip
               text={`Current rate: ${formatMoneyWithDecimals(
                 currentPrice
-              )} per entry. Rates follow a bonding curve—earlier entries require less mana.
-              Your mana spend is fixed; the final entry count is calculated at purchase time.`}
+              )} per entry. Rates follow a bonding curve—earlier entries require less coins.
+              Your coins spend is fixed; the final entry count is calculated at purchase time.`}
               size="sm"
             />
           </Row>
@@ -1868,7 +1868,7 @@ function SalesHistory(props: { sweepstakesNum: number; refreshKey: number }) {
                 Entries
               </th>
               <th className="text-ink-500 px-5 py-3 text-right text-xs font-medium uppercase tracking-wider">
-                Mana
+                Coins
               </th>
               <th className="text-ink-500 px-5 py-3 text-right text-xs font-medium uppercase tracking-wider">
                 Time

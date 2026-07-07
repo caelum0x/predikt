@@ -220,7 +220,7 @@ function CashoutOptionsContent(props: {
             className="whitespace-nowrap text-xs sm:text-sm"
             disabled={!!allDisabled || hasNoRedeemableCash}
           >
-            Redeem for mana
+            Redeem for coins
           </Button>
           <Row className="text-ink-500 w-full justify-end gap-1 whitespace-nowrap text-xs sm:text-sm ">
             <TokenNumber
@@ -231,7 +231,7 @@ function CashoutOptionsContent(props: {
               )}
               coinClassName={clsx(allDisabled && 'grayscale')}
             />
-            mana value
+            coins value
           </Row>
         </Col>
       </Card>
@@ -327,7 +327,7 @@ const ManaDescription = (props: { disabled?: boolean }) => (
   <div className="flex gap-4">
     <ManaCoin className={clsx('text-7xl', props.disabled && 'grayscale')} />
     <Col>
-      <div className="text-lg font-semibold">Get Mana</div>
+      <div className="text-lg font-semibold">Get Coins</div>
       <div className="text-ink-700 flex flex-wrap gap-x-1 text-sm">
         Redeem {SWEEPIES_NAME} at
         <span>

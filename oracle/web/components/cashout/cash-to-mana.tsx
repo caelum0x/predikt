@@ -64,7 +64,7 @@ export const CashToManaForm = (props: {
       setLoading(false)
       updateAmounts(sweepiesAmount, 'sweepies')
       setError(null)
-      toast.success(`Successfully converted your ${SWEEPIES_NAME} to mana!`)
+      toast.success(`Successfully converted your ${SWEEPIES_NAME} to coins!`)
       onBack()
     } catch (e) {
       console.error(e)
@@ -76,7 +76,7 @@ export const CashToManaForm = (props: {
   return (
     <Col className="w-full shrink-0 gap-4">
       Convert at a rate of {CASH_TO_MANA_CONVERSION_RATE} {SWEEPIES_NAME} to 1
-      mana.
+      coin.
       <Col>
         <div className="text-ink-500 text-sm">Redeem</div>
         <AmountInput

@@ -417,7 +417,7 @@ export function Search(props: SearchProps) {
         <Col className="gap-2">
           {!prefersPlay && (
             <Button onClick={() => setPrefersPlay(true)} color="purple">
-              See mana markets
+              See coins markets
             </Button>
           )}
 

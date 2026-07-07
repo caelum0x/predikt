@@ -1273,7 +1273,7 @@ function PrizeEligibilitySection({
         res.voidedEntryCount > 0
           ? ` Voided ${res.voidedEntryCount} ${
               res.voidedEntryCount === 1 ? 'entry' : 'entries'
-            }, refunded ${res.refundedManaTotal} mana.`
+            }, refunded ${res.refundedManaTotal} coins.`
           : ''
       toast.success(
         (selectedEligibility === null
@@ -1360,7 +1360,7 @@ function PrizeEligibilitySection({
                 className="mt-0.5"
               />
               <span>
-                Void this user's outstanding entries and refund the mana they
+                Void this user's outstanding entries and refund the coins they
                 paid. Recommended for under-18 / wrongly-charged cases — they
                 bought entries they can't win.
               </span>

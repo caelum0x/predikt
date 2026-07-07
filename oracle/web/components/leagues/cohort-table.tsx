@@ -88,7 +88,7 @@ export const CohortTable = (props: {
     <Col className="gap-3">
       {division === 1 && (
         <p className="text-ink-500 text-sm">
-          Requires 100 mana earned to promote from Bronze
+          Requires 100 coins earned to promote from Bronze
         </p>
       )}
 

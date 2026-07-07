@@ -34,7 +34,7 @@ export default function TxnsPage() {
     <Page trackPageView={false}>
       <Col className="gap-4">
         <Row className="items-start justify-between">
-          <Title>Bank Mana Transactions</Title>
+          <Title>Bank Coins Transactions</Title>
           <div className="flex gap-1">
             <Button onClick={() => setPage(page - 1)} disabled={page === 0}>
               Previous

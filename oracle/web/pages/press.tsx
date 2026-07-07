@@ -274,13 +274,13 @@ export default function PressPage() {
         <Section title="Currency & Icons">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <AssetCard
-              title="Mana Symbol"
+              title="Coins Symbol"
               src="/mana.svg"
               downloadPath="/mana.svg"
               bgColor="bg-canvas-0"
             />
             <AssetCard
-              title="Mana Flat"
+              title="Coins Flat"
               src="/manaFlat.svg"
               downloadPath="/manaFlat.svg"
               bgColor="bg-canvas-0"
@@ -1787,7 +1787,9 @@ function AssetCard(props: {
   // Make white logos bigger on dark backgrounds, and determine padding
   const isWhiteLogo = props.title.includes('White')
   const isCurrencyIcon =
-    props.title.includes('Mana') || props.title.includes('Manachan')
+    props.title.includes('Coins') ||
+    props.title.includes('Mana') ||
+    props.title.includes('Manachan')
   const imageScale = isWhiteLogo ? 'w-full h-full' : 'max-h-full max-w-full'
 
   // Determine padding: no padding if noPadding prop is true, or if it's a currency icon

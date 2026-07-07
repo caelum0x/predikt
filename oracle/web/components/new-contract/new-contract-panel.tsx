@@ -904,7 +904,7 @@ export function NewContractPanel(props: {
       } else if (insufficientForBoostOnly && errorKeys.length === 0) {
         // Boost-only balance issue: tell the user how to proceed.
         toast.error(
-          'Not enough mana to boost. Switch to "No boost" to create without boosting, or top up.'
+          'Not enough coins to boost. Switch to "No boost" to create without boosting, or top up.'
         )
         setSubmitAttemptCount((prev) => prev + 1)
       } else {
@@ -1949,7 +1949,7 @@ const TraderPanel = ({
     <div className="pb-2">Our thousands of daily, active traders.</div>
     <div className="pb-2">
       The traders that have insight into your question will push the probability
-      towards the correct answer. The traders that are correct earn more mana
+      towards the correct answer. The traders that are correct earn more coins
       (our play-money currency), and influence the probability more.
     </div>
   </ExpandSection>

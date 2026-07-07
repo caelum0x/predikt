@@ -130,7 +130,7 @@ const PlayMoney = ({
     onClick={() => onClick('Why play money?')}
   >
     <div className="pb-2">
-      Mana ({ENV_CONFIG.moneyMoniker}) is the play-money currency used to bet on
+      Coins ({ENV_CONFIG.moneyMoniker}) is the play-money currency used to bet on
       Predikt. It cannot be converted to cash. All users start with{' '}
       {formatMoney(1000)} for free.
     </div>

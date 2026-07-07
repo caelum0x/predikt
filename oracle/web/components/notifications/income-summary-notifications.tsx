@@ -142,7 +142,7 @@ export function UniqueBettorBonusIncomeNotification(props: {
               href="/checkout"
               className="text-primary-700 font-semibold hover:underline"
             >
-              buy mana
+              buy coins
             </a>
             , or{' '}
             <a
@@ -362,7 +362,7 @@ export function QuestIncomeNotification(props: {
               href="/checkout"
               className="text-primary-700 font-semibold hover:underline"
             >
-              buy mana
+              buy coins
             </a>
             , or{' '}
             <a
@@ -465,7 +465,7 @@ export function BettingStreakBonusIncomeNotification(props: {
               href="/checkout"
               className="text-primary-700 font-semibold hover:underline"
             >
-              buy mana
+              buy coins
             </a>
             , or{' '}
             <a

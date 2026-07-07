@@ -95,8 +95,8 @@ export default function SitemapPage() {
             )}
             {user && (!isNative || (isNative && platform !== 'ios')) && (
               <SitemapLink
-                title="Get mana"
-                description="Purchase mana to trade with"
+                title="Get coins"
+                description="Purchase coins to trade with"
                 href="/add-funds"
                 icon={CurrencyDollarIcon}
               />

@@ -368,12 +368,12 @@ function CheckoutContent() {
         <div className="border-ink-100 border-b bg-gradient-to-r from-primary-50 to-purple-50 px-6 py-4 dark:from-primary-950/30 dark:to-purple-950/30">
           <Row className="items-center justify-between gap-2">
             <h1 className="text-primary-700 text-xl font-semibold sm:text-2xl">
-              Buy mana
+              Buy coins
             </h1>
             <Row className="items-center gap-1 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-3 py-1 text-xs font-bold text-white shadow-sm dark:from-teal-600/80 dark:to-emerald-600/80">
               <span>$1</span>
               <ArrowRightIcon className="h-3 w-3" />
-              <span>100 mana</span>
+              <span>100 coins</span>
             </Row>
           </Row>
         </div>
@@ -388,7 +388,7 @@ function CheckoutContent() {
               Payment Successful!
             </h2>
             <p className="text-ink-600 mb-6 text-sm">
-              Your mana is being credited to your account. This may take a few
+              Your coins are being credited to your account. This may take a few
               minutes.
             </p>
             <Link href="/">
@@ -472,7 +472,7 @@ function CheckoutContent() {
                 <div className="flex justify-center">
                   <Image
                     src="/buy-mana-graphics/100k.png"
-                    alt="Mana coins"
+                    alt="Coins"
                     width={140}
                     height={140}
                     className="object-contain"
@@ -568,7 +568,7 @@ function CheckoutContent() {
             {/* Legal disclaimer */}
             <div className="text-ink-600 rounded-lg bg-amber-50/50 p-4 text-sm dark:bg-amber-950/20">
               <p>
-                Mana is play money and{' '}
+                Coins are play money and{' '}
                 <strong className="text-ink-700">
                   cannot be redeemed for cash
                 </strong>
@@ -594,7 +594,7 @@ function CheckoutContent() {
                     <Row className="items-center gap-2">
                       <SparklesIcon className="h-5 w-5 text-amber-500" />
                       <span className="font-semibold text-amber-700 dark:text-amber-400">
-                        First Crypto Purchase Bonus: Get up to 20% extra mana!
+                        First Crypto Purchase Bonus: Get up to 20% extra coins!
                       </span>
                     </Row>
                     <p className="text-ink-600 mt-1 text-sm">
@@ -651,7 +651,7 @@ function CheckoutContent() {
       >
         <Col className="w-full gap-4">
           <h2 className="text-primary-700 text-xl font-semibold sm:text-2xl">
-            Buy mana with credit card
+            Buy coins with credit card
           </h2>
           <CreditCardPurchaseGrid />
         </Col>
@@ -666,8 +666,8 @@ export default function CheckoutPage() {
   return (
     <Page trackPageView="checkout page">
       <SEO
-        title="Buy mana"
-        description="Buy mana to trade in your favorite questions on Predikt"
+        title="Buy coins"
+        description="Buy coins to trade in your favorite questions on Predikt"
         url="/checkout"
         image="/buy-mana-graphics/100k.png"
       />

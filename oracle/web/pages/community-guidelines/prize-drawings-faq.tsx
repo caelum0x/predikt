@@ -40,15 +40,15 @@ export default function CommunityGuidelinesPrizeDrawingsFAQPage() {
             How do I enter?
           </h2>
           <p className="text-ink-700 mt-3">
-            The drawing is entirely opt-in. Users with at least 1,000 mana
+            The drawing is entirely opt-in. Users with at least 1,000 coins
             invested across markets can claim one free entry on the{' '}
             <Link href="/prize" className="text-primary-500 underline">
               Prize Drawing
             </Link>{' '}
-            page. Additional entries can be purchased by converting mana.
+            page. Additional entries can be purchased by converting coins.
           </p>
           <p className="text-ink-700 mt-3">
-            Entry pricing uses a bonding curve — earlier entries cost less mana,
+            Entry pricing uses a bonding curve — earlier entries cost less coins,
             with prices scaling gradually as more entries are purchased.
           </p>
         </div>
@@ -59,7 +59,7 @@ export default function CommunityGuidelinesPrizeDrawingsFAQPage() {
           </h2>
           <ul className="text-ink-700 mt-3 list-disc space-y-2 pl-5">
             <li>Must be 18 or older</li>
-            <li>Must have at least 1,000 mana invested across markets</li>
+            <li>Must have at least 1,000 coins invested across markets</li>
             <li>Only one account per person</li>
             <li>
               Must be in an eligible location — many countries and US states are

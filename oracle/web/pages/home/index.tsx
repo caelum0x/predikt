@@ -42,7 +42,7 @@ export default function Home() {
             track('mobile buy mana button')
           }}
         >
-          <span className="font-semibold">Get mana</span>
+          <span className="font-semibold">Get coins</span>
           <ManaCoin className="h-5 w-5" />
         </button>
       )}

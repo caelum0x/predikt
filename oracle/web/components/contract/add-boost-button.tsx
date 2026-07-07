@@ -269,7 +269,7 @@ function BoostPurchaseModal(props: {
                 href="/checkout"
                 className="bg-primary-500 hover:bg-primary-600 rounded px-2 py-1 text-sm text-white"
               >
-                Get mana
+                Get coins
               </Link>
             </div>
           )}

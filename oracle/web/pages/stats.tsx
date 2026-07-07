@@ -504,7 +504,7 @@ function ActivityTab(props: {
         ]}
       />
       <Spacer h={8} />
-      <Title>Total mana {TRADED_TERM}</Title>
+      <Title>Total coins {TRADED_TERM}</Title>
       <p className="text-ink-500">
         Sum of {TRADE_TERM} amounts. (Divided by 100 to be more readable.)
       </p>
@@ -676,10 +676,10 @@ function ManaSupplyTab(props: {
 
   return (
     <Col>
-      <Title>Mana supply</Title>
+      <Title>Coins supply</Title>
       <div className="text-ink-700 mb-4 grid grid-cols-2 justify-items-end gap-y-1">
         <div className="text-ink-800 mb-2">Supply Today</div>
-        <div className="text-ink-800 mb-2">Mana</div>
+        <div className="text-ink-800 mb-2">Coins</div>
 
         <div>Balances</div>
         <div className="font-semibold">
@@ -729,7 +729,7 @@ function ManaSupplyTab(props: {
       <Spacer h={8} />
       <Title>Active Balances</Title>
       <p className="text-ink-500">
-        Sum of mana balances held by users who were active in the last 30 days.
+        Sum of coins balances held by users who were active in the last 30 days.
       </p>
       {activeUserManaStats.length > 0 && (
         <DailyChart
@@ -744,7 +744,7 @@ function ManaSupplyTab(props: {
       <BonusSummary txnSummaryStats={fromBankSummaryMana} days={days} />
       <Spacer h={8} />
       <Title>Transactions to Predikt</Title>
-      <span className="text-ink-500">(Ignores mana purchases)</span>
+      <span className="text-ink-500">(Ignores coins purchases)</span>
       <BonusSummary txnSummaryStats={toBankSummaryMana} days={days} />
     </Col>
   )
@@ -757,9 +757,9 @@ function ManaSalesTab(props: { stats: rowfor<'daily_stats'>[] }) {
 
   return (
     <Col>
-      <Title>Mana sales</Title>
+      <Title>Coins sales</Title>
       <p className="text-ink-500">
-        <b>${formatWithCommas(last30dSales)}</b> of mana sold in the last 30d
+        <b>${formatWithCommas(last30dSales)}</b> of coins sold in the last 30d
         <br />
       </p>
       <Spacer h={4} />
@@ -785,7 +785,7 @@ function ManaSalesTab(props: { stats: rowfor<'daily_stats'>[] }) {
       />
       <Spacer h={8} />
       <span className="text-ink-500 italic">
-        mana purchased divided by 100, except from{' '}
+        coins purchased divided by 100, except from{' '}
         <DateTimeTooltip time={MANA_PURCHASE_RATE_CHANGE_DATE.valueOf()}>
           <span>
             {formatTimeShort(MANA_PURCHASE_RATE_CHANGE_DATE.valueOf())}
@@ -1269,7 +1269,7 @@ export function CustomAnalytics(props: {
             ),
           },
           {
-            title: 'Mana Supply',
+            title: 'Coins Supply',
             queryString: 'mana-supply',
             content: (
               <ManaSupplyTab
@@ -1281,7 +1281,7 @@ export function CustomAnalytics(props: {
             ),
           },
           {
-            title: 'Mana Sales',
+            title: 'Coins Sales',
             queryString: 'mana-sales',
             content: <ManaSalesTab stats={localStats} />,
           },

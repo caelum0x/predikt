@@ -50,14 +50,14 @@ export function AddFundsModal(props: {
         className="[&_svg]:hidden" // hide carousel switcher
         tabs={buildArray(
           {
-            title: 'Buy mana',
+            title: 'Buy coins',
             content: <BuyManaTab onClose={() => setOpen(false)} />,
           },
           {
-            title: 'Earn free mana',
+            title: 'Earn free coins',
             content: (
               <>
-                <div className="my-4">Other ways to earn mana:</div>
+                <div className="my-4">Other ways to earn coins:</div>
                 <OtherWaysToGetMana />
               </>
             ),
@@ -129,7 +129,7 @@ export function PriceTile(props: {
       <Col className={' w-full items-center rounded-t px-4 pb-2 pt-4'}>
         <Image
           src={imgSrc}
-          alt={`${shortenNumber(mana)} mana`}
+          alt={`${shortenNumber(mana)} coins`}
           className="100%"
           width={120}
           height={120}
@@ -212,7 +212,7 @@ export const SpiceToManaForm = (props: {
 
   return (
     <>
-      <div className="my-4">Convert at a rate of 1 prize point to 1 mana.</div>
+      <div className="my-4">Convert at a rate of 1 prize point to 1 coin.</div>
       <div className="text-ink-500 mb-2 text-sm">Amount</div>
       <AmountInput amount={amount} onChangeAmount={setAmount} />
       <div className="mt-4 flex gap-2">
