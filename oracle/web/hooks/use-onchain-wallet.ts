@@ -17,11 +17,25 @@ export interface OnchainWalletState {
   usdcFormatted: string | null
   loading: boolean
   error: string | null
-  refresh: () => Promise<void>
+  /**
+   * Reconcile address + USDC balance from the chain. Interval-guarded: calls
+   * that land within `REFRESH_MIN_INTERVAL_MS` of the last successful refresh
+   * are coalesced (skipped) to avoid redundant RPC traffic on re-render/effect
+   * churn. Pass `{ force: true }` after an explicit user action (a trade, a
+   * create/import) to bypass the guard and read the freshest state.
+   */
+  refresh: (opts?: { force?: boolean }) => Promise<void>
   create: () => Promise<void>
   importPhrase: (phrase: string) => Promise<void>
   disconnect: () => Promise<void>
 }
+
+/**
+ * Minimum spacing between balance/position RPC reads. Effect- and render-driven
+ * refreshes that arrive faster than this are coalesced; explicit user actions
+ * bypass it via `refresh({ force: true })`.
+ */
+const REFRESH_MIN_INTERVAL_MS = 15_000
 
 /**
  * Client-only hook exposing the self-custodial on-chain wallet: its address,
@@ -45,6 +59,12 @@ export function useOnchainWallet(): OnchainWalletState {
     }
   }, [])
 
+  // Interval guard for coalescing redundant refreshes. `lastRefreshRef` records
+  // the timestamp of the last refresh that actually hit the network; `inFlightRef`
+  // dedupes concurrent calls so overlapping effects share one RPC round-trip.
+  const lastRefreshRef = useRef(0)
+  const inFlightRef = useRef<Promise<void> | null>(null)
+
   const loadBalance = useCallback(async (addr: Address) => {
     try {
       const bal = await readUsdcBalance(addr)
@@ -55,12 +75,14 @@ export function useOnchainWallet(): OnchainWalletState {
     }
   }, [])
 
-  const refresh = useCallback(async () => {
+  const doRefresh = useCallback(async () => {
     setError(null)
     if (!hasWallet()) {
-      setAddress(null)
-      setUsdc(null)
-      setReady(true)
+      if (mountedRef.current) {
+        setAddress(null)
+        setUsdc(null)
+        setReady(true)
+      }
       return
     }
     const addr = await getAddress()
@@ -70,8 +92,38 @@ export function useOnchainWallet(): OnchainWalletState {
     if (addr) await loadBalance(addr)
   }, [loadBalance])
 
+  const refresh = useCallback(
+    async (opts?: { force?: boolean }) => {
+      const now = Date.now()
+      // Coalesce render/effect-driven refreshes that arrive within the guard
+      // window, unless the caller explicitly forces a fresh read after an action.
+      if (
+        !opts?.force &&
+        lastRefreshRef.current !== 0 &&
+        now - lastRefreshRef.current < REFRESH_MIN_INTERVAL_MS
+      ) {
+        return
+      }
+      // Dedupe concurrent refreshes so overlapping effects share one RPC pass.
+      if (inFlightRef.current) return inFlightRef.current
+      const run = (async () => {
+        try {
+          await doRefresh()
+        } finally {
+          lastRefreshRef.current = Date.now()
+          inFlightRef.current = null
+        }
+      })()
+      inFlightRef.current = run
+      return run
+    },
+    [doRefresh]
+  )
+
   useEffect(() => {
-    refresh()
+    // Force the initial mount read (the guard is only meaningful after the
+    // first successful refresh), while still respecting the mount-guard fix.
+    refresh({ force: true })
   }, [refresh])
 
   const create = useCallback(async () => {
@@ -82,6 +134,7 @@ export function useOnchainWallet(): OnchainWalletState {
       if (!mountedRef.current) return
       setAddress(addr)
       await loadBalance(addr)
+      lastRefreshRef.current = Date.now()
     } catch (e) {
       if (mountedRef.current)
         setError(e instanceof Error ? e.message : 'Could not create wallet.')
@@ -99,6 +152,7 @@ export function useOnchainWallet(): OnchainWalletState {
         if (mountedRef.current) {
           setAddress(addr)
           await loadBalance(addr)
+          lastRefreshRef.current = Date.now()
         }
       } catch (e) {
         if (mountedRef.current)
@@ -115,6 +169,8 @@ export function useOnchainWallet(): OnchainWalletState {
     await wipe()
     setAddress(null)
     setUsdc(null)
+    // Reset the guard so the next connect/refresh reads immediately.
+    lastRefreshRef.current = 0
   }, [])
 
   return {

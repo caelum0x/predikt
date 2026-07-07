@@ -48,6 +48,18 @@ type OrderMode = 'MARKET' | 'LIMIT'
 type TradeSide = 'BUY' | 'SELL'
 type AdvancedAction = 'split' | 'merge'
 
+/**
+ * Describes an in-flight submission for optimistic UI feedback. `label` is the
+ * confirming-state button text; `detail` is a human summary of the intended
+ * position/USDC delta shown while the real tx confirms. Purely presentational —
+ * the underlying on-chain tx is real and authoritative; on success/error we
+ * reconcile against the actual chain state.
+ */
+interface PendingAction {
+  label: string
+  detail: string
+}
+
 function fmt(n: bigint | null | undefined): string {
   if (n == null) return '—'
   return formatUnits(n, USDC_DECIMALS)
@@ -123,6 +135,13 @@ export function OnchainTradeBox(props: {
   const [busy, setBusy] = useState(false)
   const [walletOpen, setWalletOpen] = useState(false)
 
+  // Optimistic in-flight state. The on-chain tx is still REAL — this only drives
+  // immediate UI feedback while the RPC/relay confirms, so the box never looks
+  // frozen. It is set the instant a submit starts, and reconciled (cleared) on
+  // success or error. `delta` is the intended position/USDC change we surface
+  // optimistically; on failure we simply drop it (revert) and toast the error.
+  const [pending, setPending] = useState<PendingAction | null>(null)
+
   // Best-execution route for the current MARKET inputs (null until quoted).
   const [route, setRoute] = useState<BestExecution | null>(null)
   const [quoting, setQuoting] = useState(false)
@@ -190,12 +209,15 @@ export function OnchainTradeBox(props: {
     if (!relayEnabled && mode === 'LIMIT') setMode('MARKET')
   }, [relayEnabled, mode])
 
+  // Post-action reconcile: always FORCE the wallet balance read (bypassing the
+  // hook's interval guard) because a trade/mint/redeem just changed on-chain
+  // state and the UI must reflect the freshest USDC + position immediately.
   const refreshAll = useCallback(async () => {
     await Promise.all([
       loadState(),
       loadPosition(),
       loadBook(),
-      wallet.refresh(),
+      wallet.refresh({ force: true }),
     ])
   }, [loadState, loadPosition, loadBook, wallet])
 
@@ -278,6 +300,19 @@ export function OnchainTradeBox(props: {
       toast.error('No venue can execute this trade right now')
       return
     }
+    // Optimistic feedback: reflect the intended fill immediately. Numbers come
+    // from the REAL router quote — we're not fabricating a result, just showing
+    // the trade we're about to send while it confirms.
+    const q = route.quote
+    const shs = q.outcomeTokens ? Number(q.outcomeTokens) / 1e6 : 0
+    const usd = q.usdc ? Number(q.usdc) / 1e6 : 0
+    setPending({
+      label: side === 'BUY' ? 'Confirming buy…' : 'Confirming sell…',
+      detail:
+        side === 'BUY'
+          ? `+${shs.toFixed(2)} ${outcome} shares (−$${usd.toFixed(2)})`
+          : `+$${usd.toFixed(2)} (−${shs.toFixed(2)} ${outcome} shares)`,
+    })
     setBusy(true)
     try {
       const result = await route.execute()
@@ -313,6 +348,9 @@ export function OnchainTradeBox(props: {
         toast.error(e instanceof Error ? e.message : 'Trade failed')
       }
     } finally {
+      // Reconcile: drop the optimistic state whether we succeeded (real result
+      // is now loaded via refreshAll) or failed (revert + error already toasted).
+      setPending(null)
       setBusy(false)
     }
   }
@@ -334,6 +372,14 @@ export function OnchainTradeBox(props: {
       return
     }
 
+    // Optimistic feedback for the signed limit order (real EIP-712 submit).
+    setPending({
+      label: side === 'BUY' ? 'Confirming buy…' : 'Confirming sell…',
+      detail:
+        side === 'BUY'
+          ? `${amt.toFixed(2)} ${outcome} @ ${(price * 100).toFixed(0)}¢`
+          : `Sell ${amt.toFixed(2)} ${outcome} @ ${(price * 100).toFixed(0)}¢`,
+    })
     setBusy(true)
     try {
       const w = await unlock()
@@ -371,6 +417,7 @@ export function OnchainTradeBox(props: {
         toast.error(e instanceof Error ? e.message : 'Order failed')
       }
     } finally {
+      setPending(null)
       setBusy(false)
     }
   }
@@ -403,6 +450,12 @@ export function OnchainTradeBox(props: {
       toast.error('Enter an amount')
       return
     }
+    const human = formatUnits(wei, USDC_DECIMALS)
+    setPending(
+      advanced === 'split'
+        ? { label: 'Confirming mint…', detail: `+${human} YES + ${human} NO` }
+        : { label: 'Confirming merge…', detail: `−${human} YES + NO → +$${human}` }
+    )
     setBusy(true)
     try {
       if (advanced === 'split') {
@@ -417,6 +470,7 @@ export function OnchainTradeBox(props: {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Transaction failed')
     } finally {
+      setPending(null)
       setBusy(false)
     }
   }
@@ -426,6 +480,7 @@ export function OnchainTradeBox(props: {
       setWalletOpen(true)
       return
     }
+    setPending({ label: 'Confirming redeem…', detail: 'Paying out winning shares' })
     setBusy(true)
     try {
       await redeem(conditionId)
@@ -434,6 +489,7 @@ export function OnchainTradeBox(props: {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Redeem failed')
     } finally {
+      setPending(null)
       setBusy(false)
     }
   }
@@ -471,8 +527,15 @@ export function OnchainTradeBox(props: {
               <span>YES shares: {shares(position?.yes)}</span>
               <span>NO shares: {shares(position?.no)}</span>
             </Row>
-            <Button color="blue" size="lg" loading={busy} onClick={onRedeem}>
-              Redeem USDC
+            {pending && <PendingBanner pending={pending} />}
+            <Button
+              color="blue"
+              size="lg"
+              loading={busy}
+              disabled={!!pending}
+              onClick={onRedeem}
+            >
+              {pending ? pending.label : 'Redeem USDC'}
             </Button>
           </Col>
         ) : tradingEnabled ? (
@@ -599,28 +662,33 @@ export function OnchainTradeBox(props: {
               </Row>
             )}
 
+            {pending && <PendingBanner pending={pending} />}
+
             <Button
               color="blue"
               size="lg"
               loading={busy || (mode === 'MARKET' && quoting)}
               disabled={
-                mode === 'MARKET' &&
-                !!wallet.address &&
-                Number(amount) > 0 &&
-                !quoting &&
-                (!route || route.venue === 'none')
+                !!pending ||
+                (mode === 'MARKET' &&
+                  !!wallet.address &&
+                  Number(amount) > 0 &&
+                  !quoting &&
+                  (!route || route.venue === 'none'))
               }
               onClick={placeOrder}
             >
-              {marketButtonLabel({
-                connected: !!wallet.address,
-                mode,
-                side,
-                outcome,
-                route,
-                quoting,
-                hasAmount: Number(amount) > 0,
-              })}
+              {pending
+                ? pending.label
+                : marketButtonLabel({
+                    connected: !!wallet.address,
+                    mode,
+                    side,
+                    outcome,
+                    route,
+                    quoting,
+                    hasAmount: Number(amount) > 0,
+                  })}
             </Button>
 
             <button
@@ -639,6 +707,7 @@ export function OnchainTradeBox(props: {
                 busy={busy}
                 onSubmit={onAdvanced}
                 connected={!!wallet.address}
+                pending={pending}
               />
             )}
           </Col>
@@ -661,6 +730,7 @@ export function OnchainTradeBox(props: {
               busy={busy}
               onSubmit={onAdvanced}
               connected={!!wallet.address}
+              pending={pending}
             />
           </Col>
         )}
@@ -795,9 +865,18 @@ function AdvancedPanel(props: {
   busy: boolean
   onSubmit: () => void
   connected: boolean
+  pending: PendingAction | null
 }) {
-  const { advanced, setAdvanced, amount, setAmount, busy, onSubmit, connected } =
-    props
+  const {
+    advanced,
+    setAdvanced,
+    amount,
+    setAmount,
+    busy,
+    onSubmit,
+    connected,
+    pending,
+  } = props
   return (
     <Col className="border-ink-200 gap-3 rounded-md border p-3">
       <Row className="bg-canvas-50 rounded-md p-0.5">
@@ -824,14 +903,38 @@ function AdvancedPanel(props: {
           placeholder="0.00"
         />
       </Col>
-      <Button color="gray" size="md" loading={busy} onClick={onSubmit}>
-        {!connected
+      {pending && <PendingBanner pending={pending} />}
+      <Button
+        color="gray"
+        size="md"
+        loading={busy}
+        disabled={!!pending}
+        onClick={onSubmit}
+      >
+        {pending
+          ? pending.label
+          : !connected
           ? 'Connect wallet'
           : advanced === 'split'
           ? 'Mint YES + NO'
           : 'Merge to USDC'}
       </Button>
     </Col>
+  )
+}
+
+/**
+ * Compact optimistic-state banner shown while a real on-chain tx confirms. It
+ * surfaces the intended position/USDC delta so the box gives immediate feedback
+ * instead of appearing frozen. Reconciled away on success/error by the caller.
+ */
+function PendingBanner(props: { pending: PendingAction }) {
+  const { pending } = props
+  return (
+    <Row className="border-primary-200 bg-primary-50 text-primary-700 items-center justify-between rounded-md border px-3 py-2 text-xs">
+      <span className="font-semibold">Confirming on-chain…</span>
+      <span className="text-primary-600">{pending.detail}</span>
+    </Row>
   )
 }
 

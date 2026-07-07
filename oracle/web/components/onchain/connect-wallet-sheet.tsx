@@ -73,7 +73,7 @@ export function ConnectWalletSheet(props: {
                 color="gray-outline"
                 size="sm"
                 className="flex-1"
-                onClick={wallet.refresh}
+                onClick={() => wallet.refresh({ force: true })}
               >
                 Refresh
               </Button>
