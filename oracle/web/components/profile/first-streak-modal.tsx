@@ -6,6 +6,7 @@ import { Button } from 'web/components/buttons/button'
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { StreakIcon } from 'web/components/icons/streak-icon'
 import { useUser } from 'web/hooks/use-user'
 import { StreakProgressBar } from './streak-progress-bar'
 import { updateUser } from 'web/lib/api/api'
@@ -61,7 +62,10 @@ export function BettingStreakProgressModal(props: {
   return (
     <Modal open={open} setOpen={setOpen} size="md">
       <Col className="bg-canvas-0 rounded-md px-8 py-6">
-        <Title className="!mt-0">You've started a Prediction Streak! 🔥</Title>
+        <Title className="!mt-0 inline-flex items-center gap-2">
+          You've started a Prediction Streak!
+          <StreakIcon className="h-6 w-6" />
+        </Title>
         <p className="text-ink-700 mb-4">
           Make at least one prediction each day (Pacific time) to build your
           streak.
@@ -91,7 +95,7 @@ export function BettingStreakProgressModal(props: {
 
         <Row className="w-full items-center justify-between">
           <Row className="text-ink-500 items-center gap-1.5 text-sm">
-            <span>🧊</span>
+            <StreakIcon frozen className="h-4 w-4" />
             <span>
               {freezes > 0
                 ? `${freezes} streak freeze${freezes === 1 ? '' : 's'} owned`

@@ -21,7 +21,7 @@ export interface LeaderboardColumn<
 }
 
 export function Leaderboard<T extends LeaderboardEntry>(props: {
-  title?: string
+  title?: ReactNode
   entries: T[]
   columns: LeaderboardColumn<T>[]
   className?: string

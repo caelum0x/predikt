@@ -3,6 +3,7 @@ import { sortBy } from 'lodash'
 
 import { DIVISION_NAMES, prizesByDivisionAndRank } from 'common/leagues'
 import { formatMoney } from 'common/util/format'
+import { DivisionMedalIcon } from '../icons/rank-medal-icon'
 import { Col } from '../layout/col'
 import { Modal } from '../layout/modal'
 import { Row } from '../layout/row'
@@ -13,15 +14,6 @@ export function PrizesModal(props: {
   setOpen: (open: boolean) => void
 }) {
   const { open, setOpen } = props
-  const divisionIcons: { [key: number]: string } = {
-    0: '🤖',
-    1: '🥉',
-    2: '🥈',
-    3: '🥇',
-    4: '💿',
-    5: '💎',
-    6: '🎖️',
-  }
   const divisions = sortBy(
     Object.entries(DIVISION_NAMES),
     ([division]) => +division
@@ -52,14 +44,13 @@ export function PrizesModal(props: {
                 <Row className="items-center gap-2">
                   <div
                     className={clsx(
-                      'flex h-6 w-6 items-center justify-center rounded text-xs font-semibold',
+                      'flex h-6 w-6 items-center justify-center rounded',
                       style.bg,
                       style.border,
-                      style.text,
                       'border'
                     )}
                   >
-                    {divisionIcons[div] ?? div}
+                    <DivisionMedalIcon division={div} className="h-4 w-4" />
                   </div>
                   <span className="text-ink-900 font-medium">
                     {divisionName}

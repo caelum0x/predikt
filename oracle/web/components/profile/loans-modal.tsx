@@ -28,6 +28,7 @@ import { PayBackLoanForm } from 'web/components/bet/pay-back-loan-form'
 import { LoadingIndicator } from 'web/components/widgets/loading-indicator'
 import { Tooltip } from 'web/components/widgets/tooltip'
 import Link from 'next/link'
+import { TbBuildingBank, TbLock } from 'react-icons/tb'
 
 export function LoansModal(props: {
   user: User
@@ -196,7 +197,10 @@ export function LoansModal(props: {
         {/* Header */}
         <Col className="border-ink-200 gap-3 border-b px-6 pb-4 pt-6">
           <Row className="items-center gap-3">
-            <div className="text-4xl">🏦</div>
+            <TbBuildingBank
+              aria-hidden="true"
+              className="text-ink-700 h-9 w-9 shrink-0"
+            />
             <Col className="gap-0.5">
               <h2 className="text-ink-900 text-xl font-semibold">
                 Margin loans
@@ -503,7 +507,10 @@ export function LoansModal(props: {
           ) : (
             <Col className="items-center gap-4 py-4 text-center">
               <div className="rounded-full bg-primary-100 p-4 dark:bg-primary-900/30">
-                <span className="text-4xl">🔒</span>
+                <TbLock
+                  aria-hidden="true"
+                  className="text-primary-600 dark:text-primary-300 h-9 w-9"
+                />
               </div>
               <Col className="gap-2">
                 <h3 className="text-ink-900 text-lg font-semibold">

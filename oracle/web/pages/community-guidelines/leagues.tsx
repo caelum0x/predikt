@@ -11,17 +11,8 @@ import {
 import { DIVISION_NAMES } from 'common/leagues'
 import { GuidelinesSearch } from 'web/components/guidelines-search'
 import { SectionNav } from 'web/components/guidelines-sections'
+import { DivisionMedalIcon } from 'web/components/icons/rank-medal-icon'
 import { DIVISION_STYLES } from 'web/components/leagues/division-badge'
-
-const DIVISION_ICONS: Record<number, string> = {
-  0: '🤖',
-  1: '🥉',
-  2: '🥈',
-  3: '🥇',
-  4: '💿',
-  5: '💎',
-  6: '🎖️',
-}
 
 const DIVISION_MOVEMENT: { name: string; demote: string; promote: string }[] = [
   { name: 'Silicon', demote: '—', promote: 'Bots only — stays in Silicon' },
@@ -127,12 +118,12 @@ export default function CommunityGuidelinesLeaguesPage() {
                   <div className="flex flex-col items-center gap-1">
                     <div
                       className={clsx(
-                        'flex h-12 w-12 items-center justify-center rounded-lg border text-xl shadow-sm',
+                        'flex h-12 w-12 items-center justify-center rounded-lg border shadow-sm',
                         style.bg,
                         style.border
                       )}
                     >
-                      {DIVISION_ICONS[d]}
+                      <DivisionMedalIcon division={d} className="h-6 w-6" />
                     </div>
                     <span className={clsx('text-xs font-medium', style.text)}>
                       {DIVISION_NAMES[d]}

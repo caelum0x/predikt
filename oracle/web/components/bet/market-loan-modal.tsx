@@ -8,6 +8,12 @@ import { useAPIGetter } from 'web/hooks/use-api-getter'
 import { formatMoney } from 'common/util/format'
 import { api } from 'web/lib/api/api'
 import { LoadingIndicator } from 'web/components/widgets/loading-indicator'
+import {
+  TbBuildingBank,
+  TbGift,
+  TbSparkles,
+  TbTrendingUp,
+} from 'react-icons/tb'
 
 export function MarketLoanModal(props: {
   user: User
@@ -37,7 +43,10 @@ export function MarketLoanModal(props: {
         {/* Header */}
         <Col className="border-ink-200 gap-3 border-b px-6 pb-4 pt-6">
           <Row className="items-center gap-3">
-            <div className="text-4xl">🏦</div>
+            <TbBuildingBank
+              aria-hidden="true"
+              className="text-ink-700 h-9 w-9 shrink-0"
+            />
             <Col className="gap-0.5">
               <h2 className="text-ink-900 text-xl font-semibold">
                 Loans on this market
@@ -66,7 +75,10 @@ export function MarketLoanModal(props: {
                 <Row className="items-start justify-between">
                   <Col className="gap-1">
                     <Row className="items-center gap-2">
-                      <span className="text-lg">🎁</span>
+                      <TbGift
+                        aria-hidden="true"
+                        className="h-5 w-5 text-green-700 dark:text-green-300"
+                      />
                       <span className="font-semibold text-green-800 dark:text-green-200">
                         Daily Loan
                       </span>
@@ -91,7 +103,10 @@ export function MarketLoanModal(props: {
                 <Row className="items-start justify-between">
                   <Col className="gap-1">
                     <Row className="items-center gap-2">
-                      <span className="text-lg">📈</span>
+                      <TbTrendingUp
+                        aria-hidden="true"
+                        className="h-5 w-5 text-amber-700 dark:text-amber-300"
+                      />
                       <span className="font-semibold text-amber-800 dark:text-amber-200">
                         Margin Loans
                       </span>
@@ -128,7 +143,10 @@ export function MarketLoanModal(props: {
             <div className="px-6 py-5">
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
                 <Row className="items-start gap-3">
-                  <span className="text-xl">✨</span>
+                  <TbSparkles
+                    aria-hidden="true"
+                    className="h-6 w-6 shrink-0 text-blue-700 dark:text-blue-300"
+                  />
                   <Col className="gap-2">
                     <p className="font-semibold text-blue-800 dark:text-blue-200">
                       Loans are repaid automatically

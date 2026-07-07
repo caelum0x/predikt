@@ -1,7 +1,19 @@
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { FaStar } from 'react-icons/fa'
+import {
+  TbConfetti,
+  TbDiamond,
+  TbFileText,
+  TbHeartHandshake,
+  TbMoneybag,
+  TbShare2,
+  TbSnowflake,
+  TbTargetArrow,
+  TbTrendingUp,
+} from 'react-icons/tb'
+import { StreakIcon } from 'web/components/icons/streak-icon'
 import { DAY_MS } from 'common/util/time'
 import { MAX_LOAN_NET_WORTH_PERCENT } from 'common/loans'
 import { ENV_CONFIG } from 'common/envs/constants'
@@ -339,7 +351,10 @@ export default function SupporterPage() {
       {/* Celebration Modal */}
       <Modal open={showCelebration} setOpen={setShowCelebration}>
         <Col className="bg-canvas-0 max-w-md rounded-xl p-8 text-center">
-          <div className="mb-4 text-5xl">🎉</div>
+          <TbConfetti
+            aria-hidden="true"
+            className="text-primary-500 mx-auto mb-4 h-14 w-14"
+          />
           <h2 className="mb-6 text-2xl font-bold">
             You're now a{' '}
             {purchasedTier && (
@@ -358,12 +373,14 @@ export default function SupporterPage() {
             {purchasedTier && (
               <>
                 <BenefitRow
-                  icon="🎯"
+                  icon={<TbTargetArrow className="text-ink-700 h-5 w-5" />}
                   label={`${SUPPORTER_BENEFITS[purchasedTier].questMultiplier}x quest rewards`}
                 />
                 {SUPPORTER_BENEFITS[purchasedTier].shopDiscount > 0 && (
                   <BenefitRow
-                    icon="💎"
+                    icon={
+                      <TbDiamond className="h-5 w-5 text-violet-500" />
+                    }
                     label={`${Math.round(
                       SUPPORTER_BENEFITS[purchasedTier].shopDiscount * 100
                     )}% off shop items`}
@@ -371,13 +388,15 @@ export default function SupporterPage() {
                 )}
                 {SUPPORTER_BENEFITS[purchasedTier].maxStreakFreezes > 1 && (
                   <BenefitRow
-                    icon="❄️"
+                    icon={<TbSnowflake className="h-5 w-5 text-cyan-500" />}
                     label={`${SUPPORTER_BENEFITS[purchasedTier].maxStreakFreezes} max streak freezes`}
                   />
                 )}
                 {SUPPORTER_BENEFITS[purchasedTier].freeLoanRate > 0.01 && (
                   <BenefitRow
-                    icon="💰"
+                    icon={
+                      <TbMoneybag className="h-5 w-5 text-amber-500" />
+                    }
                     label={`${Math.round(
                       SUPPORTER_BENEFITS[purchasedTier].freeLoanRate * 100
                     )}% daily free loans`}
@@ -385,7 +404,9 @@ export default function SupporterPage() {
                 )}
                 {SUPPORTER_BENEFITS[purchasedTier].marginLoanAccess && (
                   <BenefitRow
-                    icon="📈"
+                    icon={
+                      <TbTrendingUp className="h-5 w-5 text-teal-500" />
+                    }
                     label={`${
                       SUPPORTER_BENEFITS[purchasedTier].maxLoanNetWorthPercent +
                       1
@@ -441,10 +462,12 @@ export default function SupporterPage() {
 }
 
 // BenefitRow helper for celebration modal
-function BenefitRow({ icon, label }: { icon: string; label: string }) {
+function BenefitRow({ icon, label }: { icon: ReactNode; label: string }) {
   return (
     <Row className="items-center gap-2">
-      <span>{icon}</span>
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+        {icon}
+      </span>
       <span>{label}</span>
     </Row>
   )
@@ -596,20 +619,28 @@ function MonthlyValueBreakdown({
 
       <Col className="gap-1 text-xs sm:text-sm">
         <Row className="justify-between">
-          <span className="text-ink-600">🔥 Streak</span>
+          <span className="text-ink-600 flex items-center gap-1.5">
+            <StreakIcon className="h-4 w-4" /> Streak
+          </span>
           <span className="font-medium tabular-nums">{streakWithMult}</span>
         </Row>
         <Row className="justify-between">
-          <span className="text-ink-600">📤 Sharing</span>
+          <span className="text-ink-600 flex items-center gap-1.5">
+            <TbShare2 aria-hidden="true" className="h-4 w-4" /> Sharing
+          </span>
           <span className="font-medium tabular-nums">{sharesWithMult}</span>
         </Row>
         <Row className="justify-between">
-          <span className="text-ink-600">📝 Markets</span>
+          <span className="text-ink-600 flex items-center gap-1.5">
+            <TbFileText aria-hidden="true" className="h-4 w-4" /> Markets
+          </span>
           <span className="font-medium tabular-nums">{marketsWithMult}</span>
         </Row>
         <Row className="items-center justify-between">
           <Row className="items-center gap-1">
-            <span className="text-ink-600">🤝 Referrals</span>
+            <span className="text-ink-600 flex items-center gap-1.5">
+              <TbHeartHandshake aria-hidden="true" className="h-4 w-4" /> Referrals
+            </span>
             <InfoTooltip
               size="sm"
               text={`Each referral pays out in two parts — ${
@@ -745,8 +776,9 @@ function MonthlyValueBreakdown({
           {extraLeverageMultiple > 0 && ' — extra leverage is profit!'}
         </div>
       ) : extraLeverageMultiple > 0 ? (
-        <div className="mt-2 rounded bg-amber-100 px-2 py-1 text-center text-xs font-medium text-amber-700 dark:bg-amber-900/60 dark:text-amber-100 sm:text-sm">
-          📈 {breakEvenPercent.toFixed(1)}%/mo return to break even
+        <div className="mt-2 flex items-center justify-center gap-1 rounded bg-amber-100 px-2 py-1 text-center text-xs font-medium text-amber-700 dark:bg-amber-900/60 dark:text-amber-100 sm:text-sm">
+          <TbTrendingUp aria-hidden="true" className="h-4 w-4 shrink-0" />
+          {breakEvenPercent.toFixed(1)}%/mo return to break even
         </div>
       ) : null}
 

@@ -29,6 +29,8 @@ import { Col } from 'web/components/layout/col'
 import { Page } from 'web/components/layout/page'
 import { Row } from 'web/components/layout/row'
 import { QueryUncontrolledTabs } from 'web/components/layout/tabs'
+import { TbTrophy } from 'react-icons/tb'
+import { DivisionMedalIcon } from 'web/components/icons/rank-medal-icon'
 import { CohortTable } from 'web/components/leagues/cohort-table'
 import { LeagueFeed } from 'web/components/leagues/league-feed'
 import { PrizesModal } from 'web/components/leagues/prizes-modal'
@@ -132,15 +134,6 @@ export default function Leagues(props: LeaguesProps) {
     Object.keys(divisionToCohorts).map((division) => +division),
     (division) => division
   ).reverse()
-  const divisionIcons: { [key: number]: string } = {
-    0: '🤖',
-    1: '🥉',
-    2: '🥈',
-    3: '🥇',
-    4: '💿',
-    5: '💎',
-    6: '🎖️',
-  }
   const defaultDivision = getMaxDivisionBySeason(season)
   const [division, setDivision] = useState<number>(defaultDivision)
   const divisionCohorts = divisionToCohorts[defaultDivision]
@@ -294,9 +287,10 @@ export default function Leagues(props: LeaguesProps) {
             </Row>
             <button
               onClick={() => setPrizesModalOpen(true)}
-              className="text-ink-500 hover:text-ink-700 text-sm"
+              className="text-ink-500 hover:text-ink-700 flex items-center gap-1 text-sm"
             >
-              🏆 View prizes
+              <TbTrophy aria-hidden="true" className="h-4 w-4" />
+              View prizes
             </button>
           </Row>
         </div>
@@ -337,7 +331,7 @@ export default function Leagues(props: LeaguesProps) {
                           : 'text-ink-500 hover:text-ink-700 border-transparent'
                       )}
                     >
-                      <span>{divisionIcons[div]}</span>
+                      <DivisionMedalIcon division={div} className="h-4 w-4" />
                       <span>{DIVISION_NAMES[div]}</span>
                       {isUserDivision && (
                         <span className="bg-primary-100 text-primary-700 rounded px-1.5 py-0.5 text-xs font-medium">
@@ -385,49 +379,42 @@ export default function Leagues(props: LeaguesProps) {
 
 // Division styling for the user card
 const DIVISION_CARD_STYLES: {
-  [key: number]: { border: string; bg: string; text: string; icon: string }
+  [key: number]: { border: string; bg: string; text: string }
 } = {
   0: {
     border: 'border-slate-400 dark:border-slate-800',
     bg: 'bg-slate-50 dark:bg-slate-800/30',
     text: 'text-slate-600 dark:text-slate-300',
-    icon: '🤖',
   },
   1: {
     border: 'border-amber-400 dark:border-amber-800',
     bg: 'bg-amber-50 dark:bg-amber-950/20',
     text: 'text-amber-600 dark:text-amber-400',
-    icon: '🥉',
   },
   2: {
     border: 'border-slate-400 dark:border-slate-800',
     bg: 'bg-slate-50 dark:bg-slate-800/30',
     text: 'text-slate-600 dark:text-slate-300',
-    icon: '🥈',
   },
   3: {
     border: 'border-yellow-500 dark:border-yellow-800',
     bg: 'bg-yellow-50 dark:bg-yellow-950/20',
     text: 'text-yellow-600 dark:text-yellow-400',
-    icon: '🥇',
   },
   4: {
     border: 'border-cyan-400 dark:border-cyan-800',
     bg: 'bg-cyan-50 dark:bg-cyan-950/20',
     text: 'text-cyan-600 dark:text-cyan-400',
-    icon: '💿',
   },
   5: {
     border: 'border-primary-400 dark:border-primary-800',
     bg: 'bg-primary-50 dark:bg-primary-950/20',
     text: 'text-primary-600 dark:text-primary-400',
-    icon: '💎',
   },
   6: {
     border: 'border-rose-400 dark:border-rose-800',
     bg: 'bg-rose-50 dark:bg-rose-950/20',
     text: 'text-rose-600 dark:text-rose-400',
-    icon: '🎖️',
   },
 }
 
@@ -487,7 +474,7 @@ function UserLeagueStatus(props: {
             divisionStyle.bg
           )}
         >
-          <span className="text-2xl">{divisionStyle.icon}</span>
+          <DivisionMedalIcon division={division} className="h-6 w-6" />
           <span className={clsx('text-xs font-semibold', divisionStyle.text)}>
             {currentDivision}
           </span>

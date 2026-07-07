@@ -5,7 +5,7 @@ import { User } from 'common/user'
 import { formatMoney } from 'common/util/format'
 import { useState } from 'react'
 import { FaXmark } from 'react-icons/fa6'
-import { TbMoneybag } from 'react-icons/tb'
+import { TbMedal, TbMoneybag, TbQuestionMark } from 'react-icons/tb'
 import { api, cancelBounty } from 'web/lib/api/api'
 import { Button } from '../buttons/button'
 import { ConfirmationButton } from '../buttons/confirmation-button'
@@ -116,7 +116,11 @@ export function AwardBountyButton(props: {
       </Button>
       <Modal open={open} setOpen={setOpen}>
         <Col className={MODAL_CLASS}>
-          <div className="text-[150px]">🏅</div>
+          <TbMedal
+            role="img"
+            aria-label="Bounty award"
+            className="h-32 w-32 text-yellow-500"
+          />
           <span>
             Award <b>{comment.userName}</b> a bounty
           </span>
@@ -238,7 +242,10 @@ export function CancelBountyButton(props: {
       onSubmit={onCancel}
     >
       <Row className="items-center gap-2 text-xl">
-        <div className="text-3xl">🤔</div>
+        <TbQuestionMark
+          aria-hidden="true"
+          className="text-ink-700 h-8 w-8 shrink-0"
+        />
         Are you sure?
       </Row>
 

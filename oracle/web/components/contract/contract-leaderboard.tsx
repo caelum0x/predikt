@@ -5,6 +5,7 @@ import { getRanking } from 'common/supabase/contract-metrics'
 import { BETTORS, User } from 'common/user'
 import { removeUndefinedProps } from 'common/util/object'
 import { useEffect, useState } from 'react'
+import { TbMedal } from 'react-icons/tb'
 import { Leaderboard } from 'web/components/leaderboard'
 import { db } from 'web/lib/supabase/db'
 
@@ -83,7 +84,16 @@ export function ContractLeaderboard(props: {
 
   return top && top.length > 0 ? (
     <Leaderboard
-      title={`🏅 Top ${BETTORS}`}
+      title={
+        <span className="inline-flex items-center gap-2">
+          <TbMedal
+            role="img"
+            aria-label="Leaderboard"
+            className="h-6 w-6 text-yellow-500"
+          />
+          {`Top ${BETTORS}`}
+        </span>
+      }
       entries={top || []}
       columns={[
         {

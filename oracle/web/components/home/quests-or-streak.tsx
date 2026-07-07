@@ -25,6 +25,14 @@ import { getEffectiveBonusMultiplier } from 'common/supporter-config'
 import { useQuestStatus } from 'web/hooks/use-quest-status'
 import { LoadingIndicator } from 'web/components/widgets/loading-indicator'
 import Link from 'next/link'
+import { IconType } from 'react-icons'
+import {
+  TbChartLine,
+  TbCompass,
+  TbFlame,
+  TbShare2,
+  TbSnowflake,
+} from 'react-icons/tb'
 import { linkClass } from '../widgets/site-link'
 import { StreakProgressBar } from '../profile/streak-progress-bar'
 import { ReducedBonusNotice } from 'web/components/upsell/reduced-bonus-notice'
@@ -76,8 +84,21 @@ export const QuestsOrStreak = memo(function DailyProfit(props: {
         onClick={handleQuestsClick}
       >
         <Col className={clsx(getStyle(), 'items-center')}>
-          <span>
-            {showFrozen ? '🧊' : '🔥'} {user?.currentBettingStreak ?? 0}
+          <span className="flex items-center gap-1">
+            {showFrozen ? (
+              <TbSnowflake
+                role="img"
+                aria-label="Streak frozen"
+                className="h-4 w-4 text-cyan-500"
+              />
+            ) : (
+              <TbFlame
+                role="img"
+                aria-label="Streak"
+                className="h-4 w-4 text-orange-500"
+              />
+            )}{' '}
+            {user?.currentBettingStreak ?? 0}
           </span>
           <span className="text-ink-600 text-xs">
             {showFrozen ? 'Frozen' : 'Streak'}
@@ -137,8 +158,12 @@ export function QuestsModal(props: {
       <div className="bg-canvas-0 text-ink-1000 rounded-lg p-3">
         <Col className={'mb-6 items-center justify-center gap-2'}>
           <Title className={'!mb-1'}> Your quests</Title>
-          <span className="text-ink-700 text-sm">
-            {`🧭 ${totalQuestsCompleted}/${totalQuests}`} completed
+          <span className="text-ink-700 flex items-center gap-1 text-sm">
+            <TbCompass
+              aria-hidden="true"
+              className="h-4 w-4"
+            />
+            {`${totalQuestsCompleted}/${totalQuests}`} completed
           </span>
           <ProgressBar
             value={totalQuestsCompleted / totalQuests}
@@ -158,7 +183,8 @@ export function QuestsModal(props: {
         <Col className={'mb-4 gap-6'}>
           <Row className={'text-primary-700 '}>Daily</Row>
           <QuestRow
-            emoji={'🔥'}
+            icon={TbFlame}
+            iconClassName="text-orange-500"
             title={
               (user.currentBettingStreak ?? 0) > 0
                 ? `Continue your ${user.currentBettingStreak}-day prediction streak`
@@ -178,7 +204,8 @@ export function QuestsModal(props: {
             </Row>
           )}
           <QuestRow
-            emoji={'📤'}
+            icon={TbShare2}
+            iconClassName="text-primary-500"
             title={`Share ${shareStatus.requiredCount} market today`}
             complete={shareStatus.currentCount >= shareStatus.requiredCount}
             status={`(${shareStatus.currentCount}/${shareStatus.requiredCount})`}
@@ -189,7 +216,8 @@ export function QuestsModal(props: {
           />
           <Row className={'text-primary-700'}>Weekly</Row>
           <QuestRow
-            emoji={'📈'}
+            icon={TbChartLine}
+            iconClassName="text-teal-500"
             title={`Create a market this week`}
             complete={createStatus.currentCount >= createStatus.requiredCount}
             status={`(${createStatus.currentCount}/${createStatus.requiredCount})`}
@@ -224,7 +252,8 @@ export function QuestsModal(props: {
 }
 
 const QuestRow = (props: {
-  emoji: string
+  icon: IconType
+  iconClassName?: string
   title: string
   complete: boolean
   status: string
@@ -233,19 +262,28 @@ const QuestRow = (props: {
   href?: string
   onClick?: () => void
 }) => {
-  const { title, complete, status, reward, emoji, info, href, onClick } = props
+  const {
+    title,
+    complete,
+    status,
+    reward,
+    icon: Icon,
+    iconClassName,
+    info,
+    href,
+    onClick,
+  } = props
   return (
     <Row className={'justify-between'}>
       <Col>
-        <Row className={'gap-4 sm:gap-6'}>
-          <span
+        <Row className={'items-center gap-4 sm:gap-6'}>
+          <Icon
+            aria-hidden="true"
             className={clsx(
-              'text-3xl sm:text-4xl',
-              complete ? '' : 'grayscale'
+              'h-8 w-8 shrink-0 sm:h-9 sm:w-9',
+              complete ? iconClassName : 'text-ink-400'
             )}
-          >
-            {emoji}
-          </span>
+          />
           <Col>
             <span className={clsx('text-left sm:text-xl')}>
               {href ? (

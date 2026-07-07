@@ -3,6 +3,17 @@ import { getBenefit } from 'common/supporter-config'
 import { User } from 'common/user'
 import { formatMoney } from 'common/util/format'
 import { GiOpenChest, GiTwoCoins } from 'react-icons/gi'
+import {
+  TbBulb,
+  TbChartBar,
+  TbClock,
+  TbCoin,
+  TbGift,
+  TbLock,
+  TbMoon,
+  TbSparkles,
+  TbTrendingUp,
+} from 'react-icons/tb'
 import { Col } from 'web/components/layout/col'
 import { Modal } from 'web/components/layout/modal'
 import { Row } from 'web/components/layout/row'
@@ -61,9 +72,12 @@ export function DailyFreeLoanModal(props: {
         >
           {/* Decorative coins */}
           {!alreadyClaimedToday && (
-            <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-20">
-              <div className="absolute -right-4 -top-4 text-8xl">💰</div>
-              <div className="absolute -bottom-2 -left-2 text-6xl">🪙</div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 overflow-hidden opacity-20"
+            >
+              <GiTwoCoins className="absolute -right-4 -top-4 h-24 w-24" />
+              <TbCoin className="absolute -bottom-2 -left-2 h-16 w-16" />
             </div>
           )}
 
@@ -144,8 +158,9 @@ export function DailyFreeLoanModal(props: {
         {/* Action Hint */}
         {canClaim && freeLoanAvailable >= 1 && (
           <div className="bg-amber-50 px-6 py-3 dark:bg-amber-900/20">
-            <p className="text-center text-sm font-medium text-amber-800 dark:text-amber-200">
-              💡 Click the{' '}
+            <p className="flex items-center justify-center gap-1 text-center text-sm font-medium text-amber-800 dark:text-amber-200">
+              <TbBulb aria-hidden="true" className="h-4 w-4 shrink-0" />
+              Click the{' '}
               <span className="inline-flex items-center gap-1">
                 <GiTwoCoins className="inline h-4 w-4" /> coins
               </span>{' '}
@@ -157,26 +172,38 @@ export function DailyFreeLoanModal(props: {
         {/* Status message */}
         {!(canClaim && freeLoanAvailable >= 1) && (
           <div className="bg-canvas-50 px-6 py-3">
-            <p className="text-ink-600 text-center text-sm">
+            <p className="text-ink-600 flex items-center justify-center gap-1.5 text-center text-sm">
               {atMaxLoanLimit ? (
                 <>
-                  🔒 Max loan ({formatMoney(freeLoanData.maxLoan)}) reached.
-                  Repay some to unlock more.
+                  <TbLock aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  <span>
+                    Max loan ({formatMoney(freeLoanData.maxLoan)}) reached. Repay
+                    some to unlock more.
+                  </span>
                 </>
               ) : noEligiblePositions ? (
                 <>
-                  📊 Invest in{' '}
-                  <Tooltip text="Listed, ranked markets with 10+ traders that are 24+ hours old">
-                    <span className="cursor-help underline decoration-dotted">
-                      eligible markets
-                    </span>
-                  </Tooltip>{' '}
-                  to start earning daily loans!
+                  <TbChartBar aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  <span>
+                    Invest in{' '}
+                    <Tooltip text="Listed, ranked markets with 10+ traders that are 24+ hours old">
+                      <span className="cursor-help underline decoration-dotted">
+                        eligible markets
+                      </span>
+                    </Tooltip>{' '}
+                    to start earning daily loans!
+                  </span>
                 </>
               ) : alreadyClaimedToday ? (
-                <>🌙 Next loan available after midnight PT</>
+                <>
+                  <TbMoon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  <span>Next loan available after midnight PT</span>
+                </>
               ) : (
-                <>⏰ Come back tomorrow!</>
+                <>
+                  <TbClock aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  <span>Come back tomorrow!</span>
+                </>
               )}
             </p>
           </div>
@@ -189,7 +216,10 @@ export function DailyFreeLoanModal(props: {
           </h3>
           <Row className="gap-3">
             <div className="bg-canvas-50 flex-1 rounded-lg p-3 text-center">
-              <div className="mb-1 text-2xl">📈</div>
+              <TbTrendingUp
+                aria-hidden="true"
+                className="text-ink-700 mx-auto mb-1 h-6 w-6"
+              />
               <p className="text-ink-700 text-xs font-medium">
                 {Math.round(
                   getBenefit(user.entitlements, 'freeLoanRate') * 100
@@ -199,12 +229,18 @@ export function DailyFreeLoanModal(props: {
               <p className="text-ink-500 text-xs">daily</p>
             </div>
             <div className="bg-canvas-50 flex-1 rounded-lg p-3 text-center">
-              <div className="mb-1 text-2xl">🎁</div>
+              <TbGift
+                aria-hidden="true"
+                className="text-ink-700 mx-auto mb-1 h-6 w-6"
+              />
               <p className="text-ink-700 text-xs font-medium">0% interest</p>
               <p className="text-ink-500 text-xs">forever</p>
             </div>
             <div className="bg-canvas-50 flex-1 rounded-lg p-3 text-center">
-              <div className="mb-1 text-2xl">✨</div>
+              <TbSparkles
+                aria-hidden="true"
+                className="text-ink-700 mx-auto mb-1 h-6 w-6"
+              />
               <p className="text-ink-700 text-xs font-medium">Auto-repaid</p>
               <p className="text-ink-500 text-xs">on resolution</p>
             </div>

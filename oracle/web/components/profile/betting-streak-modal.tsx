@@ -11,6 +11,7 @@ import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
 import clsx from 'clsx'
+import { StreakIcon } from 'web/components/icons/streak-icon'
 import { VerifyPhoneNumberBanner } from 'web/components/user/verify-phone-number-banner'
 import { ReducedBonusNotice } from 'web/components/upsell/reduced-bonus-notice'
 
@@ -50,13 +51,15 @@ export function BettingStreakModal(props: {
   return (
     <Modal open={isOpen} setOpen={setOpen}>
       <Col className="bg-canvas-0 text-ink-1000 items-center gap-4 rounded-md px-8 py-6">
-        <span className={clsx('text-8xl', getEmojiStyle())}>
-          {showFrozen ? '🧊' : '🔥'}
-        </span>
+        <StreakIcon
+          frozen={!!showFrozen}
+          className={clsx('h-24 w-24', getEmojiStyle())}
+        />
         {showFrozen && (
-          <Col className="gap-2 text-center">
-            <span className="font-bold text-blue-500">
-              Your streak was frozen! 🧊
+          <Col className="items-center gap-2 text-center">
+            <span className="flex items-center gap-1.5 font-bold text-blue-500">
+              Your streak was frozen!
+              <StreakIcon frozen className="h-5 w-5" />
             </span>
             <span className="ml-2">
               A streak freeze was used to protect your{' '}

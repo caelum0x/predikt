@@ -3,6 +3,7 @@ import Link from 'next/link'
 import clsx from 'clsx'
 import { DIVISION_NAMES, getLeaguePath } from 'common/leagues'
 import { dailyStatsClass } from 'web/components/home/daily-stats'
+import { DivisionMedalIcon } from 'web/components/icons/rank-medal-icon'
 import { useLeagueInfo } from 'web/hooks/use-leagues'
 import { track } from 'web/lib/service/analytics'
 import { Col } from '../layout/col'
@@ -17,7 +18,6 @@ export const DailyLeagueStat = (props: {
   if (!info || info.division === undefined) {
     return null
   }
-  const name = DIVISION_NAMES[info.division]
   return (
     <Link
       prefetch={false}
@@ -34,20 +34,11 @@ export const DailyLeagueStat = (props: {
           className ? className : clsx(dailyStatsClass, 'relative items-center')
         }
       >
-        <div className="whitespace-nowrap">
-          {name === 'Bronze'
-            ? '🥉'
-            : name === 'Silver'
-            ? '🥈'
-            : name === 'Gold'
-            ? '🥇'
-            : name === 'Platinum'
-            ? '💿'
-            : name === 'Diamond'
-            ? '💎'
-            : name === 'Masters'
-            ? '🎖️'
-            : '🏅'}{' '}
+        <div className="flex items-center gap-1 whitespace-nowrap">
+          <DivisionMedalIcon
+            division={info.division}
+            className="h-4 w-4 shrink-0"
+          />
           {info.rank}
         </div>
         <div className="text-ink-600 text-xs">
