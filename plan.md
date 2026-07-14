@@ -16,8 +16,14 @@
       X Layer config), reputation/Brier leaderboard, activity feed + portfolio,
       MCP server (12 tools), web dashboard at /app, autonomous trader bot.
       Integrated, 146 tests green, committed (0dfb9fa).
-- [~] Workflow 2 (running): multi-outcome markets → limit orders →
-      adversarial review panel (correctness/security/typescript) → fixes.
+- [x] Workflow 2: multi-outcome markets (per-answer CPMM pools, migrations),
+      limit orders (reserve/refund, price-priority FIFO, AMM slicing),
+      adversarial review (11 findings, 5 HIGH — all confirmed & fixed with
+      regression tests: CANCEL fee-mint, XFF rate-limit bypass, leaderboard
+      O(N) SQL, x402 nonce burned pre-settlement, sync file reads).
+      Final: 219 tests green, committed (b343eac).
+- [x] Deploy packaging (Dockerfile, fly.toml), CI, seed script, README,
+      submission assets (listing copy, 90s demo script, X post draft).
 
 ## Day 2 — Tue Jul 15  ⚠️ real deadline for listing
 - [ ] Build the real endpoint — free tier first, works end-to-end

@@ -40,6 +40,10 @@ import { createDepositRoutes } from './routes/deposits'
 import { createStatsRoutes } from './routes/stats'
 import { createActivityRoutes } from './routes/activity'
 import { createDashboardRoutes } from './routes/dashboard'
+import { createCommentsRoutes } from './routes/comments'
+import { createWebhookRoutes } from './routes/webhooks'
+import { createDiscoveryRoutes } from './routes/discovery'
+import { createResolutionRoutes } from './routes/resolution'
 
 // Consistent envelope for every response.
 type ApiResponse<T> = {
@@ -178,6 +182,14 @@ export function createApp(options: AppOptions = {}): Hono {
   app.route('/', createStatsRoutes(db))
   // Trade history, portfolios, and the global activity feed.
   app.route('/', createActivityRoutes(service, db))
+  // Market comments with skin-in-the-game position disclosure.
+  app.route('/', createCommentsRoutes(service, db))
+  // Webhook subscriptions (signed, retried event deliveries).
+  app.route('/', createWebhookRoutes({ service, db }))
+  // Search, categories, and trending (search is IP rate limited internally).
+  app.route('/', createDiscoveryRoutes(db, { trustProxyHeader }))
+  // AI auto-resolution suggestions for closed markets.
+  app.route('/', createResolutionRoutes({ service, db }))
   // Human-facing dashboard at /app.
   app.route('/', createDashboardRoutes())
 
