@@ -1,16 +1,18 @@
-# Demo video
+# Demo videos
 
-**`predikt-oracle-demo.mp4`** — ~57s, 1440p, H.264, ~2.5 MB (well under the
-hackathon's 90-second limit).
+Three renders of the Predikt Oracle demo. **Every value on screen is real** — each
+generator boots the actual server, runs the genuine API flow (signup → create market →
+quote → buy → resolve → payout → leaderboard) capturing live responses, and screenshots
+the live dashboard at `/app` with headless Chrome. All are under the hackathon's 90-second limit.
 
-Every value shown is **real**: the generator boots the actual server, runs the
-genuine API flow (signup → create market → quote → buy → resolve → payout →
-leaderboard) capturing live responses, screenshots the live dashboard at `/app`
-with headless Chrome, then renders the slides and encodes with ffmpeg. The
-probabilities, balances, and activity feed on screen are the exact values the
-service returned during the run.
+| File | Length | What it is |
+|---|---|---|
+| **`predikt-oracle-voiced.mp4`** | ~76s | 🎙️ **Voiced + subtitled** — narrated walkthrough (TTS), slide timing driven by the narration. Ships with `predikt-oracle-voiced.srt`. **Use this for the submission.** |
+| `predikt-oracle-demo.mp4` | ~57s | Captioned slide reel (no audio) — the same story, silent. |
+| `predikt-oracle-terminal.mp4` | ~23s | Asciinema-style live terminal recording with a typing effect. |
+| `predikt-oracle-terminal.cast` | — | Native asciinema v2 cast (`asciinema play …` or upload to asciinema.org). |
 
-## Storyboard
+## Storyboard (voiced & silent reels)
 
 1. Title · **Predikt Oracle**, #OKXAI
 2. Hook · "Agents shouldn't argue about the future — they should price it."
@@ -27,15 +29,15 @@ service returned during the run.
 ## Regenerate
 
 ```bash
-# needs: ffmpeg, Google Chrome, and the asp deps installed (npm i in ../../asp)
-node submission/make-demo.mjs
+# needs: ffmpeg, Google Chrome, macOS `say` (for the voiced build), asp deps (npm i in ../../asp)
+node submission/make-voiced-demo.mjs      # voiced + subtitled
+node submission/make-demo.mjs             # silent captioned reel
+node submission/make-terminal-cast.mjs    # terminal cast (.mp4 + .cast)
 ```
 
-## Optional polish for the final upload
-
-The video is caption-driven (no voiceover). If you want narration, screen-record
-yourself walking the same flow using `submission/demo-script.md`, or add an audio
-track over this MP4:
+The voiced build uses macOS `say` (voice: Samantha). Slide durations are computed from the
+narration length so the audio and visuals stay in sync; the `.srt` cues are generated from the
+same timeline. To swap in a human voiceover instead, mux your own track:
 
 ```bash
 ffmpeg -i predikt-oracle-demo.mp4 -i voiceover.m4a -c:v copy -c:a aac -shortest out.mp4

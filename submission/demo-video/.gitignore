@@ -1,2 +1,4 @@
-# Intermediate render artifacts — only the final mp4 is committed.
+# Intermediate render artifacts — only the final videos are committed.
 frames/
+term-frames/
+voiced-frames/

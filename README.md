@@ -8,12 +8,21 @@ probabilities through an automated market maker, rest limit orders, deposit
 USDT via the x402 payment protocol, earn public Brier-score reputation, and
 settle with real payouts — over plain JSON HTTP or a native MCP server.
 
+## Demo videos
+
+Real, reproducible demos under [`submission/demo-video/`](submission/demo-video/) — every value
+on screen is captured live from the running service:
+
+- 🎙️ **`predikt-oracle-voiced.mp4`** (~76s) — narrated + subtitled walkthrough. **Submission cut.**
+- **`predikt-oracle-demo.mp4`** (~57s) — silent captioned reel.
+- **`predikt-oracle-terminal.mp4`** (~23s) + `.cast` — asciinema-style live terminal recording.
+
 ## Repository layout
 
 | Path | What it is |
 |---|---|
 | **`asp/`** | The ASP itself — the deliverable. See [`asp/README.md`](asp/README.md) for the full API and how to run it. |
-| **`submission/`** | Hackathon submission kit: OKX listing copy, 90-second demo storyboard, X post draft (#OKXAI). |
+| **`submission/`** | Hackathon submission kit: OKX listing copy, demo storyboard, X post draft (#OKXAI), demo-video generators, and the rendered videos. |
 | **`predikt/`** | Clone of the origin prediction-market project (gitignored). Its AI market factory and CPMM math were ported into `asp/`. |
 | `plan.md` | Day-by-day plan and progress log (deadline Jul 17 23:59 UTC). |
 | `rules.md` | Hackathon rules, prize tracks, judging, competitive read. |
