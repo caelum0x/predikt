@@ -11,6 +11,14 @@
       requirements BEFORE the real submission
 - [ ] Deploy the service to a public URL (Fly.io/Render/Railway)
 
+## Day 1 progress log (evening)
+- [x] Workflow 1 (6 parallel agents): x402 deposits (real EIP-3009 verification,
+      X Layer config), reputation/Brier leaderboard, activity feed + portfolio,
+      MCP server (12 tools), web dashboard at /app, autonomous trader bot.
+      Integrated, 146 tests green, committed (0dfb9fa).
+- [~] Workflow 2 (running): multi-outcome markets → limit orders →
+      adversarial review panel (correctness/security/typescript) → fixes.
+
 ## Day 2 — Tue Jul 15  ⚠️ real deadline for listing
 - [ ] Build the real endpoint — free tier first, works end-to-end
 - [ ] Add x402 paid tier if time allows (strengthens Revenue Rocket / category

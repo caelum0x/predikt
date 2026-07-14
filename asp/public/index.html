@@ -52,10 +52,14 @@
         <h3 id="detail-question"></h3>
         <div class="detail-prob-row">
           <span id="detail-prob" class="big-prob"></span>
-          <span class="muted small">chance of YES</span>
+          <span id="detail-prob-label" class="muted small">chance of YES</span>
         </div>
         <div class="prob-bar" aria-hidden="true">
           <span id="detail-bar-yes" class="bar-yes"></span>
+        </div>
+        <div id="detail-answers-wrap" hidden>
+          <h4>Answers</h4>
+          <ul id="detail-answers" class="answers-list"></ul>
         </div>
         <dl class="detail-meta">
           <div><dt>Volume</dt><dd id="detail-volume"></dd></div>
@@ -72,6 +76,7 @@
         <div class="quote-box">
           <h4>Quote a trade</h4>
           <div class="quote-controls">
+            <select id="quote-answer" aria-label="Answer" hidden></select>
             <div class="side-toggle" role="group" aria-label="Side">
               <button id="side-yes" type="button" class="side-btn yes active">YES</button>
               <button id="side-no" type="button" class="side-btn no">NO</button>

@@ -60,6 +60,8 @@ const marketSchema = z.object({
   criteria: z.string(),
   closeTime: z.number(),
   probability: z.number(),
+  // Optional so the bot keeps working against older API versions.
+  outcomeType: z.string().optional(),
 })
 
 const marketsDataSchema = z.object({ markets: z.array(marketSchema) })
@@ -146,6 +148,16 @@ export class TraderBot {
 
     for (const market of markets) {
       considered += 1
+
+      // The strategy only understands single-pool YES/NO markets; skip
+      // multiple-choice markets explicitly rather than mispricing them.
+      if (market.outcomeType === 'MULTI') {
+        skipped.push({
+          marketId: market.id,
+          reason: 'MULTI (multiple-choice) market: bot only trades binary markets',
+        })
+        continue
+      }
 
       const odds = await this.estimateOdds(market)
       if (odds.kind === 'rate-limited') {

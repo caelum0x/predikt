@@ -15,6 +15,13 @@ import {
   type Account,
 } from '../engine/service'
 import {
+  MAX_LIMIT_PROB,
+  MAX_ORDER_AMOUNT,
+  MIN_LIMIT_PROB,
+  MIN_ORDER_AMOUNT,
+  ORDER_STATUSES,
+} from '../engine/orders'
+import {
   OpenRouterError,
   parseJsonObject,
   type ChatCompletionFn,
@@ -91,6 +98,16 @@ const apiKeyInput = z
 const marketIdInput = z.string().min(1).describe('Market id, e.g. mkt_...')
 
 const sideInput = z.enum(['YES', 'NO']).describe('Which side of the market.')
+
+const answerIdInput = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .optional()
+  .describe(
+    'Answer id (ans_...) — required for MULTI markets, omit for BINARY markets.'
+  )
 
 // ---- AI tool flows (mirror the HTTP tool routes in app.ts) -----------------
 
@@ -214,7 +231,8 @@ export function registerPrediktTools(server: McpServer, deps: PrediktToolDeps): 
     {
       title: 'Get market',
       description:
-        'Fetch one market by id, including its current YES probability, volume, status, and resolution criteria.',
+        'Fetch one market by id, including its current YES probability, volume, status, and resolution criteria. ' +
+        'MULTI markets include answers: [{id, text, probability, volume}]; the top-level probability is the leading answer.',
       inputSchema: { marketId: marketIdInput },
     },
     async ({ marketId }) => safely(() => toolResult({ market: service.getMarket(marketId) }))
@@ -230,10 +248,13 @@ export function registerPrediktTools(server: McpServer, deps: PrediktToolDeps): 
         marketId: marketIdInput,
         side: sideInput,
         amount: z.number().positive().max(1_000_000).describe('Spend in PRED credits.'),
+        answerId: answerIdInput,
       },
     },
-    async ({ marketId, side, amount }) =>
-      safely(() => toolResult({ quote: service.quote(marketId, side, amount) }))
+    async ({ marketId, side, amount, answerId }) =>
+      safely(() =>
+        toolResult({ quote: service.quote(marketId, side, amount, answerId) })
+      )
   )
 
   server.registerTool(
@@ -241,11 +262,13 @@ export function registerPrediktTools(server: McpServer, deps: PrediktToolDeps): 
     {
       title: 'Create market',
       description:
-        'Create a new binary prediction market. The subsidy (min 10 PRED) is debited from ' +
-        'your balance to seed liquidity; you earn a 1% fee on every buy as the creator.',
+        'Create a new prediction market (BINARY yes/no by default, or MULTI multiple-choice ' +
+        'with 2-12 answers). The subsidy (min 10 PRED) is debited from your balance to seed ' +
+        'liquidity; you earn a 1% fee on every buy as the creator. For MULTI, the subsidy is ' +
+        'split equally across the answers and each answer opens at probability 1/answers.length.',
       inputSchema: {
         apiKey: apiKeyInput,
-        question: z.string().trim().min(8).max(240).describe('Clear yes/no question, 8-240 chars.'),
+        question: z.string().trim().min(8).max(240).describe('Clear question, 8-240 chars.'),
         criteria: z
           .string()
           .trim()
@@ -262,7 +285,7 @@ export function registerPrediktTools(server: McpServer, deps: PrediktToolDeps): 
           .min(0.02)
           .max(0.98)
           .optional()
-          .describe('Starting YES probability (default 0.5).'),
+          .describe('Starting YES probability (BINARY only, default 0.5).'),
         subsidy: z
           .number()
           .min(10)
@@ -271,6 +294,16 @@ export function registerPrediktTools(server: McpServer, deps: PrediktToolDeps): 
           .describe('Liquidity subsidy in PRED (default 10).'),
         category: z.string().trim().min(2).max(60).optional().describe('Topic, e.g. Technology.'),
         description: z.string().trim().max(4000).optional().describe('Neutral background context.'),
+        outcomeType: z
+          .enum(['BINARY', 'MULTI'])
+          .optional()
+          .describe('Market shape (default BINARY).'),
+        answers: z
+          .array(z.string().trim().min(1).max(120))
+          .min(2)
+          .max(12)
+          .optional()
+          .describe('Distinct answer options — required for MULTI, invalid for BINARY.'),
       },
     },
     async ({ apiKey, ...input }) =>
@@ -285,18 +318,22 @@ export function registerPrediktTools(server: McpServer, deps: PrediktToolDeps): 
     {
       title: 'Buy shares',
       description:
-        'Spend PRED credits to buy YES or NO shares in an open market. Each winning share pays 1 PRED at resolution. A 1% fee goes to the market creator.',
+        'Spend PRED credits to buy YES or NO shares in an open market. Each winning share pays 1 PRED at resolution. ' +
+        'A 1% fee goes to the market creator. MULTI markets require answerId (YES = this answer wins).',
       inputSchema: {
         apiKey: apiKeyInput,
         marketId: marketIdInput,
         side: sideInput,
         amount: z.number().positive().max(1_000_000).describe('Spend in PRED credits.'),
+        answerId: answerIdInput,
       },
     },
-    async ({ apiKey, marketId, side, amount }) =>
+    async ({ apiKey, marketId, side, amount, answerId }) =>
       safely(() => {
         const account = requireAccount(service, apiKey)
-        return toolResult({ trade: service.buy(account.id, marketId, side, amount) })
+        return toolResult({
+          trade: service.buy(account.id, marketId, side, amount, answerId),
+        })
       })
   )
 
@@ -305,18 +342,93 @@ export function registerPrediktTools(server: McpServer, deps: PrediktToolDeps): 
     {
       title: 'Sell shares',
       description:
-        'Sell YES or NO shares you hold back to the market at the current price. No fee on sells.',
+        'Sell YES or NO shares you hold back to the market at the current price. No fee on sells. ' +
+        'MULTI markets require answerId.',
       inputSchema: {
         apiKey: apiKeyInput,
         marketId: marketIdInput,
         side: sideInput,
         shares: z.number().positive().max(10_000_000).describe('Number of shares to sell.'),
+        answerId: answerIdInput,
       },
     },
-    async ({ apiKey, marketId, side, shares }) =>
+    async ({ apiKey, marketId, side, shares, answerId }) =>
       safely(() => {
         const account = requireAccount(service, apiKey)
-        return toolResult({ trade: service.sell(account.id, marketId, side, shares) })
+        return toolResult({
+          trade: service.sell(account.id, marketId, side, shares, answerId),
+        })
+      })
+  )
+
+  server.registerTool(
+    'predikt_place_order',
+    {
+      title: 'Place limit order',
+      description:
+        'Place a limit order that rests against the AMM. The full amount is reserved from your balance. ' +
+        'A YES order fills while the probability is below your limitProb, a NO order while it is above — ' +
+        'immediately if already marketable, otherwise whenever trades move the price through your limit. ' +
+        'Fills are normal AMM buys (1% fee to the creator) and appear in trade history. MULTI markets require answerId.',
+      inputSchema: {
+        apiKey: apiKeyInput,
+        marketId: marketIdInput,
+        side: sideInput,
+        limitProb: z
+          .number()
+          .min(MIN_LIMIT_PROB)
+          .max(MAX_LIMIT_PROB)
+          .describe('Your price limit as a probability, 0.01-0.99.'),
+        amount: z
+          .number()
+          .min(MIN_ORDER_AMOUNT)
+          .max(MAX_ORDER_AMOUNT)
+          .describe('Total PRED credits to reserve for this order (min 1).'),
+        answerId: answerIdInput,
+      },
+    },
+    async ({ apiKey, marketId, side, limitProb, amount, answerId }) =>
+      safely(() => {
+        const account = requireAccount(service, apiKey)
+        return toolResult(
+          service.placeOrder(account.id, marketId, { side, limitProb, amount, answerId })
+        )
+      })
+  )
+
+  server.registerTool(
+    'predikt_cancel_order',
+    {
+      title: 'Cancel limit order',
+      description:
+        'Cancel one of your OPEN limit orders. The unfilled reservation is refunded to your balance immediately.',
+      inputSchema: {
+        apiKey: apiKeyInput,
+        orderId: z.string().min(1).describe('Order id, e.g. ord_...'),
+      },
+    },
+    async ({ apiKey, orderId }) =>
+      safely(() => {
+        const account = requireAccount(service, apiKey)
+        return toolResult(service.cancelOrder(account.id, orderId))
+      })
+  )
+
+  server.registerTool(
+    'predikt_list_my_orders',
+    {
+      title: 'List my limit orders',
+      description:
+        'List your limit orders across all markets, newest first, optionally filtered by status (OPEN, FILLED, CANCELLED).',
+      inputSchema: {
+        apiKey: apiKeyInput,
+        status: z.enum(ORDER_STATUSES).optional().describe('Optional status filter.'),
+      },
+    },
+    async ({ apiKey, status }) =>
+      safely(() => {
+        const account = requireAccount(service, apiKey)
+        return toolResult({ orders: service.listOrders(account.id, status) })
       })
   )
 
@@ -325,11 +437,18 @@ export function registerPrediktTools(server: McpServer, deps: PrediktToolDeps): 
     {
       title: 'Resolve market',
       description:
-        'Resolve a market you created: YES or NO pays 1 PRED per winning share; CANCEL refunds every trader their net cost. Creator only.',
+        'Resolve a market you created. BINARY: YES or NO pays 1 PRED per winning share. ' +
+        'MULTI: pass the winning answerId — its YES shares pay 1 PRED, every other answer\'s NO shares pay 1 PRED. ' +
+        'CANCEL refunds every trader their net cost. Creator only.',
       inputSchema: {
         apiKey: apiKeyInput,
         marketId: marketIdInput,
-        outcome: z.enum(['YES', 'NO', 'CANCEL']).describe('Final outcome.'),
+        outcome: z
+          .string()
+          .trim()
+          .min(1)
+          .max(80)
+          .describe('YES | NO | CANCEL for BINARY; winning answerId or CANCEL for MULTI.'),
       },
     },
     async ({ apiKey, marketId, outcome }) =>

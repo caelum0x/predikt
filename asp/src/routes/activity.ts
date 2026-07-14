@@ -13,7 +13,6 @@ import {
   ServiceError,
   type Account,
   type Market,
-  type Outcome,
   type Position,
 } from '../engine/service'
 
@@ -27,6 +26,7 @@ type TradeRow = {
   account_id: string
   kind: 'BUY' | 'SELL'
   side: 'YES' | 'NO'
+  answer_id: string | null
   amount: number
   shares: number
   fee: number
@@ -42,7 +42,8 @@ type CreatedFeedRow = { id: string; question: string; created_at: number }
 type ResolvedFeedRow = {
   id: string
   question: string
-  outcome: Outcome
+  // YES | NO | CANCEL for binary markets, the winning answer id for MULTI.
+  outcome: string
   resolved_at: number
 }
 
@@ -78,7 +79,7 @@ export type FeedEvent =
       type: 'resolved'
       marketId: string
       question: string
-      outcome: Outcome
+      outcome: string
       createdAt: number
     }
 
@@ -134,6 +135,9 @@ function toTradeItem(row: TradeRow) {
     tradeId: row.id,
     kind: row.kind,
     side: row.side,
+    // Binary trades keep their historical shape; MULTI trades carry the
+    // answer they targeted.
+    ...(row.answer_id ? { answerId: row.answer_id } : {}),
     amount: round6(row.amount),
     shares: round6(row.shares),
     fee: round6(row.fee),
@@ -145,8 +149,20 @@ function toTradeItem(row: TradeRow) {
 }
 
 // Mark-to-market value of a position: probability-weighted for live markets,
-// settlement value once resolved (CANCEL refunds the net cost basis).
+// settlement value once resolved (CANCEL refunds the net cost basis). MULTI
+// positions are valued against their answer's own pool probability.
 function markValueOf(market: Market, pos: Position): number {
+  if (market.outcomeType === 'MULTI' && pos.answerId) {
+    if (market.status === 'RESOLVED') {
+      if (market.outcome === 'CANCEL') return round6(pos.invested)
+      return round6(
+        pos.answerId === market.outcome ? pos.yesShares : pos.noShares
+      )
+    }
+    const answer = market.answers?.find((a) => a.id === pos.answerId)
+    const prob = answer?.probability ?? 0
+    return round6(pos.yesShares * prob + pos.noShares * (1 - prob))
+  }
   if (market.status === 'RESOLVED') {
     if (market.outcome === 'YES') return round6(pos.yesShares)
     if (market.outcome === 'NO') return round6(pos.noShares)
@@ -234,15 +250,35 @@ export function createActivityRoutes(service: MarketService, db: Db): Hono<Env> 
   app.get('/accounts/me/portfolio', auth, (c) => {
     try {
       const accountId = c.get('account').id
+      // One market fetch per market, not per answer position.
+      const marketCache = new Map<string, Market>()
+      const marketOf = (id: string): Market => {
+        const cached = marketCache.get(id)
+        if (cached) return cached
+        const market = service.getMarket(id)
+        marketCache.set(id, market)
+        return market
+      }
       const positions = service.getPositions(accountId).map((pos) => {
-        const market = service.getMarket(pos.marketId)
+        const market = marketOf(pos.marketId)
         const markValue = markValueOf(market, pos)
+        const answer = pos.answerId
+          ? market.answers?.find((a) => a.id === pos.answerId)
+          : undefined
         return {
           marketId: market.id,
           question: market.question,
           status: market.status,
           outcome: market.outcome,
           probability: market.probability,
+          // MULTI positions identify their answer and its own probability.
+          ...(pos.answerId
+            ? {
+                answerId: pos.answerId,
+                answerText: answer?.text ?? null,
+                answerProbability: answer?.probability ?? null,
+              }
+            : {}),
           yesShares: pos.yesShares,
           noShares: pos.noShares,
           invested: pos.invested,

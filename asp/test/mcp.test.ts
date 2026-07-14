@@ -20,6 +20,9 @@ const EXPECTED_TOOLS = [
   'predikt_create_market',
   'predikt_buy',
   'predikt_sell',
+  'predikt_place_order',
+  'predikt_cancel_order',
+  'predikt_list_my_orders',
   'predikt_resolve',
   'predikt_draft_market',
   'predikt_estimate_odds',
@@ -104,7 +107,7 @@ function errorTextOf(result: ToolCallResult): string {
 }
 
 describe('MCP server: tool discovery', () => {
-  it('lists all 12 predikt tools with descriptions and schemas', async () => {
+  it('lists all 15 predikt tools with descriptions and schemas', async () => {
     const { client } = await setup()
     const { tools } = await client.listTools()
     const names = tools.map((t) => t.name).sort()
@@ -219,6 +222,120 @@ describe('MCP server: full market lifecycle', () => {
       sellRes.trade.balance + (buyRes.trade.shares - 5)
     expect(bobFinal.account.balance).toBeCloseTo(expectedFinal, 4)
     expect(bobFinal.account.balance).toBeGreaterThan(SIGNUP_GRANT)
+  })
+})
+
+describe('MCP server: MULTI market lifecycle', () => {
+  it('create MULTI -> get answers -> quote/buy with answerId -> resolve winner', async () => {
+    const { client } = await setup()
+
+    const alice = dataOf<{ apiKey: string }>(
+      await call(client, 'predikt_create_account', { name: 'alice' })
+    )
+    const bob = dataOf<{ apiKey: string }>(
+      await call(client, 'predikt_create_account', { name: 'bob' })
+    )
+
+    type MultiMarket = {
+      market: {
+        id: string
+        outcomeType: string
+        probability: number
+        answers: Array<{ id: string; text: string; probability: number }>
+      }
+    }
+    const created = dataOf<MultiMarket>(
+      await call(client, 'predikt_create_market', {
+        apiKey: alice.apiKey,
+        question: 'Which model tops the agent leaderboard next quarter?',
+        criteria: 'Resolves to the #1 model on the public leaderboard snapshot.',
+        closeTime: Date.now() + 24 * 60 * 60 * 1000,
+        subsidy: 40,
+        outcomeType: 'MULTI',
+        answers: ['Model A', 'Model B'],
+      })
+    )
+    expect(created.market.outcomeType).toBe('MULTI')
+    expect(created.market.answers).toHaveLength(2)
+    expect(created.market.probability).toBeCloseTo(0.5, 6)
+    const marketId = created.market.id
+    const winner = created.market.answers[1]!
+
+    // Fetching the market returns the answers too.
+    const fetched = dataOf<MultiMarket>(
+      await call(client, 'predikt_get_market', { marketId })
+    )
+    expect(fetched.market.answers.map((a) => a.text)).toEqual([
+      'Model A',
+      'Model B',
+    ])
+
+    // Buying without answerId is a readable isError, not a crash.
+    const missingAnswer = await call(client, 'predikt_buy', {
+      apiKey: bob.apiKey,
+      marketId,
+      side: 'YES',
+      amount: 20,
+    })
+    expect(errorTextOf(missingAnswer)).toContain('answerId')
+
+    const quote = dataOf<{ quote: { shares: number } }>(
+      await call(client, 'predikt_quote', {
+        marketId,
+        side: 'YES',
+        amount: 20,
+        answerId: winner.id,
+      })
+    )
+    const buy = dataOf<{ trade: { shares: number; answerId: string } }>(
+      await call(client, 'predikt_buy', {
+        apiKey: bob.apiKey,
+        marketId,
+        side: 'YES',
+        amount: 20,
+        answerId: winner.id,
+      })
+    )
+    expect(buy.trade.shares).toBeCloseTo(quote.quote.shares, 6)
+    expect(buy.trade.answerId).toBe(winner.id)
+
+    const sell = dataOf<{ trade: { amount: number } }>(
+      await call(client, 'predikt_sell', {
+        apiKey: bob.apiKey,
+        marketId,
+        side: 'YES',
+        shares: 2,
+        answerId: winner.id,
+      })
+    )
+    expect(sell.trade.amount).toBeGreaterThan(0)
+
+    // Resolving with a non-answer outcome fails; the winning answerId works.
+    const badResolve = await call(client, 'predikt_resolve', {
+      apiKey: alice.apiKey,
+      marketId,
+      outcome: 'YES',
+    })
+    expect(errorTextOf(badResolve)).toContain('answerId')
+
+    const resolved = dataOf<{ market: { status: string; outcome: string } }>(
+      await call(client, 'predikt_resolve', {
+        apiKey: alice.apiKey,
+        marketId,
+        outcome: winner.id,
+      })
+    )
+    expect(resolved.market.status).toBe('RESOLVED')
+    expect(resolved.market.outcome).toBe(winner.id)
+
+    // Bob's remaining winner-YES shares paid out 1 PRED each.
+    const final = dataOf<{ account: { balance: number } }>(
+      await call(client, 'predikt_get_balance', { apiKey: bob.apiKey })
+    )
+    expect(final.account.balance).toBeCloseTo(
+      SIGNUP_GRANT - 20 + sell.trade.amount + (buy.trade.shares - 2),
+      4
+    )
   })
 })
 

@@ -154,50 +154,88 @@ export function platformStats(db: Db): PlatformStats {
 // ---- internals -------------------------------------------------------------
 
 type ResolvedPositionRow = {
+  market_id: string
+  answer_id: string
   yes_shares: number
   no_shares: number
   invested: number
-  outcome: Outcome
+  outcome: string
+  outcome_type: 'BINARY' | 'MULTI'
 }
 
-// Payout received at resolution — mirrors the engine's settlement rule:
-// winning shares pay 1 each; CANCEL refunds the positive net cost basis.
+// Payout received at resolution for a non-CANCEL outcome — mirrors the
+// engine's settlement rule: winning shares pay 1 each. For MULTI markets the
+// winning answer's YES shares pay 1 and every other answer's NO shares pay 1.
 // Positions are not zeroed on resolve, so they reflect final holdings.
 function settlementPayout(row: ResolvedPositionRow): number {
+  if (row.outcome_type === 'MULTI') {
+    return row.answer_id === row.outcome ? row.yes_shares : row.no_shares
+  }
   if (row.outcome === 'YES') return row.yes_shares
-  if (row.outcome === 'NO') return row.no_shares
-  return Math.max(0, row.invested)
+  return row.no_shares
 }
 
 function realizedProfit(db: Db, accountId: string): number {
   const rows = db
     .prepare(
-      `SELECT p.yes_shares, p.no_shares, p.invested, m.outcome
+      `SELECT p.market_id, p.answer_id, p.yes_shares, p.no_shares, p.invested,
+              m.outcome, m.outcome_type
          FROM positions p JOIN markets m ON m.id = p.market_id
         WHERE p.account_id = ? AND m.status = 'RESOLVED'`
     )
     .all(accountId) as ResolvedPositionRow[]
 
+  // CANCEL refunds the positive net cost basis per (account, market) —
+  // aggregated across a MULTI market's answer rows, matching the engine.
+  const cancelInvested = new Map<string, number>()
   let profit = 0
-  for (const row of rows) profit += settlementPayout(row) - row.invested
+  for (const row of rows) {
+    if (row.outcome === 'CANCEL') {
+      cancelInvested.set(
+        row.market_id,
+        (cancelInvested.get(row.market_id) ?? 0) + row.invested
+      )
+      continue
+    }
+    profit += settlementPayout(row) - row.invested
+  }
+  for (const invested of cancelInvested.values()) {
+    profit += Math.max(0, invested) - invested
+  }
   return round6(profit)
 }
 
+type BrierTradeRow = {
+  amount: number
+  prob_after: number
+  answer_id: string | null
+  outcome: string
+  outcome_type: 'BINARY' | 'MULTI'
+}
+
 function accountBrier(db: Db, accountId: string): number | null {
+  // Each BUY is a forecast: of YES for a binary market, of "this answer wins"
+  // for a MULTI market (a binary forecast on that answer). CANCEL excluded.
   const rows = db
     .prepare(
-      `SELECT t.amount, t.prob_after, m.outcome
+      `SELECT t.amount, t.prob_after, t.answer_id, m.outcome, m.outcome_type
          FROM trades t JOIN markets m ON m.id = t.market_id
         WHERE t.account_id = ? AND t.kind = 'BUY'
-          AND m.status = 'RESOLVED' AND m.outcome IN ('YES', 'NO')`
+          AND m.status = 'RESOLVED'
+          AND ((m.outcome_type = 'BINARY' AND m.outcome IN ('YES', 'NO'))
+            OR (m.outcome_type = 'MULTI' AND m.outcome != 'CANCEL'))`
     )
-    .all(accountId) as { amount: number; prob_after: number; outcome: 'YES' | 'NO' }[]
+    .all(accountId) as BrierTradeRow[]
 
   let weightedError = 0
   let totalWeight = 0
   for (const row of rows) {
     if (!(row.amount > 0)) continue
-    const o = row.outcome === 'YES' ? 1 : 0
+    const won =
+      row.outcome_type === 'MULTI'
+        ? row.answer_id === row.outcome
+        : row.outcome === 'YES'
+    const o = won ? 1 : 0
     weightedError += row.amount * (row.prob_after - o) ** 2
     totalWeight += row.amount
   }

@@ -24,19 +24,25 @@ const createMarketSchema = z.object({
   closeTime: z.number().int().positive(),
   initialProb: z.number().min(0.02).max(0.98).optional(),
   subsidy: z.number().min(10).max(100_000).optional(),
+  outcomeType: z.enum(['BINARY', 'MULTI']).optional(),
+  answers: z.array(z.string().trim().min(1).max(120)).min(2).max(12).optional(),
 })
 
 const tradeSchema = z.object({
   side: z.enum(['YES', 'NO']),
   amount: z.number().positive().max(1_000_000),
+  answerId: z.string().trim().min(1).max(80).optional(),
 })
 
 const sellSchema = z.object({
   side: z.enum(['YES', 'NO']),
   shares: z.number().positive().max(10_000_000),
+  answerId: z.string().trim().min(1).max(80).optional(),
 })
 
-const resolveSchema = z.object({ outcome: z.enum(['YES', 'NO', 'CANCEL']) })
+// BINARY: YES | NO | CANCEL. MULTI: the winning answerId or CANCEL. The
+// service validates the value against the market's outcome type.
+const resolveSchema = z.object({ outcome: z.string().trim().min(1).max(80) })
 
 const statusSchema = z.enum(['OPEN', 'CLOSED', 'RESOLVED']).optional()
 
@@ -112,10 +118,12 @@ export function createMarketRoutes(service: MarketService): Hono<Env> {
     }
   })
 
-  // Public: price a hypothetical buy without executing it.
+  // Public: price a hypothetical buy without executing it. MULTI markets
+  // additionally require &answerId=ans_...
   app.get('/markets/:id/quote', (c) => {
     const side = c.req.query('side')
     const amount = Number(c.req.query('amount'))
+    const answerId = c.req.query('answerId') || undefined
     if ((side !== 'YES' && side !== 'NO') || !Number.isFinite(amount) || amount <= 0) {
       return failFrom(
         c,
@@ -123,7 +131,9 @@ export function createMarketRoutes(service: MarketService): Hono<Env> {
       )
     }
     try {
-      return ok(c, { quote: service.quote(c.req.param('id'), side, amount) })
+      return ok(c, {
+        quote: service.quote(c.req.param('id'), side, amount, answerId),
+      })
     } catch (err) {
       return failFrom(c, err)
     }
@@ -172,7 +182,8 @@ export function createMarketRoutes(service: MarketService): Hono<Env> {
         c.get('account').id,
         c.req.param('id'),
         parsed.data.side,
-        parsed.data.amount
+        parsed.data.amount,
+        parsed.data.answerId
       )
       return ok(c, { trade })
     } catch (err) {
@@ -188,7 +199,8 @@ export function createMarketRoutes(service: MarketService): Hono<Env> {
         c.get('account').id,
         c.req.param('id'),
         parsed.data.side,
-        parsed.data.shares
+        parsed.data.shares,
+        parsed.data.answerId
       )
       return ok(c, { trade })
     } catch (err) {

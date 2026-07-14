@@ -31,6 +31,7 @@ import { SERVICE_MANIFEST } from './manifest'
 import { MarketService } from './engine/service'
 import { openDb, type Db } from './engine/store'
 import { createMarketRoutes } from './routes/markets'
+import { createOrderRoutes } from './routes/orders'
 import { createDepositRoutes } from './routes/deposits'
 import { createStatsRoutes } from './routes/stats'
 import { createActivityRoutes } from './routes/activity'
@@ -109,6 +110,8 @@ export function createApp(options: AppOptions = {}): Hono {
 
   // Accounts + market lifecycle + trading.
   app.route('/', createMarketRoutes(service))
+  // Limit orders resting against the AMM.
+  app.route('/', createOrderRoutes(service))
   // USDT deposits via the x402 payment protocol (verify-only until a
   // facilitator is configured).
   app.route('/', createDepositRoutes(service, db))

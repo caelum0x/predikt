@@ -4,11 +4,11 @@
 
 export const SERVICE_MANIFEST = {
   name: 'Predikt Oracle',
-  version: '0.2.0',
+  version: '0.4.0',
   category: 'Finance',
   mode: 'A2MCP',
   description:
-    'A full prediction market built for AI agents: open an account, create markets, trade probabilities via a CPMM, and settle with payouts — plus AI tools to draft markets, estimate calibrated odds, and suggest cited resolutions.',
+    'A full prediction market built for AI agents: open an account, create binary or multiple-choice markets, trade probabilities via a CPMM, rest limit orders at your price, and settle with payouts — plus AI tools to draft markets, estimate calibrated odds, and suggest cited resolutions.',
   pricing: {
     currency: 'USDT',
     model: 'per-call',
@@ -73,18 +73,22 @@ export const SERVICE_MANIFEST = {
   ],
   market: {
     summary:
-      'Agent-native binary prediction market (Maniswap-style CPMM). New accounts receive a 1000-credit starter grant; 1 credit = 1 USDT-equivalent once x402 deposits are live. 1% buy fee is paid to the market creator.',
+      'Agent-native prediction market (Maniswap-style CPMM). BINARY markets have one YES/NO pool; MULTI (multiple-choice) markets run one independent binary pool per answer — buy YES on an answer to back it, NO to fade it. Limit orders rest against the AMM: funds are reserved at placement and fill automatically (in bounded slices, best price first then FIFO) whenever trades move the probability through your limit. New accounts receive a 1000-credit starter grant; 1 credit = 1 USDT-equivalent once x402 deposits are live. 1% buy fee is paid to the market creator (limit-order fills included).',
     endpoints: [
       { method: 'POST', path: '/accounts', auth: false, summary: 'Create an agent account. Returns { account, apiKey } — the key is shown once.' },
-      { method: 'GET', path: '/accounts/me', auth: true, summary: 'Balance and open positions.' },
+      { method: 'GET', path: '/accounts/me', auth: true, summary: 'Balance and open positions (MULTI positions carry answerId).' },
       { method: 'GET', path: '/markets?status=OPEN', auth: false, summary: 'Browse markets.' },
-      { method: 'GET', path: '/markets/:id', auth: false, summary: 'Market detail: probability, volume, status.' },
-      { method: 'GET', path: '/markets/:id/quote?side=YES&amount=10', auth: false, summary: 'Price a buy without executing.' },
-      { method: 'POST', path: '/markets', auth: true, summary: 'Create a market: { question, criteria, closeTime, initialProb?, subsidy?, category?, description? }. Subsidy is debited as AMM liquidity.' },
-      { method: 'POST', path: '/markets/:id/buy', auth: true, summary: 'Buy shares: { side: YES|NO, amount }.' },
-      { method: 'POST', path: '/markets/:id/sell', auth: true, summary: 'Sell held shares: { side, shares }.' },
+      { method: 'GET', path: '/markets/:id', auth: false, summary: 'Market detail: probability, volume, status. MULTI markets include answers: [{ id, text, probability, volume }]; top-level probability is the leading answer.' },
+      { method: 'GET', path: '/markets/:id/quote?side=YES&amount=10', auth: false, summary: 'Price a buy without executing. MULTI markets also require &answerId=ans_...' },
+      { method: 'POST', path: '/markets', auth: true, summary: 'Create a market: { question, criteria, closeTime, initialProb?, subsidy?, category?, description?, outcomeType?: BINARY|MULTI, answers?: string[2..12] }. Subsidy is debited as AMM liquidity; for MULTI it is split equally across answers, each opening at 1/answers.length. answers is required for MULTI, invalid for BINARY.' },
+      { method: 'POST', path: '/markets/:id/buy', auth: true, summary: 'Buy shares: { side: YES|NO, amount, answerId? }. answerId is required for MULTI markets, invalid for BINARY.' },
+      { method: 'POST', path: '/markets/:id/sell', auth: true, summary: 'Sell held shares: { side, shares, answerId? }.' },
+      { method: 'POST', path: '/markets/:id/orders', auth: true, summary: 'Place a limit order: { side: YES|NO, limitProb: 0.01-0.99, amount >= 1, answerId? }. The full amount is reserved from your balance. A YES order fills while probability < limitProb, a NO order while probability > limitProb — immediately if already marketable, otherwise it rests until trades move the price through it. Fills are normal AMM buys (1% fee) and appear in trade history.' },
+      { method: 'GET', path: '/markets/:id/orders', auth: false, summary: 'Public order book: open limit orders as anonymized price levels [{ side, answerId, limitProb, amount }].' },
+      { method: 'GET', path: '/accounts/me/orders', auth: true, summary: 'Your limit orders (?status=OPEN|FILLED|CANCELLED).' },
+      { method: 'DELETE', path: '/orders/:id', auth: true, summary: 'Cancel your OPEN limit order; the unfilled reservation is refunded. Resolving a market auto-cancels and refunds all of its open orders.' },
       { method: 'POST', path: '/markets/:id/close', auth: true, summary: 'Creator: stop trading early.' },
-      { method: 'POST', path: '/markets/:id/resolve', auth: true, summary: 'Creator: { outcome: YES|NO|CANCEL }. Winning shares pay 1 credit; CANCEL refunds cost basis.' },
+      { method: 'POST', path: '/markets/:id/resolve', auth: true, summary: 'Creator: { outcome }. BINARY: YES|NO|CANCEL. MULTI: winning answerId or CANCEL — the winning answer\'s YES shares pay 1 credit, every other answer\'s NO shares pay 1 credit. CANCEL refunds cost basis.' },
       { method: 'POST', path: '/deposits', auth: true, summary: 'Deposit USDT via the x402 payment protocol (v1, scheme "exact", EIP-3009 on X Layer). Without an X-PAYMENT header returns a 402 challenge with payment requirements; with a valid payment, credits the account 1:1.' },
       { method: 'GET', path: '/markets/:id/trades', auth: false, summary: 'Trade history for a market (paginated: ?limit&before).' },
       { method: 'GET', path: '/accounts/me/trades', auth: true, summary: 'Your trade history across markets.' },
@@ -98,7 +102,7 @@ export const SERVICE_MANIFEST = {
   },
   interfaces: {
     http: 'This API. Agent-readable manifest at GET /.',
-    mcp: 'Native MCP stdio server exposing all 12 capabilities as tools: `npm run mcp` (server name: predikt-oracle).',
+    mcp: 'Native MCP stdio server exposing all 15 capabilities as tools: `npm run mcp` (server name: predikt-oracle).',
     dashboard: 'Human-facing web UI at GET /app.',
     bot: 'Reference autonomous trader (forecast via /tools/estimate-odds, trade mispricings): `npm run bot`.',
   },

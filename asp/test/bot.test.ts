@@ -403,6 +403,56 @@ describe('TraderBot.runOnce', () => {
     expect(report.errors).toEqual([])
   })
 
+  it('skips MULTI markets with an explicit reason and still trades binary ones', async () => {
+    const { app, creator, bot } = await setup({
+      probability: 0.9,
+      confidence: 'high',
+    })
+    const binary = await createMarket(
+      app,
+      creator.apiKey,
+      'Will the binary market alongside a MULTI one still trade?'
+    )
+    const multiRes = await app.request('/markets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${creator.apiKey}`,
+      },
+      body: JSON.stringify({
+        question: 'Which option wins the multiple-choice test market?',
+        criteria: 'Resolves to the winner announced by the test harness.',
+        closeTime: FUTURE_MS,
+        outcomeType: 'MULTI',
+        answers: ['Option A', 'Option B', 'Option C'],
+      }),
+    })
+    expect(multiRes.status).toBe(201)
+    const multi = (await multiRes.json()).data.market as { id: string }
+
+    const trader = new TraderBot({
+      baseUrl: BASE_URL,
+      apiKey: bot.apiKey,
+      fetchFn: isolatedFetch(app),
+      log: () => {},
+    })
+    const report = await trader.runOnce()
+
+    expect(report.considered).toBe(2)
+    expect(report.errors).toEqual([])
+    expect(report.skipped).toEqual([
+      { marketId: multi.id, reason: expect.stringContaining('MULTI') },
+    ])
+    expect(report.traded).toHaveLength(1)
+    expect(report.traded[0]!.marketId).toBe(binary.id)
+
+    // The MULTI market's answers were never touched by the bot.
+    const after = await json(await app.request(`/markets/${multi.id}`))
+    for (const answer of after.market.answers) {
+      expect(answer.volume).toBe(0)
+    }
+  })
+
   it('reports an authentication failure without throwing', async () => {
     const { app, creator } = await setup({ probability: 0.9, confidence: 'high' })
     await createMarket(app, creator.apiKey, 'Auth failure test question?')

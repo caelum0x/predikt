@@ -59,6 +59,26 @@
 
   function probClass(p) { return p >= 0.5 ? 'lean-yes' : 'lean-no'; }
 
+  function isMulti(market) {
+    return market && market.outcomeType === 'MULTI' &&
+      Array.isArray(market.answers) && market.answers.length > 0;
+  }
+
+  // Answers sorted by probability descending for display.
+  function sortedAnswers(market) {
+    return market.answers.slice().sort(function (a, b) {
+      return (b.probability || 0) - (a.probability || 0);
+    });
+  }
+
+  function answerById(market, answerId) {
+    if (!isMulti(market)) return null;
+    for (var i = 0; i < market.answers.length; i++) {
+      if (market.answers[i].id === answerId) return market.answers[i];
+    }
+    return null;
+  }
+
   // ---- api ----------------------------------------------------------------
 
   function getJson(path) {
@@ -121,6 +141,9 @@
 
     var top = el('div', 'card-top');
     top.appendChild(el('span', 'chip', market.category || 'general'));
+    if (isMulti(market)) {
+      top.appendChild(el('span', 'chip', market.answers.length + ' options'));
+    }
     top.appendChild(el('span', 'badge ' + statusClass(market.status),
       market.status));
     card.appendChild(top);
@@ -130,7 +153,12 @@
     var probRow = el('div', 'card-prob-row');
     probRow.appendChild(el('span', 'card-prob ' + probClass(market.probability),
       fmtPct(market.probability)));
-    probRow.appendChild(el('span', 'muted small', 'YES'));
+    var leadLabel = 'YES';
+    if (isMulti(market)) {
+      var lead = sortedAnswers(market)[0];
+      leadLabel = lead ? lead.text : 'leading';
+    }
+    probRow.appendChild(el('span', 'muted small', leadLabel));
     card.appendChild(probRow);
 
     var bar = el('div', 'prob-bar');
@@ -186,9 +214,23 @@
     prob.className = 'big-prob ' + probClass(m.probability);
     $('detail-bar-yes').style.width = Math.round(m.probability * 100) + '%';
 
+    var multi = isMulti(m);
+    var probLabel = 'chance of YES';
+    if (multi) {
+      var leading = sortedAnswers(m)[0];
+      probLabel = leading ? 'leading: ' + leading.text : 'leading answer';
+    }
+    $('detail-prob-label').textContent = probLabel;
+    renderAnswers(m);
+
     $('detail-volume').textContent = fmtNum(m.volume);
     $('detail-close').textContent = fmtDate(m.closeTime);
-    $('detail-outcome').textContent = m.outcome || '—';
+    var outcomeText = m.outcome || '—';
+    if (multi && m.outcome && m.outcome !== 'CANCEL') {
+      var winner = answerById(m, m.outcome);
+      if (winner) outcomeText = winner.text;
+    }
+    $('detail-outcome').textContent = outcomeText;
 
     var hasDesc = typeof m.description === 'string' && m.description.length > 0;
     $('detail-desc-wrap').hidden = !hasDesc;
@@ -196,12 +238,59 @@
     $('detail-criteria').textContent = m.criteria;
 
     var tradable = m.status === 'OPEN';
+    populateAnswerSelect(m, tradable);
     $('quote-closed').hidden = tradable;
     $('quote-btn').disabled = !tradable;
     $('quote-amount').disabled = !tradable;
     $('quote-result').hidden = true;
     $('quote-error').hidden = true;
     if (tradable) requestQuote();
+  }
+
+  // Per-answer probability list for MULTI markets, sorted by probability.
+  function renderAnswers(market) {
+    var wrap = $('detail-answers-wrap');
+    if (!isMulti(market)) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    var items = sortedAnswers(market).map(function (answer) {
+      var li = el('li', 'answer-row');
+      var head = el('div', 'answer-head');
+      head.appendChild(el('span', 'answer-text', answer.text));
+      head.appendChild(el('span',
+        'answer-prob ' + probClass(answer.probability),
+        fmtPct(answer.probability)));
+      li.appendChild(head);
+      var bar = el('div', 'prob-bar');
+      var fill = el('span', 'bar-yes');
+      fill.style.width = Math.round(answer.probability * 100) + '%';
+      bar.appendChild(fill);
+      li.appendChild(bar);
+      return li;
+    });
+    var list = $('detail-answers');
+    list.replaceChildren.apply(list, items);
+  }
+
+  // The quote calculator's answer selector — visible only for MULTI markets.
+  function populateAnswerSelect(market, tradable) {
+    var select = $('quote-answer');
+    if (!isMulti(market)) {
+      select.hidden = true;
+      select.replaceChildren();
+      return;
+    }
+    var options = sortedAnswers(market).map(function (answer) {
+      var option = document.createElement('option');
+      option.value = answer.id;
+      option.textContent = answer.text + ' (' + fmtPct(answer.probability) + ')';
+      return option;
+    });
+    select.replaceChildren.apply(select, options);
+    select.hidden = false;
+    select.disabled = !tradable;
   }
 
   // ---- quote calculator -------------------------------------------------------
@@ -235,6 +324,14 @@
     }
     var url = '/markets/' + encodeURIComponent(m.id) + '/quote' +
       '?side=' + state.side + '&amount=' + encodeURIComponent(String(amount));
+    if (isMulti(m)) {
+      var answerId = $('quote-answer').value;
+      if (!answerId) {
+        showQuoteError('Select an answer to quote.');
+        return;
+      }
+      url += '&answerId=' + encodeURIComponent(answerId);
+    }
     getJson(url).then(function (r) {
       if (!r.body || r.body.success !== true || !r.body.data) {
         showQuoteError((r.body && r.body.error) || 'Quote failed.');
@@ -335,6 +432,7 @@
     $('side-no').addEventListener('click', function () { setSide('NO'); });
     $('quote-btn').addEventListener('click', requestQuote);
     $('quote-amount').addEventListener('input', scheduleQuote);
+    $('quote-answer').addEventListener('change', scheduleQuote);
     $('quote-amount').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') requestQuote();
     });

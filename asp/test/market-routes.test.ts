@@ -152,3 +152,126 @@ describe('market lifecycle over HTTP', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('MULTI market lifecycle over HTTP', () => {
+  async function createMultiMarket(key: string) {
+    const res = await req('/markets', {
+      key,
+      body: {
+        question: 'Which chain wins the most agent deployments in 2026?',
+        criteria: 'Resolves to the chain leading the public deployment index.',
+        closeTime: FUTURE(),
+        subsidy: 60,
+        outcomeType: 'MULTI',
+        answers: ['X Layer', 'Base', 'Solana'],
+      },
+    })
+    expect(res.status).toBe(201)
+    return (await json(res)).data.market
+  }
+
+  it('creates, quotes, buys, sells, and resolves a MULTI market', async () => {
+    const alice = await signup('alice-agent')
+    const bob = await signup('bob-agent')
+    const market = await createMultiMarket(alice.key)
+
+    expect(market.outcomeType).toBe('MULTI')
+    expect(market.answers).toHaveLength(3)
+    for (const answer of market.answers) {
+      expect(answer.probability).toBeCloseTo(1 / 3, 6)
+    }
+
+    // Detail includes answers with per-answer probabilities.
+    const detail = (await json(await req(`/markets/${market.id}`))).data.market
+    expect(detail.answers.map((a: any) => a.text)).toEqual([
+      'X Layer',
+      'Base',
+      'Solana',
+    ])
+
+    const target = market.answers[1]
+    const quote = (
+      await json(
+        await req(
+          `/markets/${market.id}/quote?side=YES&amount=50&answerId=${target.id}`
+        )
+      )
+    ).data.quote
+    const trade = (
+      await json(
+        await req(`/markets/${market.id}/buy`, {
+          key: bob.key,
+          body: { side: 'YES', amount: 50, answerId: target.id },
+        })
+      )
+    ).data.trade
+    expect(trade.shares).toBeCloseTo(quote.shares, 6)
+    expect(trade.answerId).toBe(target.id)
+
+    const sell = await req(`/markets/${market.id}/sell`, {
+      key: bob.key,
+      body: { side: 'YES', shares: 1, answerId: target.id },
+    })
+    expect(sell.status).toBe(200)
+
+    // Resolve to the winning answer id; bob's remaining YES shares pay 1.
+    const resolved = await json(
+      await req(`/markets/${market.id}/resolve`, {
+        key: alice.key,
+        body: { outcome: target.id },
+      })
+    )
+    expect(resolved.data.market.status).toBe('RESOLVED')
+    expect(resolved.data.market.outcome).toBe(target.id)
+  })
+
+  it('rejects MULTI trades without an answerId and answerIds on binary markets', async () => {
+    const alice = await signup('alice-agent')
+    const bob = await signup('bob-agent')
+    const multi = await createMultiMarket(alice.key)
+    const binary = await createMarket(alice.key)
+
+    const noAnswer = await req(`/markets/${multi.id}/buy`, {
+      key: bob.key,
+      body: { side: 'YES', amount: 10 },
+    })
+    expect(noAnswer.status).toBe(400)
+    expect((await json(noAnswer)).error).toContain('answerId')
+
+    const badQuote = await req(
+      `/markets/${multi.id}/quote?side=YES&amount=10&answerId=ans_bogus`
+    )
+    expect(badQuote.status).toBe(400)
+
+    const binaryWithAnswer = await req(`/markets/${binary.id}/buy`, {
+      key: bob.key,
+      body: { side: 'YES', amount: 10, answerId: multi.answers[0].id },
+    })
+    expect(binaryWithAnswer.status).toBe(400)
+    expect((await json(binaryWithAnswer)).error).toContain('MULTI')
+  })
+
+  it('rejects invalid MULTI creation payloads and resolve outcomes', async () => {
+    const alice = await signup('alice-agent')
+
+    const oneAnswer = await req('/markets', {
+      key: alice.key,
+      body: {
+        question: 'Which single option wins this malformed market?',
+        criteria: 'Resolves to the announced winner of the event.',
+        closeTime: FUTURE(),
+        outcomeType: 'MULTI',
+        answers: ['only-one'],
+      },
+    })
+    expect(oneAnswer.status).toBe(400)
+
+    const multi = await createMultiMarket(alice.key)
+    const badOutcome = await req(`/markets/${multi.id}/resolve`, {
+      key: alice.key,
+      body: { outcome: 'YES' },
+    })
+    expect(badOutcome.status).toBe(400)
+    expect((await json(badOutcome)).error).toContain('answerId')
+  })
+})
