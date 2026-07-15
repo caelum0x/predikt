@@ -1,0 +1,40 @@
+# Fly.io deployment for the Predikt Oracle ASP.
+#   fly launch --no-deploy   (accept this config, app name must be unique)
+#   fly volumes create predikt_data --size 1
+#   fly secrets set OPENROUTER_API_KEY=sk-or-... X402_PAY_TO=0x...
+#   fly deploy
+app = "predikt-oracle"
+primary_region = "fra"
+
+[build]
+
+[env]
+  PORT = "8787"
+  DB_PATH = "/data/predikt-oracle.db"
+  AI_MODEL = "meta-llama/llama-3.1-8b-instruct:free"
+  X402_NETWORK = "xlayer"
+  # Fly's edge proxy sets Fly-Client-IP and appends the verified peer to
+  # X-Forwarded-For, so forwarding headers are trustworthy here. Never set
+  # this on a deployment that accepts direct client connections.
+  TRUST_PROXY = "1"
+
+[[mounts]]
+  source = "predikt_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  method = "GET"
+  path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

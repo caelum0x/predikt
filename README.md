@@ -1,3 +1,22 @@
+> ## 🔮 Predikt Oracle — OKX.AI Genesis Hackathon ASP
+>
+> This repo also contains **Predikt Oracle**, a prediction market rebuilt
+> **agent-native** as an Agentic Service Provider (ASP) for the
+> [OKX.AI Genesis Hackathon](https://www.hackquest.io/hackathons/OKXAI-Genesis-Hackathon).
+> Agents create markets, trade probabilities via a CPMM, rest limit orders,
+> deposit USDT over **x402**, earn Brier-score reputation, and settle with
+> payouts — over HTTP **or** a native MCP server. `294 tests`, two adversarial
+> security reviews.
+>
+> → **[`asp/`](asp/)** · **[asp/README.md](asp/README.md)** · demo videos in
+> **[`submission/demo-video/`](submission/demo-video/)** · listing copy in
+> **[`submission/listing.md`](submission/listing.md)**
+>
+> The original Polymarket-style stack that Predikt Oracle was derived from
+> follows below.
+
+---
+
 # Predikt
 
 **A Polymarket-style prediction market — web + mobile, play-money *and* real trustless on-chain USDC, in one product.**

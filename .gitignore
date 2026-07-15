@@ -50,3 +50,13 @@ predikt-relay/*.db
 .crush/
 addresses.*.json
 !addresses.amoy.json
+
+# ── OKX.AI Genesis ASP (asp/, submission/) ─────────────────────────────
+predikt/
+*.db
+*.db-wal
+*.db-shm
+submission/demo-video/frames/
+submission/demo-video/term-frames/
+submission/demo-video/voiced-frames/
+submission/demo-video/launch-frames/
