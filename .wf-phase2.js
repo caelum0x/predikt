@@ -9,10 +9,10 @@ export const meta = {
   ],
 }
 
-const C = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts'
-const FPMM = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts/fpmm'
-const RELAY = '/Users/arhansubasi/expo games and apps/prediction/predikt-relay'
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
+const C = '/Users/arhansubasi/products/predikt/predikt-contracts'
+const FPMM = '/Users/arhansubasi/products/predikt/predikt-contracts/fpmm'
+const RELAY = '/Users/arhansubasi/products/predikt/predikt-relay'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
 
 const OWN = `The AMM is Predikt's OWN code now: ${FPMM} = Gnosis FixedProductMarketMaker + FPMMDeterministicFactory (real OSS, LGPL-3.0 — a DEPLOYED contract the app calls via ABI, not bundled into the app, so it's fine; keep a clear LICENSE/NOTICE). USE IT DIRECTLY — do not reimplement the AMM math (calcBuyAmount/calcSellAmount/buy/sell/addFunding already exist). You MAY modify/rebrand/integrate it (it's ours). Hard rule: keep the AMM pricing LOGIC correct; verify by building + tests. It is Solidity ^0.5.1 — forge auto-selects solc 0.5, no Truffle needed.`
 

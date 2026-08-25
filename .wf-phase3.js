@@ -9,7 +9,7 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
 
 const RULE = `Existing Manifold Next.js app reskinned as Predikt. EDIT IN PLACE, preserve the off-chain default. Theme tokens only (canvas-*, ink-*, primary- blue, yes/teal green, no/scarlet red), icon-first, plain copy, no tech/product-name leaks. Strict TS, no \`any\`. REAL ONLY — real API calls, no mock/stub/faked drafts. FREE/OSS: AI via OpenRouter (user's key, env EXPO/NEXT PUBLIC or server env — never hardcode a key). \`npx tsc --noEmit\` in ${WEB} must be 0 errors. Don't touch common/ or backend/. Market creation uses the existing create API (createMarket / the new-contract flow already in the app).`
 

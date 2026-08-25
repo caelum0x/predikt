@@ -7,8 +7,8 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
-const RELAY = '/Users/arhansubasi/expo games and apps/prediction/predikt-relay'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
+const RELAY = '/Users/arhansubasi/products/predikt/predikt-relay'
 const ENV = `Headless: no device; disk may be tight — no heavy fresh installs; run \`npx tsc --noEmit\` + \`npx jest\` only if node_modules exists, else careful typed edits. REAL tests only (assert real behavior of real functions — no mocks-of-production, no empty asserts). No secrets. Keep behavior + the off-chain default intact; don't weaken security (mnemonic never plaintext, key separate from ciphertext).`
 
 phase('Develop')

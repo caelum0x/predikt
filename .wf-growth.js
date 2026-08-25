@@ -8,8 +8,8 @@ export const meta = {
 }
 
 const APPS = {
-  Vertex: '/Users/arhansubasi/expo games and apps/pillar-valley',
-  Cipher: '/Users/arhansubasi/expo games and apps/TheLock',
+  Vertex: '/Users/arhansubasi/products/pillar-valley',
+  Cipher: '/Users/arhansubasi/products/TheLock',
 }
 const ENV = `Headless: NO device — push delivery + share-sheet + real ASO ranking can only be confirmed on a device/store; make the CODE + copy real and honest about that. No heavy fresh installs (tsc only if node_modules exists). REAL ONLY (no stub), no secrets, keep the game working, plain copy, icon-first.`
 

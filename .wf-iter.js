@@ -8,8 +8,8 @@ export const meta = {
 }
 
 const APPS = {
-  Cipher: '/Users/arhansubasi/expo games and apps/TheLock',
-  Vertex: '/Users/arhansubasi/expo games and apps/pillar-valley',
+  Cipher: '/Users/arhansubasi/products/TheLock',
+  Vertex: '/Users/arhansubasi/products/pillar-valley',
 }
 const ENV = `Headless: no device/simulator, disk may be tight — no heavy fresh installs; run \`npx tsc --noEmit\` and \`npx jest\` (or the app's test script) only if node_modules exists, else careful typed edits. REAL improvements only (no stub/mock in production, no fake tests that assert nothing), no secrets, keep the app working + the brand + GREENLIT compliance intact (don't add tracking/ATT-triggering code, keep placeholder handling).`
 

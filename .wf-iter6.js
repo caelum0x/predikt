@@ -7,9 +7,9 @@ export const meta = {
   ],
 }
 
-const CIPHER = '/Users/arhansubasi/expo games and apps/TheLock'
-const VERTEX = '/Users/arhansubasi/expo games and apps/pillar-valley'
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
+const CIPHER = '/Users/arhansubasi/products/TheLock'
+const VERTEX = '/Users/arhansubasi/products/pillar-valley'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
 const ENV = `Headless: no device, disk may be tight — no heavy installs; \`npx tsc --noEmit\` + tests only if node_modules exists. REAL only, no secrets. Preserve behavior + GREENLIT compliance. Icon-first: prefer vector symbols over emoji in UI. Loop tsc + tests green.`
 
 phase('Develop')

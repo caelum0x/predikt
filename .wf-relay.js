@@ -10,12 +10,12 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
-const CONTRACTS = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts'
-const RELAY = '/Users/arhansubasi/expo games and apps/prediction/predikt-relay'
-const EXCHANGE = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts/ctf-exchange'
-const UMA = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts/uma-ctf-adapter'
-const CLOB = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts/clob-client'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
+const CONTRACTS = '/Users/arhansubasi/products/predikt/predikt-contracts'
+const RELAY = '/Users/arhansubasi/products/predikt/predikt-relay'
+const EXCHANGE = '/Users/arhansubasi/products/predikt/predikt-contracts/ctf-exchange'
+const UMA = '/Users/arhansubasi/products/predikt/predikt-contracts/uma-ctf-adapter'
+const CLOB = '/Users/arhansubasi/products/predikt/predikt-contracts/clob-client'
 
 const OWN = `THESE OSS ARE NOW PREDIKT'S OWN CODE (their nested .git is removed — they live in our tree). USE ALL, TOUCH ALL — nothing stays untouched/pristine:
 - ${EXCHANGE} (Polymarket CTFExchange — trading), ${UMA} (UmaCtfAdapter — trustless UMA settlement), ${CLOB} (clob-client — order building/signing). All MIT.

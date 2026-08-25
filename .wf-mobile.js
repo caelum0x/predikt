@@ -8,9 +8,9 @@ export const meta = {
   ],
 }
 
-const O = '/Users/arhansubasi/expo games and apps/prediction/oracle'
-const NAT = '/Users/arhansubasi/expo games and apps/prediction/oracle/native'
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
+const O = '/Users/arhansubasi/products/predikt/oracle'
+const NAT = '/Users/arhansubasi/products/predikt/oracle/native'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
 
 const ENV = `HEADLESS: no iOS simulator / Android emulator / device — the native app CANNOT be built or run here. Output is STATIC-checked (config validity + tsc + careful edits), NOT runtime-verified — be honest about that. Don't run \`eas build\`/\`expo run\`. You MAY run \`npx tsc --noEmit\` where a tsconfig exists.`
 const RULE = `Brand is PREDIKT. EDIT IN PLACE the existing app (do NOT scaffold a new native app; the WebView-shell approach reuses the web app we built). REAL ONLY, no mock/stub. No secrets committed. Icon-first, plain copy, no tech/product-name leaks. Keep the WebView shell logic intact.`

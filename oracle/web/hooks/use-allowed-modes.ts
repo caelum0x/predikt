@@ -3,12 +3,11 @@ import { useIsClient } from 'web/hooks/use-is-client'
 import { usePersistentLocalState } from 'web/hooks/use-persistent-local-state'
 import { getCookie } from 'web/lib/util/cookie'
 import {
-  allowedModesForRegion,
-  defaultModeForRegion,
   type AllowedModes,
   type MoneyMode,
   REGION_COOKIE,
 } from 'web/lib/compliance/jurisdiction'
+import { resolveMoneyMode } from 'web/lib/compliance/money-mode'
 import { isOnchainEnabled } from 'web/lib/onchain/addresses'
 
 /**
@@ -64,27 +63,13 @@ export function useAllowedModes(): MoneyModeState {
   const region = readRegionCookie(isClient)
 
   return useMemo<MoneyModeState>(() => {
-    const modes = allowedModesForRegion(region)
-    // The on-chain path also requires the deployment to be configured at all.
-    const onChain = modes.onChain && isOnchainEnabled()
-    const canSwitch = modes.playMoney && onChain
-
-    const regionDefault =
-      defaultModeForRegion(region) === 'onchain' && onChain ? 'onchain' : 'play'
-
-    // Honor a stored override only when both modes are actually available.
-    const effective: MoneyMode =
-      canSwitch && (override === 'play' || override === 'onchain')
-        ? override
-        : regionDefault
+    // All the money-mode decision logic is pure and lives in lib/compliance so
+    // it is testable without React; this hook only supplies the live inputs.
+    const resolved = resolveMoneyMode(region, isOnchainEnabled(), override)
 
     return {
-      playMoney: modes.playMoney,
-      onChain,
-      region: modes.region,
+      ...resolved,
       ready: isClient && overrideReady,
-      mode: effective,
-      canSwitch,
       setMode: (m: MoneyMode) => setOverride(m),
       resetMode: () => setOverride(null),
     }

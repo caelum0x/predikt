@@ -7,10 +7,10 @@ export const meta = {
   ],
 }
 
-const CIPHER = '/Users/arhansubasi/expo games and apps/TheLock'
-const VERTEX = '/Users/arhansubasi/expo games and apps/pillar-valley'
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
-const AETHER = '/Users/arhansubasi/expo games and apps/rn-crypto-wallet'
+const CIPHER = '/Users/arhansubasi/products/TheLock'
+const VERTEX = '/Users/arhansubasi/products/pillar-valley'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
+const AETHER = '/Users/arhansubasi/products/rn-crypto-wallet'
 const ENV = `Headless: no device, disk may be tight — no heavy installs; \`npx tsc --noEmit\` + tests only if node_modules exists. REAL only (no stub/mock-in-prod, no empty tests). No secrets. Preserve behavior + GREENLIT compliance. Loop tsc + tests to green.`
 
 phase('Develop')

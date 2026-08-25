@@ -7,8 +7,8 @@ export const meta = {
   ],
 }
 
-const V = '/Users/arhansubasi/expo games and apps/pillar-valley'
-const C = '/Users/arhansubasi/expo games and apps/TheLock'
+const V = '/Users/arhansubasi/products/pillar-valley'
+const C = '/Users/arhansubasi/products/TheLock'
 const ENV = `Headless: NO device/simulator, disk may be tight — do NOT run heavy fresh installs; run \`npx tsc --noEmit\` only if node_modules already exists, else rely on careful typed edits. Runtime (real purchases/ads/receipts) can only be verified on a device with configured store products — be honest about that; your job is to make the CODE real + the config + the docs correct. REAL ONLY (no stub/no-op in the production path), no secrets committed (store/ad keys via env or app config, Google TEST ad ids as safe fallback), plain copy, keep the game working.`
 
 const SUBMIT = `SUBMISSION CONFIG (do all): app.json/app.config — expo.ios.bundleIdentifier + expo.android.package (com.<brand>.app), version + buildNumber/versionCode, all permission usage-description strings as real sentences (incl. NSUserTrackingUsageDescription for ATT + any camera/photos/notifications used), ITSAppUsesNonExemptEncryption=false, and the plugins for the native modules used. eas.json: valid development/preview/production profiles. iOS PRIVACY MANIFEST: add ios/.../PrivacyInfo.xcprivacy (or the expo plugin config) declaring the data types collected (identifiers for ads, purchase history, usage/analytics) + required-reason API usages — matching what the app actually does. Write an APP-STORE metadata file (name, subtitle, promotional text, description, keywords, category, age rating notes, support + privacy URLs -> the websites/ pages) + REVIEW NOTES (how to test IAP with a sandbox account, that ads use test ids until real ones are set, any demo steps). Scrub any user-visible placeholder/"coming soon"/TODO copy.`

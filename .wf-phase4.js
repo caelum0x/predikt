@@ -9,9 +9,9 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
-const PRED = '/Users/arhansubasi/expo games and apps/prediction'
-const HERALD = '/Users/arhansubasi/expo games and apps/prediction/herald'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
+const PRED = '/Users/arhansubasi/products/predikt'
+const HERALD = '/Users/arhansubasi/products/predikt/herald'
 
 const RULE = `Existing Manifold Next.js app reskinned as Predikt. EDIT IN PLACE, preserve off-chain default + existing logic/data. Theme tokens only (canvas-*, ink-*, primary- blue, yes/teal green, no/scarlet red), icon-first, plain copy, no tech/product-name leaks. Strict TS, no \`any\`. REAL ONLY — real API/data, no mock/stub/faked numbers. FREE/OSS. \`npx tsc --noEmit\` in ${WEB} must be 0 errors. Don't touch common/ or backend/. Reuse existing hooks/APIs (follows, contract-metrics, user profit/calibration, bets) — surface them, don't invent fake stats.`
 

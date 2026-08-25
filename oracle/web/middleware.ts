@@ -50,11 +50,8 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import {
-  normalizeRegion,
-  REGION_COOKIE,
-  REGION_HEADER,
-} from 'web/lib/compliance/jurisdiction'
+import { REGION_COOKIE, REGION_HEADER } from 'web/lib/compliance/jurisdiction'
+import { resolveRegion } from 'web/lib/compliance/geo'
 
 // Paths that should not have the nonce middleware applied (static assets, etc.)
 // We apply to everything because next.config.js already excludes /_next/static.
@@ -91,17 +88,15 @@ function generateNonce(): string {
  * Returns an uppercased ISO-3166 alpha-2 code, or null when unknown (in which
  * case the app applies its default-open policy: play money everywhere, on-chain
  * allowed unless the operator blocked the region).
+ *
+ * The priority + normalization logic is the pure, unit-tested `resolveRegion`
+ * (lib/compliance/geo.ts); this stays a thin adapter that supplies the parsed
+ * geo (present only on Vercel's edge runtime) and the live request headers.
  */
 function readRegion(request: NextRequest): string | null {
   // `geo` is present on Vercel's edge runtime; guard for other hosts.
   const geoCountry = (request as { geo?: { country?: string } }).geo?.country
-  const raw =
-    geoCountry ??
-    request.headers.get('x-vercel-ip-country') ??
-    request.headers.get('cf-ipcountry') ??
-    request.headers.get('x-country') ??
-    undefined
-  return normalizeRegion(raw)
+  return resolveRegion(request.headers, geoCountry)
 }
 
 export function middleware(request: NextRequest): NextResponse {

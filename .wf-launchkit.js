@@ -8,10 +8,10 @@ export const meta = {
   ],
 }
 
-const PRED = '/Users/arhansubasi/expo games and apps/prediction'
-const C = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts'
-const RELAY = '/Users/arhansubasi/expo games and apps/prediction/predikt-relay'
-const FPMM = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts/fpmm'
+const PRED = '/Users/arhansubasi/products/predikt'
+const C = '/Users/arhansubasi/products/predikt/predikt-contracts'
+const RELAY = '/Users/arhansubasi/products/predikt/predikt-relay'
+const FPMM = '/Users/arhansubasi/products/predikt/predikt-contracts/fpmm'
 
 const RULE = `Do NOT touch oracle/web (another workflow owns it). Work only in ${PRED}/predikt-relay, ${PRED}/predikt-contracts, ${PRED}/fpmm... (i.e. predikt-contracts/fpmm), and a NEW ${PRED}/demo/ dir + top-level docs. REAL ONLY — real anvil, real deploys, real relay/MM, no mocks/faked steps. Reuse the existing e2e harnesses (predikt-relay/test/e2e/run.mjs and predikt-contracts/fpmm/test-e2e/run.mjs) and the existing deploy scripts — do not reimplement contracts or the AMM. anvil/forge/cast are installed; reuse installed node_modules (viem is in predikt-relay). No secrets committed.`
 

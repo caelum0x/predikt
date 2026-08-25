@@ -7,7 +7,7 @@ export const meta = {
   ],
 }
 
-const A = '/Users/arhansubasi/expo games and apps/rn-crypto-wallet'
+const A = '/Users/arhansubasi/products/rn-crypto-wallet'
 const ENV = `Headless: no device, disk may be tight — no heavy fresh installs; run \`npx tsc --noEmit\` + the test script only if node_modules exists, else careful typed edits. Real RPC round-trips need a device/network — cannot be run here; harden + UNIT-test the pure logic (derivation, encoding, amount/fee math, parsing, state) and make the code defensively correct. REAL tests only (no mocks-of-production, no empty asserts). No secrets. Keep secure key handling intact (split-key SecureStore, no plaintext mnemonic). Keep EVM/Solana working. Do NOT re-disable the 7 chains.`
 
 phase('Develop')

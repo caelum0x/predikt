@@ -9,10 +9,10 @@ export const meta = {
 }
 
 const APPS = {
-  Vertex: '/Users/arhansubasi/expo games and apps/pillar-valley',
-  Cipher: '/Users/arhansubasi/expo games and apps/TheLock',
+  Vertex: '/Users/arhansubasi/products/pillar-valley',
+  Cipher: '/Users/arhansubasi/products/TheLock',
 }
-const SECT = '/Users/arhansubasi/expo games and apps/.audit'
+const SECT = '/Users/arhansubasi/products/.audit'
 const ENV = `Headless: NO device/simulator, disk may be tight — no heavy fresh installs; run \`npx tsc --noEmit\` only if node_modules exists, else careful typed edits. Runtime (live gameplay, real IAP/ads, online multiplayer, backend) can only be confirmed on a device/live service — be honest about that; audit + complete the CODE end-to-end. REAL ONLY — no stub/mock/placeholder/dead-end in production paths; no secrets.`
 
 const AUDIT_DIMS = (name, path) => [

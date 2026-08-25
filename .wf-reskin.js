@@ -8,7 +8,7 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
 
 const HARD = `HARD RULES:
 - This is the EXISTING Manifold codebase (MIT). EDIT FILES IN PLACE. Do NOT scaffold a new app, do NOT create a new project/folder, do NOT rewrite components from scratch. You may add a small helper component under web/components only when a reskin genuinely needs it.
