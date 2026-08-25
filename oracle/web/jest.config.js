@@ -127,5 +127,13 @@ module.exports = {
       functions: 100,
       lines: 100,
     },
+    // Pure geo-region resolution (edge/CDN signal → normalized region) — the
+    // launch-gating input the whole money-mode layer consumes, fully covered.
+    './lib/compliance/geo.ts': {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
+    },
   },
 }
