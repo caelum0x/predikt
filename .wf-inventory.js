@@ -7,8 +7,8 @@ export const meta = {
   ],
 }
 
-const ROOT = '/Users/arhansubasi/expo games and apps'
-const SECT = '/Users/arhansubasi/expo games and apps/.inventory'
+const ROOT = '/Users/arhansubasi/products'
+const SECT = '/Users/arhansubasi/products/.inventory'
 
 const RULE = `Produce a GROUNDED inventory from the ACTUAL code — enumerate what really exists, do not invent. GROUP by feature area (not one giant flat list); be concise (name + 1 short line each; for big lists give counts + the notable ones). Mark anything STUB/partial/disabled/behind-a-flag honestly. End your section with a short per-app GAP list: "What a best-in-class version of THIS app still needs" (Have ✅ / Partial 🟡 / Missing ❌). Write your section to the given file path (create ${SECT}/ if needed).`
 

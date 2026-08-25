@@ -7,7 +7,7 @@ export const meta = {
   ],
 }
 
-const ROOT = '/Users/arhansubasi/expo games and apps'
+const ROOT = '/Users/arhansubasi/products'
 const ENV = `Headless: NO device/simulator, disk may be tight — do NOT run heavy fresh installs; run \`npx tsc --noEmit\` / the app's build only if node_modules already exists, else rely on careful typed edits. Be honest that runtime is not verified. REAL ONLY (no mock/stub), no secrets committed, keep existing behavior + brand, plain copy.`
 
 function fix(label, spec) {

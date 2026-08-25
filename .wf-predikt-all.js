@@ -11,10 +11,10 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
-const PRED = '/Users/arhansubasi/expo games and apps/prediction'
-const CONTRACTS = '/Users/arhansubasi/expo games and apps/prediction/predikt-contracts'
-const WALLET = '/Users/arhansubasi/expo games and apps/rn-crypto-wallet/src'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
+const PRED = '/Users/arhansubasi/products/predikt'
+const CONTRACTS = '/Users/arhansubasi/products/predikt/predikt-contracts'
+const WALLET = '/Users/arhansubasi/products/rn-crypto-wallet/src'
 
 const HARD = `HARD RULES (Manifold Next.js app, MIT — brand "Predikt"):
 - EDIT IN PLACE; no new app, no component rewrites. Off-chain play-money path is DEFAULT + must keep working. Some polish may already be partly applied — make it consistent/idempotent, don't duplicate.

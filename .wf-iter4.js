@@ -7,7 +7,7 @@ export const meta = {
   ],
 }
 
-const H = '/Users/arhansubasi/expo games and apps/slack-clone-react-native'
+const H = '/Users/arhansubasi/products/slack-clone-react-native'
 const ENV = `Headless: no device, no live Matrix homeserver — real send/sync/media/voice-video need a device+homeserver and can't run here; harden + UNIT-test the pure logic (message formatting, waveform, scheduling/reminder timing, permission/power-level checks, parsing) and make the code defensively correct. No heavy installs; \`npx tsc --noEmit\` + tests only if node_modules exists. REAL tests only (no mocks-of-production, no empty asserts). No secrets. Keep server-side scheduling (MSC4140 + worker) + the on-device fallback intact.`
 
 phase('Develop')

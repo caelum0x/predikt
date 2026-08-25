@@ -40,6 +40,9 @@ module.exports = {
   collectCoverageFrom: [
     'lib/onchain/**/*.ts',
     'lib/ai/**/*.ts',
+    // Pure, network-free compliance signal — a launch-gating differentiator.
+    // Fully covered and pinned per-file below (so it is removed from `global`).
+    'lib/compliance/**/*.ts',
     // Type-only / barrel-style files carry no executable statements; excluding
     // them keeps the ratio honest rather than diluting it with 0/0 files.
     '!lib/**/*.d.ts',
@@ -108,6 +111,13 @@ module.exports = {
       branches: 100,
       functions: 100,
       lines: 95,
+    },
+    // Pure jurisdiction/money-mode routing — fully covered, hold at 100%.
+    './lib/compliance/jurisdiction.ts': {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
     },
   },
 }

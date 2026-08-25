@@ -7,7 +7,7 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
 const ENV = `Headless: \`npx tsc --noEmit\` + \`npx jest\` if node_modules exists. REAL only, no secrets, GREENLIT + off-chain default intact. STAY TIGHTLY SCOPED to the two files/areas named — do NOT refactor unrelated screens, add new features, or touch files outside the stated scope (no scope creep). Behavior-preserving except the specific UX improvement described; keep tests green.`
 
 phase('Develop')

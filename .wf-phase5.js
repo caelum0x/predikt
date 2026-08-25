@@ -9,7 +9,7 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
 
 const RULE = `Existing Manifold Next.js app reskinned as Predikt. EDIT IN PLACE, preserve off-chain default + existing logic. Theme tokens only (canvas-*, ink-*, primary- blue, yes/teal green, no/scarlet red), icon-first, plain copy, no tech/product-name leaks. Strict TS, no \`any\`. REAL ONLY — real on-chain reads via viem, no mock/faked status. FREE/OSS. \`npx tsc --noEmit\` in ${WEB} must be 0 errors. Don't touch common/ or backend/. Reuse lib/onchain/* (addresses, evmClient, market.ts, the UmaCtfAdapter ABI). This is NOT legal advice — the jurisdiction layer is a soft, configurable compliance aid, clearly labeled.`
 

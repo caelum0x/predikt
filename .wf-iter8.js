@@ -7,7 +7,7 @@ export const meta = {
   ],
 }
 
-const WEB = '/Users/arhansubasi/expo games and apps/prediction/oracle/web'
+const WEB = '/Users/arhansubasi/products/predikt/oracle/web'
 const RULE = `ICON-FIRST: replace emoji glyphs in the app's OWN hardcoded rendered UI with VECTOR icons — use react-icons (Tb*) or the existing custom icon components already imported nearby; match the surrounding code. Give icons aria-hidden or an accessible label as fits. Rank/medal glyphs (🥉🥈🥇) → a trophy/medal vector with a rank tint or the existing rank component; 🔥 streak / 🧊 freeze / 💎 / 🎁 / ✅ ❌ / 📅 / 🏆 → semantic vector icons; toast \`{icon:'🎉'}\` → the toast lib's supported icon (a small vector node or an appropriate built-in) — don't break the toast API.
 CRITICAL: every react-icons import you add MUST actually exist in the installed react-icons version (v5.3.0) — VERIFY each named import resolves (grep node_modules/react-icons/tb) before using it; do NOT introduce a missing-export like the prior TbHandshake break. Run \`npx tsc --noEmit\` iteratively and keep it at 0 errors.
 Do NOT touch: emoji in analytics event-name strings, code comments, test files, or user-generated-content rendering (user messages/answers) — only the app's own UI glyphs.`
