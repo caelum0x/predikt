@@ -119,5 +119,13 @@ module.exports = {
       functions: 100,
       lines: 100,
     },
+    // Pure money-mode resolution (region + policy + deployment + override) —
+    // launch-gating decision, fully covered, hold at 100%.
+    './lib/compliance/money-mode.ts': {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
+    },
   },
 }
